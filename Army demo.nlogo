@@ -9,7 +9,7 @@ globals[
    randomrunnum    ;crappy hack to get unique filenames for each run in behaviourspace experiments
    filename        ;place for aforementioned filename
 ];another
-
+;philip161 test
 breed [soldiers soldier]
 soldiers-own[
   allegience;are they fighting for side 1 or 2?
@@ -134,7 +134,6 @@ end
 to-report other-turtles
    report turtles with [self != myself] 
 end
-
 @#$#@#$#@
 GRAPHICS-WINDOW
 437
