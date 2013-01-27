@@ -18,8 +18,7 @@ soldiers-own[
   speed; amount they move when its time
   health; amount of damage they can take
   state; 1 attack, 2 defend, 3 something else yet to come?
-]
-
+];hi
 to setup
   __clear-all-and-reset-ticks;clear the screen
   
@@ -135,7 +134,6 @@ end
 to-report other-turtles
    report turtles with [self != myself] 
 end
-
 
 
 @#$#@#$#@
