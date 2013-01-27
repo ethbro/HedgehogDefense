@@ -8,7 +8,7 @@ globals[
    search-angle    ;where the turtle searches for other agents
    randomrunnum    ;crappy hack to get unique filenames for each run in behaviourspace experiments
    filename        ;place for aforementioned filename
-]
+];another
 
 breed [soldiers soldier]
 soldiers-own[
@@ -134,7 +134,6 @@ end
 to-report other-turtles
    report turtles with [self != myself] 
 end
-
 
 @#$#@#$#@
 GRAPHICS-WINDOW
