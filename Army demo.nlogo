@@ -4,6 +4,9 @@ globals[
    NearView        ;close view
    MaxView         ;far view
    time-units      ;monitor to show the number of  goes 
+   theta           ;theta, x, and y all for the hedgehog
+   x
+   y
    vision-angle    ;in what direction the turtle can see
    search-angle    ;where the turtle searches for other agents
    randomrunnum    ;crappy hack to get unique filenames for each run in behaviourspace experiments
@@ -67,6 +70,10 @@ to setupSoldiers
     [
       set heading 90
       setxy 200 (10 + 5 * (who - population))
+      set theta (theta + (who * pi / 6))  ; Lucas - forms the circle of blue units
+      set x (12 * cos(theta) - 50)        ; not sure how to work it without (current) max population
+      set y (12 * sin(theta) + 25)     
+      setxy x y
     ]
     
     set shape "default"
