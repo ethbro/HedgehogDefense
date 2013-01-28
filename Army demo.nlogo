@@ -12,7 +12,7 @@ globals[
    randomrunnum    ;crappy hack to get unique filenames for each run in behaviourspace experiments
    filename        ;place for aforementioned filename
 ];another
-;philip161 test
+;philip161 test; Pho122 Test
 breed [soldiers soldier]
 soldiers-own[
   allegience;are they fighting for side 1 or 2?
