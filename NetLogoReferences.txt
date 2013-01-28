@@ -1,0 +1,8 @@
+Main docs page... (w/ three questionably-helpful tutorials)
+http://ccl.northwestern.edu/netlogo/docs/
+
+Programming guide... (more explanation, best reference when first coding)
+http://ccl.northwestern.edu/netlogo/docs/programming.html
+
+Full reference of all commands...
+http://ccl.northwestern.edu/netlogo/docs/dictionary.html
