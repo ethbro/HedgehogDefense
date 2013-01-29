@@ -11,7 +11,7 @@ globals[
    search-angle    ;where the turtle searches for other agents
    randomrunnum    ;crappy hack to get unique filenames for each run in behaviourspace experiments
    filename        ;place for aforementioned filename
-];another
+];another  manny comment
 ;philip161 test; Pho122 Test
 breed [soldiers soldier]
 soldiers-own[
