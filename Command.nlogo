@@ -47,6 +47,8 @@ soldiers-own[
   speed           ;amount they move when it's time
   health          ;amount of damage they can take
   state           ;1 attack, 2 defend, 3 something else yet to come?
+  moveTargetX     ;x coordinate trying to move to
+  moveTargetY     ;y coordinate trying to move to
 ]
 
 ;=====================
@@ -58,6 +60,13 @@ to setup
   setup-globals
   setup-patches
   setup-soldiers
+  setup-units
+  setup-commanders
+  
+  ;FIXME testing
+  form-hedgehog 1 -91 67 10
+  form-hedgehog 2 -53 -23 15
+  form-hedgehog 3 89 -39 25
 end
 
 to setup-globals
@@ -65,9 +74,9 @@ to setup-globals
   set RandomRunNum random 999999
 
   ; Model
-  set UnitMax 4
+  set UnitMax 20
   
-  set InfPopulation 10
+  set InfPopulation 50
   set InfSize 5
   set InfRange 5
   set InfView 24
@@ -80,7 +89,8 @@ to setup-globals
 end
 
 to setup-patches
-  ask patches  [set pcolor green]    ;sets background green  
+  ;ask patches  [set pcolor green]         ;NOTE ungodly inefficient
+  import-drawing "France.png"
 end
 
 to setup-soldiers
@@ -92,11 +102,16 @@ to setup-soldiers
     set attack (random 2) + InfAttack
     set defense (random 2) + InfDefense
     set health (random 5) + InfHealth
+    set moveTargetX "NaN"
+    set moveTargetY "NaN"
   ]
-  
+end
+
+to setup-units  
   let thisUnit 1                           ;NOTE units are 1-based
   let numInUnit 0
   ask soldiers [
+    set shape "default"                    ;FIXME not sure why this isn't working
     ifelse numInUnit < UnitMax [
       set unit thisUnit
       set numInUnit (numInUnit + 1)
@@ -109,7 +124,7 @@ to setup-soldiers
 
   let soldierNum 0
   ask soldiers with [unit = 1] [
-    set color black
+    set color yellow
     set heading 90
     setxy 10 (10 + InfSize * soldierNum)
     set soldierNum (soldierNum + 1)
@@ -117,7 +132,7 @@ to setup-soldiers
   
   set soldierNum 0
   ask soldiers with [unit = 2] [
-    set color brown
+    set color white
     set heading 180
     setxy 30 (10 + InfSize * soldierNum)
     set soldierNum (soldierNum + 1)
@@ -132,15 +147,57 @@ to setup-soldiers
   ]
 end
 
-;FIXME change the shape back to an arrow
+to setup-commanders
+  create-commanders (1)[
+    set color blue
+    set allegiance 1
+    set effectiveness 10
+    set morale 100
+  ]
+end
+
+;================
+;== Main Logic ==
+;================
+to go
+  move-soldiers
+  set TimeUnits (TimeUnits + 1)
+end
+
+to move-soldiers
+  ask soldiers with [is-number? moveTargetX] [                  ;NOTE just check X for performance reasons
+    facexy moveTargetX moveTargetY
+    let distanceToGo (distancexy moveTargetX moveTargetY)
+    ifelse ( distanceToGo > speed) [
+      forward speed
+    ] [
+      forward distanceToGo
+    ]
+  ]
+end
+
+;=====================
+;== Formation Logic ==
+;=====================
+to form-hedgehog [orderUnit orderCX orderCY orderRadius]
+  let soldiersInUnit (count soldiers with [unit = orderUnit])
+  let theta (360 / soldiersInUnit)                              ;how many degrees should separate soldiers
+  
+  let soldierNum 0
+  ask soldiers with [unit = orderUnit] [                        ;naive deployment, no accounting for distance
+    set moveTargetX (cos(theta * soldierNum) * orderRadius + orderCX)
+    set moveTargetY (sin(theta * soldierNum) * orderRadius + orderCY)
+    set soldierNum (soldierNum + 1)
+  ]
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
-437
+197
 10
-1041
-635
-148
-148
+809
+643
+150
+150
 2.0
 1
 4
@@ -148,13 +205,13 @@ GRAPHICS-WINDOW
 1
 1
 0
+0
+0
 1
-1
-1
--148
-148
--148
-148
+-150
+150
+-150
+150
 0
 0
 1
@@ -178,12 +235,23 @@ NIL
 NIL
 1
 
-BUTTON
-137
-27
-200
+MONITOR
+118
+15
+196
 60
 NIL
+time-units
+0
+1
+11
+
+BUTTON
+59
+102
+122
+135
+go
 go
 T
 1
@@ -193,33 +261,7 @@ NIL
 NIL
 NIL
 NIL
-1
-
-MONITOR
-350
-11
-428
-56
-NIL
-time-units
 0
-1
-11
-
-SLIDER
-17
-114
-214
-147
-population
-population
-0
-30
-10
-1
-1
-NIL
-HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
