@@ -46,9 +46,10 @@ soldiers-own[
   defense         ;resistance to damage
   speed           ;amount they move when it's time
   health          ;amount of damage they can take
-  state           ;1 attack, 2 defend, 3 something else yet to come?
+  state           ;0 at-rest, 1 moving
   moveTargetX     ;x coordinate trying to move to
   moveTargetY     ;y coordinate trying to move to
+  faceTarget      ;direction to face when not moving, in degrees
 ]
 
 ;=====================
@@ -97,13 +98,15 @@ to setup-soldiers
   create-soldiers (InfPopulation)[
     set color blue
     set allegiance 1
-    set state 1
+    set state 0
     set speed (random 2) + InfSpeed        ;FIXME random adjustments should be based on global vars
     set attack (random 2) + InfAttack
     set defense (random 2) + InfDefense
     set health (random 5) + InfHealth
     set moveTargetX "NaN"
     set moveTargetY "NaN"
+    set faceTarget "NaN"
+    set size 4
   ]
 end
 
@@ -111,7 +114,6 @@ to setup-units
   let thisUnit 1                           ;NOTE units are 1-based
   let numInUnit 0
   ask soldiers [
-    set shape "default"                    ;FIXME not sure why this isn't working
     ifelse numInUnit < UnitMax [
       set unit thisUnit
       set numInUnit (numInUnit + 1)
@@ -161,6 +163,7 @@ end
 ;================
 to go
   move-soldiers
+  orient-soldiers
   set TimeUnits (TimeUnits + 1)
 end
 
@@ -170,9 +173,20 @@ to move-soldiers
     let distanceToGo (distancexy moveTargetX moveTargetY)
     ifelse ( distanceToGo > speed) [
       forward speed
+      set state 1                                               ;FIXME needs to be set somewhere better
     ] [
       forward distanceToGo
+      set moveTargetX "NaN"
+      set moveTargetY "NaN"
+      set state 0
     ]
+  ]
+end
+
+to orient-soldiers
+  ask soldiers with [is-number? faceTarget and state = 0] [
+    facexy (cos(faceTarget) + xcor) (sin(faceTarget) + ycor)
+    set faceTarget "NaN"
   ]
 end
 
@@ -185,8 +199,10 @@ to form-hedgehog [orderUnit orderCX orderCY orderRadius]
   
   let soldierNum 0
   ask soldiers with [unit = orderUnit] [                        ;naive deployment, no accounting for distance
-    set moveTargetX (cos(theta * soldierNum) * orderRadius + orderCX)
-    set moveTargetY (sin(theta * soldierNum) * orderRadius + orderCY)
+    let thisTheta (theta * soldierNum)
+    set moveTargetX (cos(thisTheta) * orderRadius + orderCX)
+    set moveTargetY (sin(thisTheta) * orderRadius + orderCY)
+    set faceTarget thisTheta
     set soldierNum (soldierNum + 1)
   ]
 end
@@ -236,10 +252,10 @@ NIL
 1
 
 MONITOR
-118
-15
-196
-60
+110
+30
+188
+75
 NIL
 time-units
 0
@@ -247,10 +263,10 @@ time-units
 11
 
 BUTTON
-59
-102
-122
-135
+35
+75
+98
+108
 go
 go
 T
@@ -262,6 +278,23 @@ NIL
 NIL
 NIL
 0
+
+BUTTON
+35
+120
+117
+153
+go (step)
+go
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -570,5 +603,5 @@ Line -7500403 true 150 150 90 180
 Line -7500403 true 150 150 210 180
 
 @#$#@#$#@
-0
+1
 @#$#@#$#@
