@@ -14,8 +14,7 @@ globals[
   ;-- Units --
   UnitMax         ;max soldiers added to a unit before iterating
   
-  ;-- Infantry --
-  InfPopulation   ;how many soldiers to start with
+  ;-- General Infantry --
   InfSize         ;how much space a soldier takes
   InfRange        ;max distance infantry effectively fights at
   InfView         ;distance infantry can see
@@ -25,6 +24,14 @@ globals[
   InfHealth       ;how hard infantry is to kill
   InfVisionAngle  ;what angle, centered on facing direction, infantry can see
   InfSearchAngle  ;what angle, centered on facing direction, infantry will attack
+  
+  ;-- Blue Infantry --
+  BlueInfPopulation  ;how many blue soldiers to start with
+  BlueUnitList       ;a list of how many soldiers in each unit
+  
+  ;-- Red Infantry --
+  RedInfPopulation   ;how many red soldiers to start with
+  RedUnitList        ;a list of how many soldiers in each unit
 ]
 
 ;================================
@@ -34,7 +41,7 @@ breed [commanders commander]
 breed [soldiers soldier]
 
 commanders-own[
-  allegiance      ;which side they fight for
+  allegiance      ;which side they fight for, 1=France, 2=German
   effectiveness   ;how good at their job they are
   morale          ;how optimistic they are
 ]
@@ -42,6 +49,7 @@ commanders-own[
 soldiers-own[
   allegiance      ;which side they fight for
   unit            ;what unit they're associated with
+  morale          ;how likely they are to break
   attack          ;damage they do
   defense         ;resistance to damage
   speed           ;amount they move when it's time
@@ -57,17 +65,20 @@ soldiers-own[
 ;=====================
 to setup
   __clear-all-and-reset-ticks  ;clear the screen
+  print "--------------------------"
   
   setup-globals
   setup-patches
-  setup-soldiers
+  setup-soldiers               ;creates all soldiers and assigns general stats
   setup-units
+  setup-deploy
   setup-commanders
   
-  ;FIXME testing
-  form-hedgehog 1 -91 67 10
-  form-hedgehog 2 -53 -23 15
-  form-hedgehog 3 89 -39 25
+  all-skip-to-target
+  
+  form-hedgehog 1 1 -91 67 10
+  form-hedgehog 1 2 -53 -23 15
+  form-hedgehog 1 3 89 -39 25
 end
 
 to setup-globals
@@ -77,7 +88,6 @@ to setup-globals
   ; Model
   set UnitMax 20
   
-  set InfPopulation 50
   set InfSize 5
   set InfRange 5
   set InfView 24
@@ -87,6 +97,15 @@ to setup-globals
   set InfHealth 50
   set InfVisionAngle 120
   set InfSearchAngle  90
+
+  ; Blue Army
+  set BlueInfPopulation 100
+  set BlueUnitList [20 30 25 15 10]
+  ;FIXME model reserve if Population > sum of units
+  
+  ; Red Army
+  set RedInfPopulation 100
+  set RedUnitList [20 20 20 20 20]
 end
 
 to setup-patches
@@ -95,9 +114,11 @@ to setup-patches
 end
 
 to setup-soldiers
-  create-soldiers (InfPopulation)[
+  create-soldiers (BlueInfPopulation)[
     set color blue
     set allegiance 1
+    set unit 0                             ;NOTE any soldiers in surplus of unit list will have unit=0
+    set morale 100
     set state 0
     set speed (random 2) + InfSpeed        ;FIXME random adjustments should be based on global vars
     set attack (random 2) + InfAttack
@@ -108,52 +129,112 @@ to setup-soldiers
     set faceTarget "NaN"
     set size 4
   ]
+  create-soldiers (RedInfPopulation)[
+    set color red
+    set allegiance 2
+    set unit 0
+    set morale 100
+    set state 0
+    set speed (random 2) + InfSpeed
+    set attack (random 2) + InfAttack
+    set defense (random 2) + InfDefense
+    set health (random 5) + InfHealth
+    set moveTargetX "NaN"
+    set moveTargetY "NaN"
+    set faceTarget "NaN"
+    set size 4
+  ]
 end
 
-to setup-units  
-  let thisUnit 1                           ;NOTE units are 1-based
-  let numInUnit 0
-  ask soldiers [
-    ifelse numInUnit < UnitMax [
-      set unit thisUnit
+to setup-units
+  ;-- Set up French units --
+  let thisUnit 1                        ;starting unit number
+  let blueSoldierList (sort soldiers with [allegiance = 1])
+  let i 0                               ;index variable for blueSoldierList
+  
+  foreach BlueUnitList [                ;for each of unit sizes in the list...
+    let numInUnit 0
+    let maxInUnit ?
+    while [numInUnit < maxInUnit] [       ;keep adding blue soldiers until it's full
+      ask (item i blueSoldierList) [
+        set unit thisUnit
+      ]
+      set i (i + 1)                     ;FIXME check to make sure i doesn't exceed # of soldiers
       set numInUnit (numInUnit + 1)
-    ] [
-      set thisUnit (thisUnit + 1)
-      set unit thisUnit
-      set numInUnit 1
     ]
+    type "Blue " type thisUnit print " Turtle, reporting for duty!"
+    set thisUnit (thisUnit + 1)
   ]
+  
+  ;-- Set up German units --
+  set thisUnit 1
+  let redSoldierList (sort soldiers with [allegiance = 2])
+  set i 0
+  
+  foreach RedUnitList [
+    let numInUnit 0
+    let maxInUnit ?
+    while [numInUnit < maxInUnit] [
+      ask (item i RedSoldierList) [
+        set unit thisUnit
+      ]
+      set i (i + 1)
+      set numInUnit (numInUnit + 1)
+    ]
+    type "Red " type thisUnit print " Turtle, reporting for duty!"
+    set thisUnit (thisUnit + 1)
+  ]
+end
 
-  let soldierNum 0
-  ask soldiers with [unit = 1] [
-    set color yellow
-    set heading 90
-    setxy 10 (10 + InfSize * soldierNum)
-    set soldierNum (soldierNum + 1)
+to setup-deploy
+  ;FIXME this would break on non-square worlds, specifically with width < height
+  ;FIXME the "world-width / 2 - 2" is a hack, as some units were ending up outside the boundary
+  
+  ;-- Deploy French Units --
+  let separation 5          ;Linear separation between end-of-unit and start-of-next-unit
+  let unitCount (length BlueUnitList)
+  
+  ;Below is product of some simple math to figure out how much space each unit has to deploy in
+  let deployLength sqrt((world-width / 2 - 2) ^ 2 + (world-height / 2 - 2) ^ 2)
+  let unitLength ((deployLength - separation * (unitCount - 1)) / unitCount)
+  
+  ;Now, we want to start on a -1 slope line with y-intercept at top or bottom
+  ;  this means that for bottom left / blue, y = -(world-height / 2) - x
+  ;  for top right / red, y = (world-height / 2) - x
+
+  let i 0
+  let startX (-(world-width / 2 - 2))
+  let trigTemp cos(-45)
+  foreach BlueUnitList [
+    let orderX (startX + (i * trigTemp * (unitLength + separation)))
+    let orderY (-(world-height / 2) - orderX)
+    form-line 1 (i + 1) orderX orderY unitLength -45 45
+    ;NOTE increment i by 1 because units start at 1
+    set i (i + 1)
   ]
   
-  set soldierNum 0
-  ask soldiers with [unit = 2] [
-    set color white
-    set heading 180
-    setxy 30 (10 + InfSize * soldierNum)
-    set soldierNum (soldierNum + 1)
-  ]
+  ;-- Deploy German Units --
+  ;set separation 5
+  set unitCount (length RedUnitList)
+  set unitLength ((deployLength - separation * (unitCount - 1)) / unitCount)
   
-  set soldierNum 0
-  ask soldiers with [unit = 3] [
-    set color red
-    set heading 270
-    setxy 50 (10 + InfSize * soldierNum)
-    set soldierNum (soldierNum + 1)
+  set i 0
+  set startX 2
+  ;set trigTemp cos(-45)
+  foreach RedUnitList [
+    let orderX (startX + (i * trigTemp * (unitLength + separation)))
+    let orderY ((world-height / 2) - orderX)
+    form-line 2 (i + 1) orderX orderY unitLength -45 225
+    set i (i + 1)
   ]
 end
 
 to setup-commanders
+  ;-- Set up Commanders --
   create-commanders (1)[
     set color blue
     set allegiance 1
-    set effectiveness 10
+    set effectiveness 50
     set morale 100
   ]
 end
@@ -161,7 +242,7 @@ end
 ;================
 ;== Main Logic ==
 ;================
-to go
+to go 
   move-soldiers
   orient-soldiers
   set TimeUnits (TimeUnits + 1)
@@ -193,17 +274,54 @@ end
 ;=====================
 ;== Formation Logic ==
 ;=====================
-to form-hedgehog [orderUnit orderCX orderCY orderRadius]
-  let soldiersInUnit (count soldiers with [unit = orderUnit])
+to form-hedgehog [orderSide orderUnit orderCX orderCY orderRadius]
+  let soldiersInUnit (count soldiers with [allegiance = orderSide and unit = orderUnit and health > 0])
   let theta (360 / soldiersInUnit)                              ;how many degrees should separate soldiers
   
   let soldierNum 0
-  ask soldiers with [unit = orderUnit] [                        ;naive deployment, no accounting for distance
+  ask soldiers with [allegiance = orderSide and unit = orderUnit and health > 0] [
     let thisTheta (theta * soldierNum)
     set moveTargetX (cos(thisTheta) * orderRadius + orderCX)
     set moveTargetY (sin(thisTheta) * orderRadius + orderCY)
     set faceTarget thisTheta
     set soldierNum (soldierNum + 1)
+  ]
+end
+
+;Form a line using all available soldiers, evenly spaced
+;Arguments
+;  orderSide     -  which army (allegiance)
+;  orderUnit     -  what unit to order
+;  orderX        -  coordinates to start the line at
+;  orderY        -  "
+;  orderLength   -  how long the deployed line should be
+;  orderHeading  -  what heading the line should be arranged along
+;  orderFacing   -  what direction the soldiers should face after arriving
+
+to form-line [orderSide orderUnit orderX orderY orderLength orderHeading orderFacing]
+  let soldiersInUnit (count soldiers with [allegiance = orderSide and unit = orderUnit and health > 0])
+  let hypot (orderLength / soldiersInUnit)
+  let xDiff (hypot * cos(orderHeading))
+  let yDiff (hypot * sin(orderHeading))
+  
+  let soldierNum 0
+  ask soldiers with [allegiance = orderSide and unit = orderUnit and health > 0] [
+    set moveTargetX (orderX + (xDiff * soldierNum))
+    set moveTargetY (orderY + (yDiff * soldierNum))
+    set faceTarget orderFacing
+    set soldierNum (soldierNum + 1)
+  ]
+end
+
+;========================
+;== Utility Procedures ==
+;========================
+to all-skip-to-target
+  ask soldiers with [health > 0] [
+    setxy moveTargetX moveTargetY
+    facexy (cos(faceTarget) + xcor) (sin(faceTarget) + ycor)
+    set faceTarget "NaN"
+    set state 0
   ]
 end
 @#$#@#$#@
