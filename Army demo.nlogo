@@ -115,13 +115,9 @@ to interact
   set opponent nearest other-turtles;opponent always exists because of conditional in integrate function
   set heading towards opponent
   ifelse distance opponent <= PerSpace[
-      ifelse strength > [strength] of opponent[
+    set health (health - (([strength] of opponent)/(defense + 1)))
+      if health <= 0[
         die
-      ]
-      [
-        ask opponent[
-          die
-        ]
       ]
   ]
   [
@@ -223,7 +219,7 @@ population
 population
 0
 30
-10
+30
 1
 1
 NIL
