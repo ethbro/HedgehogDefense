@@ -5,6 +5,7 @@ globals[
   ;== Simulation Globals ==
   ;-- Counters --
   TimeUnits       ;how many ticks have passed
+  StopOnce
   
   ;-- Cruft --
   RandomRunNum    ;random number for unique filenames
@@ -15,7 +16,7 @@ globals[
   UnitMax         ;max soldiers added to a unit before iterating
   
   ;-- General Infantry --
-  InfSize         ;how much space a soldier takes
+  InfMaxAttackers ;how many infantry can attack a single unit
   InfRange        ;max distance infantry effectively fights at
   InfView         ;distance infantry can see
   InfSpeed        ;distance infantry can move
@@ -52,12 +53,17 @@ soldiers-own[
   morale          ;how likely they are to break
   attack          ;damage they do
   defense         ;resistance to damage
-  speed           ;amount they move when it's time
+  maxSpeed        ;fastest possible movement
+  actualSpeed     ;modified speed, for formation or other purposes
   health          ;amount of damage they can take
-  state           ;0 at-rest, 1 moving
+  state           ;0 at rest, 1 moving, 2 defending (will not pursue), 3 attacking (will move towards enemy)
+                  ;4 in combat (will not move)
   moveTargetX     ;x coordinate trying to move to
   moveTargetY     ;y coordinate trying to move to
-  faceTarget      ;direction to face when not moving, in degrees
+  faceTarget      ;direction to face when arrive, in degrees
+  stateTarget     ;state to transition to when arrive
+  enemyTarget     ;enemy currently targeted
+  attackedBy      ;number currently attacking this soldier
 ]
 
 ;=====================
@@ -65,16 +71,22 @@ soldiers-own[
 ;=====================
 to setup
   __clear-all-and-reset-ticks  ;clear the screen
-  print "--------------------------"
+  print "=============================================================================================="
+  print "====================                     NEW RUN                       ======================="
+  print "=============================================================================================="
   
   setup-globals
   setup-patches
-  setup-soldiers               ;creates all soldiers and assigns general stats
-  setup-units
+  setup-blue-soldiers
+  setup-blue-units
+
+  setup-red-soldiers
+  setup-red-units
+
   setup-deploy
   setup-commanders
   
-  all-skip-to-target
+;  skip-to-target soldiers
   
   form-hedgehog 1 1 -91 67 10
   form-hedgehog 1 2 -53 -23 15
@@ -84,16 +96,17 @@ end
 to setup-globals
   ; Simulation
   set RandomRunNum random 999999
+  set StopOnce 1
 
   ; Model
   set UnitMax 20
   
-  set InfSize 5
+  set InfMaxAttackers 5
   set InfRange 5
-  set InfView 24
+  set InfView 40
   set InfSpeed 5
-  set InfAttack 5
-  set InfDefense 10
+  set InfAttack 10
+  set InfDefense 5
   set InfHealth 50
   set InfVisionAngle 120
   set InfSearchAngle  90
@@ -113,43 +126,56 @@ to setup-patches
   import-drawing "France.png"
 end
 
-to setup-soldiers
+to setup-blue-soldiers
   create-soldiers (BlueInfPopulation)[
     set color blue
     set allegiance 1
     set unit 0                             ;NOTE any soldiers in surplus of unit list will have unit=0
     set morale 100
     set state 0
-    set speed (random 2) + InfSpeed        ;FIXME random adjustments should be based on global vars
+    set maxSpeed (random 2) + InfSpeed        ;FIXME random adjustments should be based on global vars
+    set actualSpeed maxSpeed
     set attack (random 2) + InfAttack
     set defense (random 2) + InfDefense
     set health (random 5) + InfHealth
     set moveTargetX "NaN"
     set moveTargetY "NaN"
     set faceTarget "NaN"
-    set size 4
+    set stateTarget "NaN"
+    set enemyTarget "NaN"
+    set attackedBy 0
+    set size 5
+    setxy -120 -120
   ]
+end
+  
+to setup-red-soldiers
   create-soldiers (RedInfPopulation)[
     set color red
     set allegiance 2
     set unit 0
     set morale 100
     set state 0
-    set speed (random 2) + InfSpeed
+    set maxSpeed (random 2) + InfSpeed
+    set actualSpeed maxSpeed
     set attack (random 2) + InfAttack
     set defense (random 2) + InfDefense
     set health (random 5) + InfHealth
     set moveTargetX "NaN"
     set moveTargetY "NaN"
     set faceTarget "NaN"
-    set size 4
+    set stateTarget "NaN"
+    set enemyTarget "NaN"
+    set attackedBy 0
+    set size 5
+    setxy 120 120
   ]
 end
 
-to setup-units
+to setup-blue-units
   ;-- Set up French units --
   let thisUnit 1                        ;starting unit number
-  let blueSoldierList (sort soldiers with [allegiance = 1])
+  let blueSoldierList (sort soldiers with [allegiance = 1 and health > 0])
   let i 0                               ;index variable for blueSoldierList
   
   foreach BlueUnitList [                ;for each of unit sizes in the list...
@@ -162,14 +188,16 @@ to setup-units
       set i (i + 1)                     ;FIXME check to make sure i doesn't exceed # of soldiers
       set numInUnit (numInUnit + 1)
     ]
-    type "Blue " type thisUnit print " Turtle, reporting for duty!"
+    type "Blue " type thisUnit print " Turtle Infantry, reporting for duty!"
     set thisUnit (thisUnit + 1)
   ]
-  
+end
+
+to setup-red-units
   ;-- Set up German units --
-  set thisUnit 1
-  let redSoldierList (sort soldiers with [allegiance = 2])
-  set i 0
+  let thisUnit 1
+  let redSoldierList (sort soldiers with [allegiance = 2 and health > 0])
+  let i 0
   
   foreach RedUnitList [
     let numInUnit 0
@@ -181,7 +209,7 @@ to setup-units
       set i (i + 1)
       set numInUnit (numInUnit + 1)
     ]
-    type "Red " type thisUnit print " Turtle, reporting for duty!"
+    type "Red " type thisUnit print " Turtle Infantry, reporting for duty!"
     set thisUnit (thisUnit + 1)
   ]
 end
@@ -229,45 +257,142 @@ to setup-deploy
   ]
 end
 
-to setup-commanders
-  ;-- Set up Commanders --
-  create-commanders (1)[
-    set color blue
-    set allegiance 1
-    set effectiveness 50
-    set morale 100
+to redeploy-red
+  let separation 5
+  let unitCount (length RedUnitList)
+  
+  let deployLength sqrt((world-width / 2 - 2) ^ 2 + (world-height / 2 - 2) ^ 2)
+  let unitLength ((deployLength - separation * (unitCount - 1)) / unitCount)
+
+  let i 0
+  let startX 2
+  let trigTemp cos(-45)
+
+  foreach RedUnitList [
+    let orderX (startX + (i * trigTemp * (unitLength + separation)))
+    let orderY ((world-height / 2) - orderX)
+    form-line 2 (i + 1) orderX orderY unitLength -45 225
+    set i (i + 1)
   ]
 end
 
-;================
-;== Main Logic ==
-;================
-to go 
-  move-soldiers
-  orient-soldiers
-  set TimeUnits (TimeUnits + 1)
+to setup-commanders
+  ;-- Set up Commanders --
+;  create-commanders (1)[
+;    set color blue
+;    set allegiance 1
+;    set effectiveness 50
+;    set morale 100
+;  ]
 end
 
-to move-soldiers
-  ask soldiers with [is-number? moveTargetX] [                  ;NOTE just check X for performance reasons
+;==============================================================
+;==                        Main Logic                        ==
+;==============================================================
+to go 
+  move-ordered-soldiers
+  orient-ordered-soldiers
+  
+  ;Redeploy non-hedgehog blue
+  if (TimeUnits = 30) [
+    if (stopOnce = 1) [
+      print "----------- The French Army begins to reestablish a defensive line -----------"
+      set stopOnce 2
+      stop
+    ]
+    let deployLength sqrt((world-width / 2 - 2) ^ 2 + (world-height / 2 - 2) ^ 2)
+    let unitLength ((deployLength - 5) / 2)
+    form-line 1 4 -148 0 80 -45 45
+    form-line 1 5 -74 -74 80 -45 45
+  ]
+  
+  ;Start Red marching
+  if (TimeUnits = 80) [
+    if (stopOnce = 2) [
+      print "----------- The German Army launches an attack! -----------"
+      set stopOnce 3
+      stop
+    ]
+    ask soldiers with [allegiance = 2 and health > 0] [
+      set state 3
+      set stateTarget 3
+    ]
+  ]
+  
+  ;Start Blue counterattack
+  if (TimeUnits = 100) [
+    if (stopOnce = 3) [
+      print "----------- The French Army launches a counterattack! -----------"
+      set stopOnce 4
+      stop
+    ]
+    ask soldiers with [allegiance = 1 and health > 0 and (unit = 4 or unit = 5)] [
+      set state 3
+      set stateTarget 3
+    ]
+  ]
+  
+  ask soldiers with [state = 3 and health > 0] [
+    forward maxSpeed
+  ]
+  
+  ask soldiers with [health > 0] [interact]
+  
+  if (TimeUnits = 500) [
+    file-close
+    stop
+  ]
+  
+  ifelse (any? soldiers with [allegiance = 1 and health > 0] and any? soldiers with [allegiance = 2 and health > 0]) [
+    set TimeUnits (TimeUnits + 1)
+  ] [
+    type "----- Simulation ends with " type (count soldiers with [allegiance = 2 and health > 0]) print " remaining German soldiers -----"
+    file-close
+    stop
+  ]
+end
+
+to move-ordered-soldiers
+  ask soldiers with [is-number? moveTargetX and state = 1] [  ;NOTE just check X for performance reasons
     facexy moveTargetX moveTargetY
     let distanceToGo (distancexy moveTargetX moveTargetY)
-    ifelse ( distanceToGo > speed) [
-      forward speed
-      set state 1                                               ;FIXME needs to be set somewhere better
+    ifelse (distanceToGo > actualSpeed) [
+      forward actualSpeed
     ] [
       forward distanceToGo
       set moveTargetX "NaN"
       set moveTargetY "NaN"
-      set state 0
+      set actualSpeed maxSpeed
+      set state stateTarget
     ]
   ]
 end
 
-to orient-soldiers
+to orient-ordered-soldiers
   ask soldiers with [is-number? faceTarget and state = 0] [
     facexy (cos(faceTarget) + xcor) (sin(faceTarget) + ycor)
     set faceTarget "NaN"
+  ]
+end
+
+to interact
+  let opponent nearest available-enemy
+  if (opponent != nobody) [
+    let oppDist distance opponent
+    if (oppDist <= InfView) [
+;      ask opponent [set attackedBy (attackedBy + 1)]
+      set heading towards opponent
+      ifelse (oppDist <= InfRange) [
+        set state 4
+        ask opponent [set health (health - ([attack] of myself) + defense)]
+        let oppHealth [health] of opponent
+        if (oppHealth <= 0) [
+          ask opponent [set color grey]
+        ]
+      ] [
+        set state stateTarget
+      ]
+    ]
   ]
 end
 
@@ -284,6 +409,8 @@ to form-hedgehog [orderSide orderUnit orderCX orderCY orderRadius]
     set moveTargetX (cos(thisTheta) * orderRadius + orderCX)
     set moveTargetY (sin(thisTheta) * orderRadius + orderCY)
     set faceTarget thisTheta
+    set state 1
+    set stateTarget 2
     set soldierNum (soldierNum + 1)
   ]
 end
@@ -310,18 +437,49 @@ to form-line [orderSide orderUnit orderX orderY orderLength orderHeading orderFa
     set moveTargetY (orderY + (yDiff * soldierNum))
     set faceTarget orderFacing
     set soldierNum (soldierNum + 1)
+    set state 1
+    set stateTarget 0
   ]
 end
 
 ;========================
 ;== Utility Procedures ==
 ;========================
-to all-skip-to-target
-  ask soldiers with [health > 0] [
+to skip-to-target [agentset]
+  ask agentset with [health > 0] [
     setxy moveTargetX moveTargetY
     facexy (cos(faceTarget) + xcor) (sin(faceTarget) + ycor)
     set faceTarget "NaN"
-    set state 0
+    set state stateTarget
+  ]
+end
+
+to-report nearest [agentset]
+  report min-one-of agentset [distance myself]
+end
+
+to-report available-enemy
+  let mySide [allegiance] of self
+  report soldiers with [allegiance != mySide and health > 0]
+  ;and attackedBy < InfMaxAttackers
+end
+
+;==========================
+;== Interface Procedures ==
+;==========================
+to reinforce-red
+  print "----------- German reinforcements arrive on the field! -----------"
+  ask soldiers with [allegiance = 2] [    ;hack, as bad things happen if you create duplicates of live units
+    set health 0
+    set color grey
+  ]
+  setup-red-soldiers
+  setup-red-units
+  redeploy-red
+  skip-to-target soldiers with [allegiance = 2 and health > 0]
+  ask soldiers with [allegiance = 2 and health > 0] [
+    set state 3
+    set stateTarget 3
   ]
 end
 @#$#@#$#@
@@ -404,6 +562,23 @@ BUTTON
 153
 go (step)
 go
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+35
+165
+162
+198
+reinforce attacker
+reinforce-red
 NIL
 1
 T
