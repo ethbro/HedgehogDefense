@@ -39,8 +39,13 @@ globals[
 ;== Breeds and Breed variables ==
 ;================================
 breed [commanders commander]
+breed [weapons weapon]
 breed [soldiers soldier]
 
+weapons-own[
+  range           ;the max distance the unit can shoot
+  accuracy        ;the general accuracy of this soldier, unaffected by gun type, fatigue, enemy defenses, etc.
+]
 commanders-own[
   allegiance      ;which side they fight for, 1=France, 2=German
   effectiveness   ;how good at their job they are
@@ -48,9 +53,12 @@ commanders-own[
 ]
 
 soldiers-own[
+  weapon          ;the weapon each soldier owns
   allegiance      ;which side they fight for
   unit            ;what unit they're associated with
   morale          ;how likely they are to break
+  fatigue         ;how worn out they are. High levels effect accuracy and possibly movement
+  accuracy        ;the general accuracy of this soldier, unaffected by gun type, fatigue, enemy defenses, etc.
   attack          ;damage they do
   defense         ;resistance to damage
   maxSpeed        ;fastest possible movement
@@ -132,6 +140,8 @@ to setup-blue-soldiers
     set allegiance 1
     set unit 0                             ;NOTE any soldiers in surplus of unit list will have unit=0
     set morale 100
+    set accuracy (random 60) + 40
+    set fatigue 0
     set state 0
     set maxSpeed (random 2) + InfSpeed        ;FIXME random adjustments should be based on global vars
     set actualSpeed maxSpeed
