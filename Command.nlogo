@@ -120,13 +120,17 @@ to setup-globals
   set InfSearchAngle  90
 
   ; Blue Army
-  set BlueInfPopulation 100
-  set BlueUnitList [20 30 25 15 10]
+  ;set BlueInfPopulation 100
+  ;set BlueUnitList [20 30 25 15 10]
   ;FIXME model reserve if Population > sum of units
+  set BlueInfPopulation 10
+  set BlueUnitList [1 2 2 2 3]
   
   ; Red Army
-  set RedInfPopulation 100
-  set RedUnitList [20 20 20 20 20]
+  ;set RedInfPopulation 100
+  ;set RedUnitList [20 20 20 20 20]
+  set RedInfPopulation 10
+  set RedUnitList [3 3 3 1]
 end
 
 to setup-patches
@@ -137,6 +141,7 @@ end
 to setup-blue-soldiers
   create-soldiers (BlueInfPopulation)[
     set color blue
+    set shape "infantry corps"
     set allegiance 1
     set unit 0                             ;NOTE any soldiers in surplus of unit list will have unit=0
     set morale 100
@@ -154,7 +159,7 @@ to setup-blue-soldiers
     set stateTarget "NaN"
     set enemyTarget "NaN"
     set attackedBy 0
-    set size 5
+    set size 15
     setxy -120 -120
   ]
 end
@@ -162,22 +167,23 @@ end
 to setup-red-soldiers
   create-soldiers (RedInfPopulation)[
     set color red
+    set shape "armored division"
     set allegiance 2
     set unit 0
     set morale 100
     set state 0
-    set maxSpeed (random 2) + InfSpeed
+    set maxSpeed (random 2) + InfSpeed + 5
     set actualSpeed maxSpeed
-    set attack (random 2) + InfAttack
-    set defense (random 2) + InfDefense
-    set health (random 5) + InfHealth
+    set attack (random 2) + InfAttack + 5
+    set defense (random 2) + InfDefense + 5
+    set health (random 5) + InfHealth + 25
     set moveTargetX "NaN"
     set moveTargetY "NaN"
     set faceTarget "NaN"
     set stateTarget "NaN"
     set enemyTarget "NaN"
     set attackedBy 0
-    set size 5
+    set size 15
     setxy 120 120
   ]
 end
@@ -654,6 +660,36 @@ Polygon -7500403 true true 65 224 92 171 134 160 135 164 95 175
 Polygon -7500403 true true 235 222 210 170 163 162 161 166 208 174
 Polygon -7500403 true true 249 107 211 147 168 147 168 150 213 150
 
+armored division
+false
+0
+Rectangle -16777216 true false 0 60 300 240
+Rectangle -7500403 true true 15 75 285 225
+Polygon -16777216 true false 98 45 113 45 143 15 128 15
+Polygon -16777216 true false 143 45 128 45 98 15 113 15
+Polygon -16777216 true false 158 45 173 45 203 15 188 15
+Polygon -16777216 true false 203 45 188 45 158 15 173 15
+Circle -16777216 true false 30 105 90
+Circle -16777216 true false 180 105 90
+Polygon -16777216 true false 75 105 225 105 225 195 75 195 75 105
+Circle -7500403 true true 45 120 60
+Circle -7500403 true true 195 120 60
+Polygon -7500403 true true 75 120 225 120 225 180 75 180
+
+army
+false
+0
+Rectangle -16777216 true false 0 60 300 240
+Rectangle -7500403 true true 15 75 285 225
+Polygon -16777216 true false 45 45 60 45 90 15 75 15
+Polygon -16777216 true false 90 45 75 45 45 15 60 15
+Polygon -16777216 true false 157 45 172 45 202 15 187 15
+Polygon -16777216 true false 203 45 188 45 158 15 173 15
+Polygon -16777216 true false 144 45 129 45 99 15 114 15
+Polygon -16777216 true false 97 45 112 45 142 15 127 15
+Polygon -16777216 true false 255 45 240 45 210 15 225 15
+Polygon -16777216 true false 210 45 225 45 255 15 240 15
+
 arrow
 true
 0
@@ -745,6 +781,20 @@ circle
 false
 0
 Circle -7500403 true true 35 35 230
+
+infantry corps
+false
+0
+Rectangle -16777216 true false 0 60 300 240
+Rectangle -7500403 true true 15 75 285 225
+Polygon -16777216 true false 15 210 270 75 285 75 285 90 30 225 15 225 15 210
+Polygon -16777216 true false 15 90 15 75 30 75 285 210 285 225 270 225
+Polygon -16777216 true false 75 45 90 45 120 15 105 15
+Polygon -16777216 true false 120 45 105 45 75 15 90 15
+Polygon -16777216 true false 180 45 195 45 225 15 210 15
+Polygon -16777216 true false 225 45 210 45 180 15 195 15
+Polygon -16777216 true false 128 45 143 45 173 15 158 15
+Polygon -16777216 true false 172 45 157 45 127 15 142 15
 
 person
 false
