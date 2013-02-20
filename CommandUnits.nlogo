@@ -37,7 +37,7 @@ globals[
 ;================================
 ;FIXME figure out how we want to handle weapons
 breed [units unit]
-
+breed [soldiers soldier]
 units-own[
   name            ;historical name for the unit
   allegiance      ;which side it fights for
@@ -286,7 +286,7 @@ to go
       set stopOnce 3
       stop
     ]
-    ask units with [allegiance = 1 and health > 0] [
+    ask units with [allegiance = 1 and strength > 0] [
       set state 3
       set stateTarget 3
     ]
@@ -299,27 +299,27 @@ to go
       set stopOnce 4
       stop
     ]
-    ask soldiers with [allegiance = 0 and health > 0 and (unit = 4 or unit = 5)] [
+    ask soldiers with [allegiance = 0 and strength > 0 and (unit = 4 or unit = 5)] [
       set state 3
       set stateTarget 3
     ]
   ]
   
-  ask soldiers with [state = 3 and health > 0] [
+  ask soldiers with [state = 3 and strength > 0] [
     forward maxSpeed
   ]
   
-  ask soldiers with [health > 0] [interact]
+  ask soldiers with [strength > 0] [interact]
   
   if (TimeUnits = 500) [
     file-close
     stop
   ]
   
-  ifelse (any? soldiers with [allegiance = 1 and health > 0] and any? soldiers with [allegiance = 2 and health > 0]) [
+  ifelse (any? soldiers with [allegiance = 1 and strength > 0] and any? soldiers with [allegiance = 2 and strength > 0]) [
     set TimeUnits (TimeUnits + 1)
   ] [
-    type "----- Simulation ends with " type (count soldiers with [allegiance = 2 and health > 0]) print " remaining German soldiers -----"
+    type "----- Simulation ends with " type (count soldiers with [allegiance = 2 and strength > 0]) print " remaining German soldiers -----"
     file-close
     stop
   ]
@@ -357,9 +357,9 @@ to interact
       set heading towards opponent
       ifelse (oppDist <= InfRange) [
         set state 4
-        ask opponent [set health (health - ([attack] of myself) + defense)]
-        let oppHealth [health] of opponent
-        if (oppHealth <= 0) [
+        ask opponent [set strength (strength - ([attack] of myself) + defense)]
+        let oppstrength [strength] of opponent
+        if (oppstrength <= 0) [
           ask opponent [set color grey]
         ]
       ] [
@@ -373,11 +373,11 @@ end
 ;== Formation Logic ==
 ;=====================
 to form-hedgehog [orderSide orderUnit orderCX orderCY orderRadius]
-  let soldiersInUnit (count soldiers with [allegiance = orderSide and unit = orderUnit and health > 0])
+  let soldiersInUnit (count soldiers with [allegiance = orderSide and unit = orderUnit and strength > 0])
   let theta (360 / soldiersInUnit)                              ;how many degrees should separate soldiers
   
   let soldierNum 0
-  ask soldiers with [allegiance = orderSide and unit = orderUnit and health > 0] [
+  ask soldiers with [allegiance = orderSide and unit = orderUnit and strength > 0] [
     let thisTheta (theta * soldierNum)
     set moveTargetX (cos(thisTheta) * orderRadius + orderCX)
     set moveTargetY (sin(thisTheta) * orderRadius + orderCY)
@@ -399,13 +399,13 @@ end
 ;  orderFacing   -  what direction the soldiers should face after arriving
 
 to form-line [orderSide orderUnit orderX orderY orderLength orderHeading orderFacing]
-  let soldiersInUnit (count soldiers with [allegiance = orderSide and unit = orderUnit and health > 0])
+  let soldiersInUnit (count soldiers with [allegiance = orderSide and unit = orderUnit and strength > 0])
   let hypot (orderLength / soldiersInUnit)
   let xDiff (hypot * cos(orderHeading))
   let yDiff (hypot * sin(orderHeading))
   
   let soldierNum 0
-  ask soldiers with [allegiance = orderSide and unit = orderUnit and health > 0] [
+  ask soldiers with [allegiance = orderSide and unit = orderUnit and strength > 0] [
     set moveTargetX (orderX + (xDiff * soldierNum))
     set moveTargetY (orderY + (yDiff * soldierNum))
     set faceTarget orderFacing
@@ -419,7 +419,7 @@ end
 ;== Utility Procedures ==
 ;========================
 to skip-to-target [agentset]
-  ask agentset with [health > 0] [
+  ask agentset with [strength > 0] [
     setxy moveTargetX moveTargetY
     facexy (cos(faceTarget) + xcor) (sin(faceTarget) + ycor)
     set faceTarget "NaN"
@@ -461,7 +461,7 @@ end
 
 to-report available-enemy
   let mySide [allegiance] of self
-  report soldiers with [allegiance != mySide and health > 0]
+  report soldiers with [allegiance != mySide and strength > 0]
   ;and attackedBy < InfMaxAttackers
 end
 @#$#@#$#@
