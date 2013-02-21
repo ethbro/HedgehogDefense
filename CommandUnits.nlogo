@@ -1,3 +1,6 @@
+;;TODO
+; set global "macros" for TypeStats indexing
+
 ;====================================
 ;== Simulation and Model variables ==
 ;====================================
@@ -12,11 +15,12 @@ globals[
   FileName        ;file name to save as
   
   ;== Model Globals ==
-  TypeRange          ;max distance the unit effectively fights at
-  TypeView           ;distance unit can detect
-  TypeSpeed          ;distance unit can move
-  TypeAttack         ;FIXME combat model will change these
-  TypeDefense        ;FIXME "
+  TypeStats         ;2d list with the following information, respectively,
+  ;TypeRange          max distance the unit effectively fights at
+  ;TypeView           distance unit can detect
+  ;TypeSpeed          distance unit can move
+  ;TypeAttack         FIXME combat model will change these
+  ;TypeDefense        FIXME "
   
   MaxAttackers      ;how many units will attack a single unit
   
@@ -35,7 +39,6 @@ globals[
 ;================================
 ;== Breeds and Breed variables ==
 ;================================
-;FIXME figure out how we want to handle weapons
 breed [units unit]
 breed [soldiers soldier]
 units-own[
@@ -75,9 +78,9 @@ to setup
 
   setup-deploy
   
-  form-hedgehog 1 1 -91 67 10
-  form-hedgehog 1 2 -53 -23 15
-  form-hedgehog 1 3 89 -39 25
+;  form-hedgehog 1 1 -91 67 10
+;  form-hedgehog 1 2 -53 -23 15
+;  form-hedgehog 1 3 89 -39 25
 end
 
 to setup-globals
@@ -86,12 +89,11 @@ to setup-globals
   set StopOnce 1
 
   ; Model
-  ; all lists indices are 0=INF, 1=MOT, 2=ARM
-  set TypeRange [5 5 5]
-  set TypeView [40 60 100]
-  set TypeSpeed [5 15 15]
-  set TypeAttack [5 6 15]
-  set TypeDefense [5 6 10]
+  set TypeStats [[5 40 5 5 5]
+                 [5 60 15 6 6]
+                 [5 100 15 15 10]
+  ]
+  ;with 1d indices of 0=INF, 1=MOT, 2=ARM
 
   ; Blue Army
   set BlueUnits [["21st Inf Div" "INF" "DIV" "A" "7th Army"] 
@@ -157,7 +159,7 @@ to setup-units
     let grade (item 3 unitInfo)
     set usuperior (item 4 unitInfo)
     
-    set shape (word utype usize)
+    set shape (word utype " " usize)
     set-grade self grade
     
     type name type ", " type utype type " " type grade type " " type usize type ", " type ", reporting to " type usuperior print " for duty!"
@@ -174,25 +176,20 @@ to setup-units
     let grade (item 3 unitInfo)
     set usuperior (item 4 unitInfo)
     
-    set shape (word utype usize)
+    set shape (word utype " " usize)
     set-grade self grade
     
-    type name type ", " type utype type " " type grade type " " type usize type ", " type ", reporting to " type usuperior print " for duty!"
+    type name type ", " type utype type " " type grade type " " type usize type ", reporting to " type usuperior print " for duty!"
     set i (i + 1)
   ]
 end
-
-;**************************************************************************************************
-; FIXME Stopped refactoring code here
-;**************************************************************************************************
-
 
 to setup-deploy
   ;FIXME this would break on non-square worlds, specifically with width < height
   ;FIXME the "world-width / 2 - 2" is a hack, as some units were ending up outside the boundary
   
   ;-- Deploy French Units --
-  let separation 5          ;Linear separation between end-of-unit and start-of-next-unit
+  let separation 5          ;Linear separation between units
   let unitCount (length BlueUnits)
   
   ;Below is product of some simple math to figure out how much space each unit has to deploy in
@@ -206,11 +203,9 @@ to setup-deploy
   let i 0
   let startX (-(world-width / 2 - 2))
   let trigTemp cos(-45)
-  foreach BlueUnits [
-    let orderX (startX + (i * trigTemp * (unitLength + separation)))
-    let orderY (-(world-height / 2) - orderX)
-    form-line 1 (i + 1) orderX orderY unitLength -45 45
-    ;NOTE increment i by 1 because units start at 1
+  ask units with [allegiance = 0] [
+    set moveTargetX (startX + (i * trigTemp * (unitLength + separation)))
+    set moveTargetY (-(world-height / 2) - moveTargetX)
     set i (i + 1)
   ]
   
@@ -221,63 +216,31 @@ to setup-deploy
   
   set i 0
   set startX 2
-  ;set trigTemp cos(-45)
-  foreach RedUnits [
-    let orderX (startX + (i * trigTemp * (unitLength + separation)))
-    let orderY ((world-height / 2) - orderX)
-    form-line 2 (i + 1) orderX orderY unitLength -45 225
+  ask units with [allegiance = 1] [
+    set moveTargetX (startX + (i * trigTemp * (unitLength + separation)))
+    set moveTargetY ((world-height / 2) - moveTargetX)
     set i (i + 1)
   ]
-end
-
-to redeploy-red
-  let separation 5
-  let unitCount (length RedUnits)
-  
-  let deployLength sqrt((world-width / 2 - 2) ^ 2 + (world-height / 2 - 2) ^ 2)
-  let unitLength ((deployLength - separation * (unitCount - 1)) / unitCount)
-
-  let i 0
-  let startX 2
-  let trigTemp cos(-45)
-
-  foreach RedUnits [
-    let orderX (startX + (i * trigTemp * (unitLength + separation)))
-    let orderY ((world-height / 2) - orderX)
-    form-line 2 (i + 1) orderX orderY unitLength -45 225
-    set i (i + 1)
-  ]
-end
-
-to setup-commanders
-  ;-- Set up Commanders --
-;  create-commanders (1)[
-;    set color blue
-;    set allegiance 1
-;    set effectiveness 50
-;    set morale 100
-;  ]
 end
 
 ;==============================================================
 ;==                        Main Logic                        ==
 ;==============================================================
 to go 
-  move-ordered-soldiers
-  orient-ordered-soldiers
+  move-ordered-units
   
   ;Redeploy non-hedgehog blue
-  if (TimeUnits = 30) [
-    if (stopOnce = 1) [
-      print "----------- The French Army begins to reestablish a defensive line -----------"
-      set stopOnce 2
-      stop
-    ]
-    let deployLength sqrt((world-width / 2 - 2) ^ 2 + (world-height / 2 - 2) ^ 2)
-    let unitLength ((deployLength - 5) / 2)
-    form-line 1 4 -148 0 80 -45 45
-    form-line 1 5 -74 -74 80 -45 45
-  ]
+;  if (TimeUnits = 30) [
+;    if (stopOnce = 1) [
+;      print "----------- The French Army begins to reestablish a defensive line -----------"
+;      set stopOnce 2
+;      stop
+;    ]
+;    let deployLength sqrt((world-width / 2 - 2) ^ 2 + (world-height / 2 - 2) ^ 2)
+;    let unitLength ((deployLength - 5) / 2)
+;    form-line 1 4 -148 0 80 -45 45
+;    form-line 1 5 -74 -74 80 -45 45
+;  ]
   
   ;Start Red marching
   if (TimeUnits = 80) [
@@ -299,34 +262,34 @@ to go
       set stopOnce 4
       stop
     ]
-    ask soldiers with [allegiance = 0 and strength > 0 and (unit = 4 or unit = 5)] [
+    ask units with [allegiance = 0 and strength > 0] [
       set state 3
       set stateTarget 3
     ]
   ]
-  
-  ask soldiers with [state = 3 and strength > 0] [
-    forward maxSpeed
+
+  ask units with [state = 3 and strength > 0] [
+    forward actualSpeed
   ]
   
-  ask soldiers with [strength > 0] [interact]
+  ask units with [strength > 0] [interact]
   
   if (TimeUnits = 500) [
     file-close
     stop
   ]
   
-  ifelse (any? soldiers with [allegiance = 1 and strength > 0] and any? soldiers with [allegiance = 2 and strength > 0]) [
+  ifelse (any? units with [allegiance = 0 and strength > 0] and any? units with [allegiance = 1 and strength > 0]) [
     set TimeUnits (TimeUnits + 1)
   ] [
-    type "----- Simulation ends with " type (count soldiers with [allegiance = 2 and strength > 0]) print " remaining German soldiers -----"
+    type "----- Simulation ends with " type (count units with [allegiance = 1 and strength > 0]) print " remaining German soldiers -----"
     file-close
     stop
   ]
 end
 
-to move-ordered-soldiers
-  ask soldiers with [is-number? moveTargetX and state = 1] [  ;NOTE just check X for performance reasons
+to move-ordered-units
+  ask units with [is-number? moveTargetX and state = 1] [  ;NOTE just check X for performance reasons
     facexy moveTargetX moveTargetY
     let distanceToGo (distancexy moveTargetX moveTargetY)
     ifelse (distanceToGo > actualSpeed) [
@@ -335,16 +298,9 @@ to move-ordered-soldiers
       forward distanceToGo
       set moveTargetX "NaN"
       set moveTargetY "NaN"
-      set actualSpeed maxSpeed
+      set actualSpeed 0
       set state stateTarget
     ]
-  ]
-end
-
-to orient-ordered-soldiers
-  ask soldiers with [is-number? faceTarget and state = 0] [
-    facexy (cos(faceTarget) + xcor) (sin(faceTarget) + ycor)
-    set faceTarget "NaN"
   ]
 end
 
@@ -352,14 +308,16 @@ to interact
   let opponent nearest available-enemy
   if (opponent != nobody) [
     let oppDist distance opponent
-    if (oppDist <= InfView) [
+    if (oppDist <= (get-type-property self 1)) [
 ;      ask opponent [set attackedBy (attackedBy + 1)]
       set heading towards opponent
-      ifelse (oppDist <= InfRange) [
+      ifelse (oppDist <= (get-type-property self 0)) [
         set state 4
-        ask opponent [set strength (strength - ([attack] of myself) + defense)]
-        let oppstrength [strength] of opponent
-        if (oppstrength <= 0) [
+        ask opponent [
+          set strength (strength - (get-type-property myself 2) + (get-type-property self 3))
+        ]
+        let oppStrength [strength] of opponent
+        if (oppStrength <= 0) [
           ask opponent [set color grey]
         ]
       ] [
@@ -372,21 +330,37 @@ end
 ;=====================
 ;== Formation Logic ==
 ;=====================
-to form-hedgehog [orderSide orderUnit orderCX orderCY orderRadius]
-  let soldiersInUnit (count soldiers with [allegiance = orderSide and unit = orderUnit and strength > 0])
-  let theta (360 / soldiersInUnit)                              ;how many degrees should separate soldiers
-  
-  let soldierNum 0
-  ask soldiers with [allegiance = orderSide and unit = orderUnit and strength > 0] [
-    let thisTheta (theta * soldierNum)
-    set moveTargetX (cos(thisTheta) * orderRadius + orderCX)
-    set moveTargetY (sin(thisTheta) * orderRadius + orderCY)
-    set faceTarget thisTheta
-    set state 1
-    set stateTarget 2
-    set soldierNum (soldierNum + 1)
-  ]
-end
+;to form-hedgehog [orderSide orderUnit orderCX orderCY orderRadius]
+;  let soldiersInUnit (count soldiers with [allegiance = orderSide and unit = orderUnit and strength > 0])
+;  let theta (360 / soldiersInUnit)                              ;how many degrees should separate soldiers
+;  
+;  let soldierNum 0
+;  ask soldiers with [allegiance = orderSide and unit = orderUnit and strength > 0] [
+;    let thisTheta (theta * soldierNum)
+;    set moveTargetX (cos(thisTheta) * orderRadius + orderCX)
+;    set moveTargetY (sin(thisTheta) * orderRadius + orderCY)
+;    set faceTarget thisTheta
+;    set state 1
+;    set stateTarget 2
+;    set soldierNum (soldierNum + 1)
+;  ]
+;end
+
+;to form-hedgehog [orderSide orderUnit orderCX orderCY orderRadius]
+;  let soldiersInUnit (count units with [allegiance = orderSide and unit = orderUnit and strength > 0])
+;  let theta (360 / soldiersInUnit)                              ;how many degrees should separate soldiers
+;  
+;  let soldierNum 0
+;  ask soldiers with [allegiance = orderSide and unit = orderUnit and health > 0] [
+;    let thisTheta (theta * soldierNum)
+;    set moveTargetX (cos(thisTheta) * orderRadius + orderCX)
+;    set moveTargetY (sin(thisTheta) * orderRadius + orderCY)
+;    set faceTarget thisTheta
+;    set state 1
+;    set stateTarget 2
+;    set soldierNum (soldierNum + 1)
+; ]
+;end
 
 ;Form a line using all available soldiers, evenly spaced
 ;Arguments
@@ -398,34 +372,35 @@ end
 ;  orderHeading  -  what heading the line should be arranged along
 ;  orderFacing   -  what direction the soldiers should face after arriving
 
-to form-line [orderSide orderUnit orderX orderY orderLength orderHeading orderFacing]
-  let soldiersInUnit (count soldiers with [allegiance = orderSide and unit = orderUnit and strength > 0])
-  let hypot (orderLength / soldiersInUnit)
-  let xDiff (hypot * cos(orderHeading))
-  let yDiff (hypot * sin(orderHeading))
-  
-  let soldierNum 0
-  ask soldiers with [allegiance = orderSide and unit = orderUnit and strength > 0] [
-    set moveTargetX (orderX + (xDiff * soldierNum))
-    set moveTargetY (orderY + (yDiff * soldierNum))
-    set faceTarget orderFacing
-    set soldierNum (soldierNum + 1)
-    set state 1
-    set stateTarget 0
-  ]
-end
+;to form-line [orderSide orderUnit orderX orderY orderLength orderHeading orderFacing]
+;  let soldiersInUnit (count units with [allegiance = orderSide and unit = orderUnit and health > 0])
+;  let hypot (orderLength / soldiersInUnit)
+;  let xDiff (hypot * cos(orderHeading))
+;  let yDiff (hypot * sin(orderHeading))
+;  
+;  let soldierNum 0
+;  ask soldiers with [allegiance = orderSide and unit = orderUnit and health > 0] [
+;    set moveTargetX (orderX + (xDiff * soldierNum))
+;    set moveTargetY (orderY + (yDiff * soldierNum))
+;    set faceTarget orderFacing
+;    set soldierNum (soldierNum + 1)
+;    set state 1
+;    set stateTarget 0
+;  ]
+;end
 
 ;========================
 ;== Utility Procedures ==
 ;========================
-to skip-to-target [agentset]
-  ask agentset with [strength > 0] [
-    setxy moveTargetX moveTargetY
-    facexy (cos(faceTarget) + xcor) (sin(faceTarget) + ycor)
-    set faceTarget "NaN"
-    set state stateTarget
-  ]
-end
+
+;to skip-to-target [agentset]
+;  ask agentset with [strength > 0] [
+;    setxy moveTargetX moveTargetY
+;    facexy (cos(faceTarget) + xcor) (sin(faceTarget) + ycor)
+;    set faceTarget "NaN"
+;    set state stateTarget
+;  ]
+;end
 
 to set-grade [unit grade]
   ask unit [
@@ -443,16 +418,21 @@ to set-grade [unit grade]
   ]
 end
 
-to-report type-to-index [thisType]
-  ifelse (thisType = "INF") [
-    report 0
+to-report get-type-property [unit propertyIndex]
+  let myType [utype] of unit
+  let typeIndex "NaN"
+  
+  ifelse (myType = "INF") [
+    set typeIndex 0
   ] [
-  ifelse (thisType = "MOT") [
-    report 1
+  ifelse (myType = "MOT") [
+    set typeIndex 1
   ] [
-  if (thisType = "ARM") [
-    report 2
+  if (myType = "ARM") [
+    set typeIndex 2
   ] ] ]
+  
+  report item propertyIndex (item typeIndex TypeStats)
 end
 
 to-report nearest [agentset]
@@ -461,16 +441,16 @@ end
 
 to-report available-enemy
   let mySide [allegiance] of self
-  report soldiers with [allegiance != mySide and strength > 0]
+  report units with [allegiance != mySide and strength > 0]
   ;and attackedBy < InfMaxAttackers
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
 197
 10
-809
+813
 643
-150
+151
 150
 2.0
 1
@@ -482,8 +462,8 @@ GRAPHICS-WINDOW
 0
 0
 1
--150
-150
+-151
+151
 -150
 150
 0
