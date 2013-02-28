@@ -34,16 +34,12 @@ to setup-patches
 end
 to setup-globals
   set PerSpace 5
-  set NearView 24
-  set MaxView  50 
-  set vision-angle 120
-  set search-angle  90
   set randomrunnum random 999999
   set WaitCount 10
 end
 to setupSoldiers
-  create-soldiers (population * 2)[
-    ifelse who < population[
+  create-soldiers (FrenchInfantry * 2)[
+    ifelse who < FrenchInfantry[
       set color red
       set allegience 1
       set state 1
@@ -69,7 +65,7 @@ to setupSoldiers
     ]
     [
       set heading 90
-      setxy 200 (10 + 5 * (who - population))
+      setxy 200 (10 + 5 * (who - FrenchInfantry))
       set theta (theta + (who * pi / 6))  ; Lucas - forms the circle of blue units
       set x (12 * cos(theta) - 50)        ; not sure how to work it without (current) max population
       set y (12 * sin(theta) + 25)     
@@ -166,10 +162,10 @@ ticks
 30.0
 
 BUTTON
-35
-28
-102
-61
+16
+11
+83
+44
 NIL
 setup
 NIL
@@ -183,10 +179,10 @@ NIL
 1
 
 BUTTON
-137
-27
-200
-60
+277
+62
+340
+95
 NIL
 go
 T
@@ -211,15 +207,109 @@ time-units
 11
 
 SLIDER
-17
-114
-214
-147
-population
-population
+253
+238
+425
+271
+GermanTanks
+GermanTanks
 0
-30
-30
+100
+1
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+11
+235
+183
+268
+FrenchTanks
+FrenchTanks
+0
+100
+1
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+11
+152
+183
+185
+FrenchInfantry
+FrenchInfantry
+0
+100
+87
+1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+80
+62
+143
+95
+Step
+NIL
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+157
+63
+251
+96
+Step (50)
+S
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+224
+153
+396
+186
+GermanInfantry
+GermanInfantry
+0
+100
+1
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+10
+193
+182
+226
+FrenchHedgehogs
+FrenchHedgehogs
+0
+100
+1
 1
 1
 NIL
