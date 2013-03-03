@@ -1,27 +1,31 @@
 globals[
   WaitCount
-   PerSpace        ;personal space
-   NearView        ;close view
-   MaxView         ;far view
    time-units      ;monitor to show the number of  goes 
-   theta           ;theta, x, and y all for the hedgehog
    x
    y
-   vision-angle    ;in what direction the turtle can see
-   search-angle    ;where the turtle searches for other agents
    randomrunnum    ;crappy hack to get unique filenames for each run in behaviourspace experiments
    filename        ;place for aforementioned filename
 ];another  manny comment
-;philip161 test; Pho122 Test
+
 breed [soldiers soldier]
 soldiers-own[
+  name;
   allegience;are they fighting for side 1 or 2?
-  strength; damage they do
-  defense; resistance to damage
+  accuracy; 
+  tankDamage; resistance to damage
+  infantryDamage;
+  maxRange;
+  minRange;
+  rangeIncriment;
+  tankFortification;
+  gunFortification;
+  bombFortification;
+  directDamage;
   speed; amount they move when its time
   health; amount of damage they can take
   state; 1 attack, 2 defend, 3 something else yet to come?
 ];hi
+
 to setup
   __clear-all-and-reset-ticks;clear the screen
   
@@ -33,46 +37,144 @@ to setup-patches
   ask patches  [set pcolor green]    ;sets background green  
 end
 to setup-globals
-  set PerSpace 5
   set randomrunnum random 999999
   set WaitCount 10
 end
+
 to setupSoldiers
-  create-soldiers (FrenchInfantry * 2)[
-    ifelse who < FrenchInfantry[
-      set color red
+  create-soldiers (FrenchInfantry)[
+    if who < FrenchInfantry[
+      set color blue
+      set name "infantry"
+      set accuracy .4
+      set tankDamage .1
+      set infantryDamage 1
+      set maxRange 100
+      set minRange 10
+      set rangeIncriment 10
+      set tankFortification 0
+      set gunFortification 0
+      set bombFortification 0
+      set directDamage true
+      set speed 2
       set allegience 1
       set state 1
-      set speed (random 2) + 1
-    ]
-    [
-      set color blue
-      set allegience 2
-      set state 2
-      set speed 0
-    ]
-    
-    set strength random 5
-    set defense random 5
-    set health 10
-    set size 5
+      set size 5
+      set heading 90
+      set shape "default"
+    ]    
   ]
-  
+  create-soldiers (GermanInfantry)[
+    if who > FrenchInfantry[
+      set color red
+      set name "infantry"
+      set accuracy .4
+      set tankDamage .1
+      set infantryDamage 1
+      set maxRange 100
+      set minRange 10
+      set rangeIncriment 10
+      set tankFortification 0
+      set gunFortification 0
+      set bombFortification 0
+      set directDamage true
+      set speed 2
+      set allegience 2
+      set state 1
+      set size 5
+      set heading 270
+      set shape "default"
+    ]    
+  ]
+  create-soldiers (FrenchHedgehogs)[
+    if who > FrenchInfantry + GermanInfantry[
+      set color blue
+      set name "hedgehog"
+      set accuracy .4
+      set tankDamage 1
+      set infantryDamage 1
+      set maxRange 100
+      set minRange 10
+      set rangeIncriment 10
+      set tankFortification .5
+      set gunFortification 0
+      set bombFortification 0
+      set directDamage false
+      set speed 0
+      set allegience 1
+      set state 1
+      set size 5
+      set heading 90
+      set shape "default"
+    ]
+  ]
+  create-soldiers (FrenchTanks)[
+    if who > FrenchInfantry + GermanInfantry + FrenchHedgehogs[
+      set color blue
+      set name "tank"
+      set accuracy .4
+      set tankDamage 1
+      set infantryDamage 4
+      set maxRange 100
+      set minRange 10
+      set rangeIncriment 10
+      set tankFortification 0
+      set gunFortification .8
+      set bombFortification 0
+      set directDamage false
+      set speed 5
+      set allegience 1
+      set state 1
+      set size 20
+      set heading 90
+      set shape "truck-right"
+    ]
+  ]
+  create-soldiers (GermanTanks)[
+    if who > FrenchInfantry + GermanInfantry + FrenchHedgehogs + FrenchTanks[
+      set color red
+      set name "tank"
+      set accuracy .4
+      set tankDamage 1
+      set infantryDamage 4
+      set maxRange 100
+      set minRange 10
+      set rangeIncriment 10
+      set tankFortification 0
+      set gunFortification .8
+      set bombFortification 0
+      set directDamage false
+      set speed 4
+      set allegience 1
+      set state 1
+      set size 20
+      set heading 270
+      set shape "truck-left"
+    ]
+  ]
   ask soldiers[
     ifelse color = red[
-      set heading 270
       setxy 10 (10 + 5 * who)
     ]
     [
-      set heading 90
-      setxy 200 (10 + 5 * (who - FrenchInfantry))
-      set theta (theta + (who * pi / 6))  ; Lucas - forms the circle of blue units
-      set x (12 * cos(theta) - 50)        ; not sure how to work it without (current) max population
-      set y (12 * sin(theta) + 25)     
-      setxy x y
+     setxy -60 (10 + 15 * who)
     ]
-    
-    set shape "default"
+  ]
+end
+
+to Step
+  set time-units time-units + 1;increase the counter for the total number of ticks that have gone by so far 
+  ask soldiers[
+    if(any? soldiers with [color = red] and any? soldiers with [color = blue])[
+        interact
+    ]
+      
+  ]
+end
+
+to Steps
+  repeat 50[
+   Step 
   ]
 end
 
@@ -81,24 +183,14 @@ to go
   ask soldiers [ 
     ;wait x ticks between each move so everything is visible
     ifelse (WaitCount <= 0)[
-      if(any? soldiers with [color = red] and any? soldiers with [color = blue])[
-        interact
-      ]
+      Step
       set WaitCount  10; set up to wait for 10 ticks until each unit moves again
     ]
     [
       set WaitCount WaitCount - 1;if we are waiting to move then continue the count down until we do
     ]          
   ]
-  ifelse(any? soldiers with [color = red] and any? soldiers with [color = blue])[;go until all of one army is dead
-    set time-units time-units + 1;increase the counter for the total number of ticks that have gone by so far   
-  ]
-  [
-    file-close
-    stop
-  ]
-
-  if time-units = 42800[ ;after a set amount of time stop the simulation
+  if time-units >= 42800[ ;after a set amount of time stop the simulation
     file-close
     stop
   ]            
@@ -110,11 +202,8 @@ to interact
   let opponent 0
   set opponent nearest other-turtles;opponent always exists because of conditional in integrate function
   set heading towards opponent
-  ifelse distance opponent <= PerSpace[
-    set health (health - (([strength] of opponent)/(defense + 1)))
-      if health <= 0[
-        die
-      ]
+  ifelse distance opponent <= maxRange[
+    ask opponent[ die]
   ]
   [
    forward speed 
@@ -207,15 +296,15 @@ time-units
 11
 
 SLIDER
-253
-238
-425
-271
+222
+236
+394
+269
 GermanTanks
 GermanTanks
 0
 100
-1
+2
 1
 1
 NIL
@@ -230,7 +319,7 @@ FrenchTanks
 FrenchTanks
 0
 100
-1
+6
 1
 1
 NIL
@@ -245,7 +334,7 @@ FrenchInfantry
 FrenchInfantry
 0
 100
-87
+8
 1
 1
 NIL
@@ -257,7 +346,7 @@ BUTTON
 143
 95
 Step
-NIL
+step
 NIL
 1
 T
@@ -274,7 +363,7 @@ BUTTON
 251
 96
 Step (50)
-S
+Steps
 NIL
 1
 T
@@ -294,7 +383,7 @@ GermanInfantry
 GermanInfantry
 0
 100
-1
+57
 1
 1
 NIL
@@ -309,7 +398,7 @@ FrenchHedgehogs
 FrenchHedgehogs
 0
 100
-1
+0
 1
 1
 NIL
