@@ -54,20 +54,20 @@ end
 to setup-globals
   set randomrunnum random 999999
   set WaitCount 10
-  set fInfAccuracy 40; in percent out of 100
-  set fHedgAccuracy 42
-  set fTankAccuracy 36
-  set fArtAccuracy 30
-  set gInfAccuracy 41
-  set gTankAccuracy 41
-  set gArtAccuracy 31
+  set fInfAccuracy 20; in percent out of 100
+  set fHedgAccuracy 22
+  set fTankAccuracy 26
+  set fArtAccuracy 20
+  set gInfAccuracy 21
+  set gTankAccuracy 21
+  set gArtAccuracy 21
   set fInfDmg 1;number of units it kills
-  set fHedgeDmg 2
-  set fTankDmg 3
-  set fArtDmg 4
+  set fHedgeDmg 1
+  set fTankDmg 2
+  set fArtDmg 2
   set gInfDmg 1
   set gTankDmg 2
-  set gArtDmg 5
+  set gArtDmg 2
 end
 
 to setupSoldiers
@@ -120,10 +120,10 @@ to setupSoldiers
   ]
   ask soldiers[
     ifelse color = red[
-      setxy 10 (10 + 5 * who)
+      setxy 60 (10 + 5 * who)
     ]
     [
-     setxy -60 (10 + 15 * who)
+     setxy -90 (10 + 5 * who)
     ]
   ]
 end
@@ -135,6 +135,75 @@ to Step
         interact
     ]
       
+  ]
+  ask soldiers[
+   if(allegience = 1)[
+     repeat hitsTaken[
+        let whatsHit random (numInfantry + numTanks + numArtillary + numHedgehogs + 1 )
+        show whatsHit
+        if(whatsHit <= numInfantry)[
+          
+          set numInfantry numInfantry - 1
+          if(numInfantry < 0)[
+            set numInfantry  0
+          ]
+        ]
+        ifelse(whatsHit <= (numInfantry + numTanks) and whatsHit > numInfantry)[
+         set numTanks numTanks - 1 
+         if(numTanks < 0)[
+            set numTanks  0
+          ]
+        ][
+        ifelse(whatsHit <= (numInfantry + numTanks + numArtillary) and whatsHit > (numInfantry + numTanks))[
+         set numArtillary numArtillary - 1 
+         if(numArtillary < 0)[
+            set numArtillary  0
+          ]
+        ] 
+        [
+         set numHedgehogs numHedgehogs - 1 
+         if(numHedgehogs < 0)[
+            set numHedgehogs  0
+          ]
+        ]
+        ]
+      ]
+      set hitsTaken 0
+      set effectiveness (numInfantry + numHedgehogs + numTanks + numArtillary) / (startingInfantry + startingHedgehogs + startingTanks + startingArtillary)
+      show effectiveness
+      if( effectiveness = 0)[
+        die
+      ]
+   ]
+   if(allegience = 2)[
+     repeat hitsTaken[
+        let whatsHit random (numInfantry + numTanks + numArtillary + 1)
+        if(whatsHit <= numInfantry)[
+          set numInfantry numInfantry - 1
+          if(numInfantry < 0)[
+            set numInfantry 0
+          ]
+        ]
+        ifelse(whatsHit <= (numInfantry + numTanks) and whatsHit > numInfantry)[
+         set numTanks numTanks - 1 
+         if(numTanks < 0)[
+            set numTanks 0
+          ]
+        ][
+         set numArtillary numArtillary - 1 
+         if(numArtillary < 0)[
+            set numArtillary 0
+          ]
+        ] 
+      ]
+      set hitsTaken 0
+      set effectiveness (numInfantry + numTanks + numArtillary) / (startingInfantry + startingTanks + startingArtillary)
+      show effectiveness
+      if( effectiveness = 0)[
+        die
+      ]
+   ] 
+    
   ]
 end
 
@@ -192,30 +261,7 @@ to interact
         ]
       ]
       
-      repeat hitsTaken[
-        let whatsHit random 4
-        if(whatsHit = 1)[
-          
-          set numInfantry numInfantry - 1
-        ]
-        if(whatsHit = 2)[
-         set numTanks numTanks - 1 
-        ]
-        if(whatsHit = 3)[
-         set numArtillary numArtillary - 1 
-        ] 
-        if(whatsHit = 4)[
-         set numHedgehogs numHedgehogs - 1 
-        ]
-      ]
-      show numInfantry
-      show numTanks
-      set hitsTaken 0
-      set effectiveness (numInfantry + numHedgehogs + numTanks + numArtillary) / (startingInfantry + startingHedgehogs + startingTanks + startingArtillary)
-      show effectiveness
-      if( effectiveness = 0)[
-        die
-      ]
+      
     ]
     if( allegience = 2)[
       
@@ -233,23 +279,6 @@ to interact
         if(random 100 <=  gArtAccuracy)[
           ask opponent[ set hitsTaken hitsTaken + gArtDmg]
         ]
-      ]
-      repeat hitsTaken[
-        let whatsHit random 3
-        if(whatsHit = 1)[
-          set numInfantry numInfantry - 1
-        ]
-        if(whatsHit = 2)[
-         set numTanks numTanks - 1 
-        ]
-        if(whatsHit = 3)[
-         set numArtillary numArtillary - 1 
-        ] 
-      ]
-      set hitsTaken 0
-      set effectiveness (numInfantry + numTanks + numArtillary) / (startingInfantry + startingTanks + startingArtillary)
-      if( effectiveness = 0)[
-        die
       ]
     ]  
   ]
@@ -351,8 +380,8 @@ SLIDER
 GermanTanks
 GermanTanks
 0
-100
-2
+1000
+389
 1
 1
 NIL
@@ -366,8 +395,8 @@ SLIDER
 FrenchTanks
 FrenchTanks
 0
-100
-6
+1000
+62
 1
 1
 NIL
@@ -381,8 +410,8 @@ SLIDER
 FrenchInfantry
 FrenchInfantry
 0
-100
-12
+1000
+1000
 1
 1
 NIL
@@ -430,8 +459,8 @@ SLIDER
 GermanInfantry
 GermanInfantry
 0
-100
-57
+1000
+1000
 1
 1
 NIL
@@ -440,13 +469,13 @@ HORIZONTAL
 SLIDER
 10
 193
-182
+189
 226
 FrenchHedgehogs
 FrenchHedgehogs
 0
-100
-0
+1000
+54
 1
 1
 NIL
@@ -460,8 +489,8 @@ SLIDER
 FrenchArtillary
 FrenchArtillary
 0
-100
-0
+1000
+41
 1
 1
 NIL
@@ -475,8 +504,8 @@ SLIDER
 GermanArtillary
 GermanArtillary
 0
-100
-0
+1000
+49
 1
 1
 NIL
@@ -491,7 +520,7 @@ FrenchDivisions
 FrenchDivisions
 0
 10
-1
+10
 1
 1
 NIL
@@ -506,7 +535,7 @@ GermanDivisions
 GermanDivisions
 0
 10
-1
+10
 1
 1
 NIL
