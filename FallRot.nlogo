@@ -1,3 +1,4 @@
+extensions [array]
 globals[
   WaitCount
    time-units      ;monitor to show the number of  goes 
@@ -6,20 +7,20 @@ globals[
    randomrunnum    ;crappy hack to get unique filenames for each run in behaviourspace experiments
    filename        ;place for aforementioned filename
    fInfAccuracy
-   fHedgAccuracy
+   fATAccuracy
    fTankAccuracy
    fArtAccuracy
    gInfAccuracy
    gTankAccuracy
    gArtAccuracy
    fInfDmg
-   fHedgeDmg
+   fATDmg
    fTankDmg
    fArtDmg
    gInfDmg
    gTankDmg
    gArtDmg
-];another  manny comment
+]
 
 breed [soldiers soldier]
 soldiers-own[
@@ -31,8 +32,8 @@ soldiers-own[
   speed; amount they move when its time
   numInfantry;
   startingInfantry;
-  numHedgehogs;
-  startingHedgehogs
+  numAntiTanks;
+  startingAntiTanks
   numTanks
   startingTanks;
   numArtillary
@@ -53,16 +54,18 @@ to setup-patches
 end
 to setup-globals
   set randomrunnum random 999999
+  set x array:from-list [50 50 100 100 200 200]
+  set y array:from-list [50 50 100 100 200 200]
   set WaitCount 10
   set fInfAccuracy 20; in percent out of 100
-  set fHedgAccuracy 22
+  set fATAccuracy 22
   set fTankAccuracy 26
   set fArtAccuracy 20
   set gInfAccuracy 21
   set gTankAccuracy 21
   set gArtAccuracy 21
   set fInfDmg 1;number of units it kills
-  set fHedgeDmg 1
+  set fATDmg 1
   set fTankDmg 2
   set fArtDmg 2
   set gInfDmg 1
@@ -71,18 +74,18 @@ to setup-globals
 end
 
 to setupSoldiers
-  create-soldiers (FrenchDivisions)[
-    if who < FrenchDivisions[
+  create-soldiers (240)[
+    if who = 0[
       set color blue
       set effectiveness 100
       set name "4nd Division"
-      set startingInfantry FrenchInfantry
+      set startingInfantry 0
       set numInfantry startingInfantry
-      set startingHedgehogs FrenchHedgehogs
-      set numHedgehogs startingHedgehogs
-      set startingTanks FrenchTanks
+      set startingAntiTanks 0
+      set numAntiTanks startingAntiTanks
+      set startingTanks 0
       set numTanks startingTanks
-      set startingArtillary FrenchArtillary
+      set startingArtillary 0
       set numArtillary startingArtillary
       set maxRange 100
       set minRange 10
@@ -90,41 +93,11 @@ to setupSoldiers
       set speed 2
       set allegience 1
       set state 1
-      set size 5
+      setxy array:item x 0  array:item x 4
+      set size 15 
       set heading 90
       set shape "default"
     ]    
-  ]
-  create-soldiers (GermanDivisions)[
-    if who < FrenchDivisions + GermanDivisions[
-      set color red
-      set name "Panzer Division"
-      set startingInfantry GermanInfantry
-      set numInfantry startingInfantry
-      set startingHedgehogs 0
-      set numHedgehogs startingHedgehogs
-      set startingTanks GermanTanks
-      set numTanks startingTanks
-      set startingArtillary GermanArtillary
-      set numArtillary startingArtillary
-      set maxRange 100
-      set minRange 10
-      set speed 2
-      set allegience 2
-      set hitsTaken 0
-      set state 1
-      set size 5
-      set heading 270
-      set shape "default"
-    ]    
-  ]
-  ask soldiers[
-    ifelse color = red[
-      setxy 60 (10 + 5 * who)
-    ]
-    [
-     setxy -90 (10 + 5 * who)
-    ]
   ]
 end
 
@@ -135,75 +108,6 @@ to Step
         interact
     ]
       
-  ]
-  ask soldiers[
-   if(allegience = 1)[
-     repeat hitsTaken[
-        let whatsHit random (numInfantry + numTanks + numArtillary + numHedgehogs + 1 )
-        show whatsHit
-        if(whatsHit <= numInfantry)[
-          
-          set numInfantry numInfantry - 1
-          if(numInfantry < 0)[
-            set numInfantry  0
-          ]
-        ]
-        ifelse(whatsHit <= (numInfantry + numTanks) and whatsHit > numInfantry)[
-         set numTanks numTanks - 1 
-         if(numTanks < 0)[
-            set numTanks  0
-          ]
-        ][
-        ifelse(whatsHit <= (numInfantry + numTanks + numArtillary) and whatsHit > (numInfantry + numTanks))[
-         set numArtillary numArtillary - 1 
-         if(numArtillary < 0)[
-            set numArtillary  0
-          ]
-        ] 
-        [
-         set numHedgehogs numHedgehogs - 1 
-         if(numHedgehogs < 0)[
-            set numHedgehogs  0
-          ]
-        ]
-        ]
-      ]
-      set hitsTaken 0
-      set effectiveness (numInfantry + numHedgehogs + numTanks + numArtillary) / (startingInfantry + startingHedgehogs + startingTanks + startingArtillary)
-      show effectiveness
-      if( effectiveness = 0)[
-        die
-      ]
-   ]
-   if(allegience = 2)[
-     repeat hitsTaken[
-        let whatsHit random (numInfantry + numTanks + numArtillary + 1)
-        if(whatsHit <= numInfantry)[
-          set numInfantry numInfantry - 1
-          if(numInfantry < 0)[
-            set numInfantry 0
-          ]
-        ]
-        ifelse(whatsHit <= (numInfantry + numTanks) and whatsHit > numInfantry)[
-         set numTanks numTanks - 1 
-         if(numTanks < 0)[
-            set numTanks 0
-          ]
-        ][
-         set numArtillary numArtillary - 1 
-         if(numArtillary < 0)[
-            set numArtillary 0
-          ]
-        ] 
-      ]
-      set hitsTaken 0
-      set effectiveness (numInfantry + numTanks + numArtillary) / (startingInfantry + startingTanks + startingArtillary)
-      show effectiveness
-      if( effectiveness = 0)[
-        die
-      ]
-   ] 
-    
   ]
 end
 
@@ -231,60 +135,10 @@ to go
   ]            
 end  
                                 
-to interact     
-  let winner 0
-  let loser 0
-  let opponent 0
+to interact
+  let opponent 0     
   set opponent nearest other-turtles;opponent always exists because of conditional in integrate function
-  set heading towards opponent
-  ifelse distance opponent <= maxRange[
-    if( allegience = 1)[
-      
-      repeat numInfantry[
-        if(random 100 <=  fInfAccuracy)[
-          ask opponent[ set hitsTaken hitsTaken + fInfDmg]
-        ]
-      ]
-      repeat numHedgehogs[
-        if(random 100 <=  fHedgAccuracy)[
-          ask opponent[ set hitsTaken hitsTaken + fHedgeDmg]
-        ]
-      ]
-      repeat numTanks[
-        if(random 100 <=  fTankAccuracy)[
-          ask opponent[ set hitsTaken hitsTaken + fTankDmg]
-        ]
-      ]
-      repeat numArtillary[
-        if(random 100 <=  fArtAccuracy)[
-          ask opponent[ set hitsTaken hitsTaken + fArtDmg]
-        ]
-      ]
-      
-      
-    ]
-    if( allegience = 2)[
-      
-      repeat numInfantry[
-        if(random 100 <=  gInfAccuracy)[
-          ask opponent[ set hitsTaken hitsTaken + gInfDmg]
-        ]
-      ]
-      repeat numTanks[
-        if(random 100 <=  gTankAccuracy)[
-          ask opponent[ set hitsTaken hitsTaken + gTankDmg]
-        ]
-      ]
-      repeat numArtillary[
-        if(random 100 <=  gArtAccuracy)[
-          ask opponent[ set hitsTaken hitsTaken + gArtDmg]
-        ]
-      ]
-    ]  
-  ]
-  [
-   forward speed 
-  ]      
+  ;set heading towards opponent      
 end   
 
 to-report nearest [agentset]
@@ -301,26 +155,26 @@ to-report other-turtles
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-437
+478
 10
-1049
-643
-150
-150
-2.0
+888
+441
+-1
+-1
+0.4
 1
 4
 1
 1
 1
 0
+0
+0
 1
-1
-1
--150
-150
--150
-150
+0
+999
+0
+999
 0
 0
 1
@@ -372,51 +226,6 @@ time-units
 1
 11
 
-SLIDER
-222
-236
-394
-269
-GermanTanks
-GermanTanks
-0
-1000
-389
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-11
-235
-183
-268
-FrenchTanks
-FrenchTanks
-0
-1000
-62
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-11
-152
-183
-185
-FrenchInfantry
-FrenchInfantry
-0
-1000
-1000
-1
-1
-NIL
-HORIZONTAL
-
 BUTTON
 80
 62
@@ -450,96 +259,6 @@ NIL
 NIL
 NIL
 1
-
-SLIDER
-224
-153
-396
-186
-GermanInfantry
-GermanInfantry
-0
-1000
-1000
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-10
-193
-189
-226
-FrenchHedgehogs
-FrenchHedgehogs
-0
-1000
-54
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-12
-282
-184
-315
-FrenchArtillary
-FrenchArtillary
-0
-1000
-41
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-223
-280
-395
-313
-GermanArtillary
-GermanArtillary
-0
-1000
-49
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-11
-111
-183
-144
-FrenchDivisions
-FrenchDivisions
-0
-10
-10
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-224
-113
-396
-146
-GermanDivisions
-GermanDivisions
-0
-10
-10
-1
-1
-NIL
-HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
