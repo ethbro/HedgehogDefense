@@ -1,0 +1,18 @@
+188 german brigades, 24 of which are panzer brigades
+212 turtles
+
+in a panzer brigades
+2950 infantry
+20 AT
+66 Tank
+20 Artillary
+
+regular brigade
+4125 infantry
+31 AT
+0 Tank
+47 Artillary
+
+unknown number of french brigades, 
+
+228 brigades, 12 light brigade, 20 armor brigades

@@ -50,7 +50,7 @@ to setup
   setupSoldiers
 end
 to setup-patches
-  ask patches  [set pcolor green]    ;sets background green  
+ import-drawing "FullComposite.jpg"
 end
 to setup-globals
   set randomrunnum random 999999
@@ -157,8 +157,8 @@ end
 GRAPHICS-WINDOW
 478
 10
-888
-441
+1488
+1041
 -1
 -1
 0.4
