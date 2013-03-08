@@ -13,6 +13,9 @@ regular brigade
 0 Tank
 47 Artillary
 
+french were no more than 32 pixels from the river,
+checkerboarded, 8 pixels betweeen hamlets
 unknown number of french brigades, 
-
-228 brigades, 12 light brigade, 20 armor brigades
+These numbers are fudged
+132 turtles
+116 brigades, 6 light brigade, 10 armor brigades

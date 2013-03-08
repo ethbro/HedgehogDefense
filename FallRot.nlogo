@@ -50,12 +50,12 @@ to setup
   setupSoldiers
 end
 to setup-patches
- import-drawing "FullComposite.jpg"
+ import-drawing "Map.png"
 end
 to setup-globals
   set randomrunnum random 999999
-  set x array:from-list [50 50 100 100 200 200]
-  set y array:from-list [50 50 100 100 200 200]
+  set x array:from-list [50 50 50 50 50 50]
+  set y array:from-list [50 50 50 50 50 50]
   set WaitCount 10
   set fInfAccuracy 20; in percent out of 100
   set fATAccuracy 22
@@ -94,7 +94,7 @@ to setupSoldiers
       set allegience 1
       set state 1
       setxy array:item x 0  array:item x 4
-      set size 15 
+      set size 5 
       set heading 90
       set shape "default"
     ]    
@@ -155,13 +155,13 @@ to-report other-turtles
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-478
+448
 10
-1488
-1041
+1106
+689
 -1
 -1
-0.4
+1.013
 1
 4
 1
@@ -172,9 +172,9 @@ GRAPHICS-WINDOW
 0
 1
 0
-999
+639
 0
-999
+639
 0
 0
 1
