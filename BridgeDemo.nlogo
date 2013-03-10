@@ -4,8 +4,11 @@ globals[
    time-units      ;monitor to show the number of  goes 
    x
    y
+   que
    bridgeX
    bridgeY
+   bridgeOccupied
+   bridgeWait
    randomrunnum    ;crappy hack to get unique filenames for each run in behaviourspace experiments
    filename        ;place for aforementioned filename
    fInfAccuracy
@@ -40,7 +43,10 @@ soldiers-own[
   numArtillary
   startingArtillary; 
   hitsTaken
-  state; 1 attack, 2 defend, 3 something else yet to come?
+  destinationX
+  destinationY
+  destinationNum
+  state; 1 ready, 2 moving, 3 crossing bridge, 4 crossed bridge
 ];hi
 
 to setup
@@ -55,35 +61,38 @@ to setup-patches
 end
 to setup-globals
   set randomrunnum random 999999
-  set x array:from-list [148 142 157 134 164 154 161 145 136 166]
-  set y array:from-list [178 179 172 181 168 186 181 192 195 176]
+  set x array:from-list [145 142 157 134 164 154 161 145 136 166]
+  set y array:from-list [174 179 172 181 168 186 181 192 195 176]
+  set que array:from-list [false false false false false false false false false false]
   set bridgeX array:from-list [153 139]
   set bridgeY array:from-list [168 140]
+  set bridgeOccupied false
+  set bridgeWait 4
   set WaitCount 10
-  set fInfAccuracy 20; in percent out of 100
-  set fHedgAccuracy 22
-  set fTankAccuracy 26
-  set fArtAccuracy 20
-  set gInfAccuracy 21
-  set gTankAccuracy 21
-  set gArtAccuracy 21
+  set fInfAccuracy 1; in percent out of 100
+  set fHedgAccuracy 7
+  set fTankAccuracy 5
+  set fArtAccuracy 7
+  set gInfAccuracy 7
+  set gTankAccuracy 5
+  set gArtAccuracy 5
   set fInfDmg 1;number of units it kills
   set fHedgeDmg 1
-  set fTankDmg 2
-  set fArtDmg 2
+  set fTankDmg 1
+  set fArtDmg 1
   set gInfDmg 1
-  set gTankDmg 2
-  set gArtDmg 2
+  set gTankDmg 1
+  set gArtDmg 1
 end
 
 to setupSoldiers
-  create-soldiers (FrenchDivisions)[
-    if who < FrenchDivisions[
+  create-soldiers (10)[
+    if who < 10[
       
       set effectiveness 100
-      set startingInfantry FrenchInfantry
+      set startingInfantry 30000
       set numInfantry startingInfantry
-      set startingHedgehogs FrenchHedgehogs
+      set startingHedgehogs 0
       set numHedgehogs startingHedgehogs
       set startingTanks FrenchTanks
       set numTanks startingTanks
@@ -95,15 +104,18 @@ to setupSoldiers
       set speed 2
       set allegience 1
       set state 1
+      set destinationX -1
+      set destinationY -1
+      set destinationNum -1
       set size 10
       set heading 90
       set shape "TankRight"
       set color blue
     ]    
   ]
-  create-soldiers (GermanDivisions)[
-    if who < FrenchDivisions + GermanDivisions[
-      set startingInfantry GermanInfantry
+  create-soldiers (10)[
+    if who < 10 + 10[
+      set startingInfantry 16000
       set numInfantry startingInfantry
       set startingHedgehogs 0
       set numHedgehogs startingHedgehogs
@@ -117,6 +129,9 @@ to setupSoldiers
       set allegience 2
       set hitsTaken 0
       set state 1
+      set destinationX -1
+      set destinationY -1
+      set destinationNum -1
       set size 10
       set heading 220
       set shape "Default"
@@ -143,8 +158,12 @@ to Step
   ask soldiers[
     if(any? soldiers with [color = red] and any? soldiers with [color = blue])[
         attack
-    ]
-      
+       
+    ]  
+  ]
+  ask soldiers[
+    getMoveOrders
+    move
   ]
   ask soldiers[
     applyDamage 
@@ -158,8 +177,69 @@ to Steps
 end
 
 to move
-  
-  
+  if(state = 2)[
+    ifelse(absolute-value (destinationX - xcor) < speed and absolute-value (destinationY - ycor) < speed)[
+      facexy 125 125
+      set state 1
+
+    ]
+    [
+      facexy destinationX destinationY
+      forward speed
+     ;       
+    ]
+  ]
+  if(state = 3)[
+    ifelse(bridgeWait = 0)[
+     set bridgeWait 4
+     facexy destinationX destinationY
+     forward 1 
+    ]
+    [
+      set bridgeWait (bridgeWait - 1)
+    ]
+  ]
+  if(state = 4)[
+   facexy 0 0
+   forward speed 
+  ]
+end
+to getMoveOrders
+  if(state = 1 and allegience = 2)[
+    let i 0
+    let goal -1
+    repeat 10[
+      if(goal = -1 and array:item que i = false)[
+        set goal i
+        set state 2
+        set destinationX (array:item x i) 
+        set destinationY (array:item y i)
+        set destinationNum i
+        array:set que i true
+      ]
+      set i (i + 1)
+    ]
+  ]
+  if(destinationNum = 0 and state = 1 and bridgeOccupied = false)[
+   set destinationNum -1
+   set state 3
+   set destinationX (array:item bridgeX 1)
+   set destinationY (array:item bridgeY 1)
+   array:set que 0 false 
+   set bridgeOccupied true
+  ]
+
+  if(state = 3 and absolute-value ((array:item bridgeX 1) - xcor) < speed and absolute-value ((array:item bridgeY 1) - ycor) < speed)[
+   set state 4
+   set destinationX (array:item bridgeX 1)
+   set destinationY (array:item bridgeY 1)
+   set bridgeOccupied false
+  ]    
+  ;repeat 10[
+
+      
+
+  ;]
 end
 
 ;run procedure
@@ -184,7 +264,6 @@ to applyDamage
   if(allegience = 1)[
      repeat hitsTaken[
         let whatsHit random (numInfantry + numTanks + numArtillary + numHedgehogs + 1 )
-        show whatsHit
         if(whatsHit <= numInfantry)[
           
           set numInfantry numInfantry - 1
@@ -214,8 +293,10 @@ to applyDamage
       ]
       set hitsTaken 0
       set effectiveness (numInfantry + numHedgehogs + numTanks + numArtillary) / (startingInfantry + startingHedgehogs + startingTanks + startingArtillary)
-      show effectiveness
       if( effectiveness = 0)[
+        if(state = 3)[
+          set bridgeOccupied false
+        ]
         die
       ]
    ]
@@ -242,8 +323,10 @@ to applyDamage
       ]
       set hitsTaken 0
       set effectiveness (numInfantry + numTanks + numArtillary) / (startingInfantry + startingTanks + startingArtillary)
-      show effectiveness
       if( effectiveness = 0)[
+        if(state = 3)[
+          set bridgeOccupied false
+        ]
         die
       ]
    ]
@@ -251,11 +334,10 @@ end
 to attack     
   let opponent 0
   set opponent nearest other-turtles;opponent always exists because of conditional in integrate function
-  set heading towards opponent
   if(distance opponent <= maxRange)[
     if( allegience = 1)[
       
-      repeat numInfantry[
+      repeat (numInfantry / 100)[
         if(random 100 <=  fInfAccuracy)[
           ask opponent[ set hitsTaken hitsTaken + fInfDmg]
         ]
@@ -280,7 +362,7 @@ to attack
     ]
     if( allegience = 2)[
       
-      repeat numInfantry[
+      repeat (numInfantry / 100)[
         if(random 100 <=  gInfAccuracy)[
           ask opponent[ set hitsTaken hitsTaken + gInfDmg]
         ]
@@ -298,6 +380,12 @@ to attack
     ]  
   ]     
 end   
+
+to-report absolute-value [number]
+  ifelse number >= 0
+    [ report number ]
+    [ report (- number) ]
+end
 
 to-report nearest [agentset]
   ifelse color = red[
@@ -393,7 +481,7 @@ GermanTanks
 GermanTanks
 0
 1000
-389
+656
 1
 1
 NIL
@@ -408,32 +496,17 @@ FrenchTanks
 FrenchTanks
 0
 1000
-62
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-11
-152
-183
-185
-FrenchInfantry
-FrenchInfantry
-0
-1000
-1000
+293
 1
 1
 NIL
 HORIZONTAL
 
 BUTTON
-80
-62
-143
-95
+82
+65
+145
+98
 Step
 step
 NIL
@@ -464,36 +537,6 @@ NIL
 1
 
 SLIDER
-224
-153
-396
-186
-GermanInfantry
-GermanInfantry
-0
-1000
-1000
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-10
-193
-189
-226
-FrenchHedgehogs
-FrenchHedgehogs
-0
-1000
-54
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
 12
 282
 184
@@ -518,36 +561,6 @@ GermanArtillary
 0
 1000
 49
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-11
-111
-183
-144
-FrenchDivisions
-FrenchDivisions
-0
-10
-10
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-224
-113
-396
-146
-GermanDivisions
-GermanDivisions
-0
-10
-10
 1
 1
 NIL
