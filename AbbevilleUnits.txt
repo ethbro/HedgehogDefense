@@ -1,0 +1,33 @@
+Abbeville Units
+	German:
+		on 25 May
+			Abbeville held by 57th Bavarian Infantry Division
+		on June 5th
+			Conde-Hangest bridges taken by XV Panzer Corps
+				infantry regiments led the assault
+				armor followed a bit after (engineers had to remove rails for tanks to cross)
+
+	French:
+		on June 1st
+			4th Armored Division (aka 4th DCr) withdrawn from area
+			5th Cavalry Division relieved by British 51st Highland Division
+			2nd Cavalry Division relieved by 31st Alpine Division
+		on June 4th
+			Reconstituted 2nd Armored Div (DCr) deployed on line
+			2nd DCr and 31st Alpine Div attack to reduce bridgehead
+				helped by two British brigades: 154th and 152nd
+		on June 5th
+			Germans attack
+			Units west of Abbeville (near St Valery / mouth of Somme, where there was another bridgehead)
+				British 154th Brigade on left
+				31st Alpine Div & British 153th Brigade
+				British 152nd Brigade
+			Units opposite Abbeville
+				2nd Cavalry Div on line
+				5th Cavalry Div farther back (positions around Hallencourt)
+			Units east of Abbeville (covering Conde-Hangest area, where there was another bridgehead)
+				3rd Cavalry Div (probably 6th Dragoons [3rd Cav's horsed brigade])
+					3rd Cav's mechanized brigade had already been sent away
+				Being relieved by two regiments of 5th Colonial Division
+					5th Col's artillery was not yet in position
+				in progress, so elements of both units present at time of attack
