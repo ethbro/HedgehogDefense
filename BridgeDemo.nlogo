@@ -25,8 +25,7 @@ globals[
    gInfDmg
    gTankDmg
    gArtDmg
-];another  manny comment
-
+]
 breed [soldiers soldier]
 soldiers-own[
   allegience;are they fighting for side 1 or 2?
@@ -47,7 +46,7 @@ soldiers-own[
   destinationY
   destinationNum
   state; 1 ready, 2 moving, 3 crossing bridge, 4 crossed bridge
-];hi
+]
 
 to setup
   __clear-all-and-reset-ticks;clear the screen
@@ -158,7 +157,6 @@ to Step
   ask soldiers[
     if(any? soldiers with [color = red] and any? soldiers with [color = blue])[
         attack
-       
     ]  
   ]
   ask soldiers[
@@ -186,7 +184,6 @@ to move
     [
       facexy destinationX destinationY
       forward speed
-     ;       
     ]
   ]
   if(state = 3)[
@@ -198,10 +195,6 @@ to move
     [
       set bridgeWait (bridgeWait - 1)
     ]
-  ]
-  if(state = 4)[
-   facexy 0 0
-   forward speed 
   ]
 end
 to getMoveOrders
@@ -234,12 +227,31 @@ to getMoveOrders
    set destinationX (array:item bridgeX 1)
    set destinationY (array:item bridgeY 1)
    set bridgeOccupied false
-  ]    
-  ;repeat 10[
-
-      
-
-  ;]
+  ]
+  if(state = 4)[
+    let opponent 0     
+    ifelse(any? soldiers with [color = blue])[
+      set opponent nearest other-turtles with[allegience = 1];opponent always exists because of conditional in integrate function
+      ifelse(distance opponent < speed)[
+        set heading towards opponent
+      ]
+      [
+        set heading towards opponent
+        forward speed
+      ]        
+    ]
+    [
+      set destinationX 0
+      set destinationY 0
+      ifelse(absolute-value (destinationX - xcor) > speed and absolute-value (destinationY - ycor) > speed)[
+        facexy destinationX destinationY
+        forward speed
+      ]
+      [
+        facexy destinationX destinationY
+      ]
+    ]
+  ]
 end
 
 ;run procedure
@@ -265,7 +277,6 @@ to applyDamage
      repeat hitsTaken[
         let whatsHit random (numInfantry + numTanks + numArtillary + numHedgehogs + 1 )
         if(whatsHit <= numInfantry)[
-          
           set numInfantry numInfantry - 1
           if(numInfantry < 0)[
             set numInfantry  0
@@ -330,13 +341,13 @@ to applyDamage
         die
       ]
    ]
-end                                
+end       
+                         
 to attack     
   let opponent 0
   set opponent nearest other-turtles;opponent always exists because of conditional in integrate function
   if(distance opponent <= maxRange)[
     if( allegience = 1)[
-      
       repeat (numInfantry / 100)[
         if(random 100 <=  fInfAccuracy)[
           ask opponent[ set hitsTaken hitsTaken + fInfDmg]
@@ -357,11 +368,8 @@ to attack
           ask opponent[ set hitsTaken hitsTaken + fArtDmg]
         ]
       ]
-      
-      
     ]
     if( allegience = 2)[
-      
       repeat (numInfantry / 100)[
         if(random 100 <=  gInfAccuracy)[
           ask opponent[ set hitsTaken hitsTaken + gInfDmg]
@@ -429,9 +437,9 @@ ticks
 
 BUTTON
 16
-11
+12
 83
-44
+45
 NIL
 setup
 NIL
