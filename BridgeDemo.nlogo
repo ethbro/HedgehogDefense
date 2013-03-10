@@ -2,13 +2,13 @@ extensions [array]
 globals[
   WaitCount
    time-units      ;monitor to show the number of  goes 
-   x
+   x; waiting positions for the units while they wait to cross the bridge
    y
-   que
-   bridgeX
+   que; lets units know what spots are available to wait in
+   bridgeX; the start and end of the bridge
    bridgeY
-   bridgeOccupied
-   bridgeWait
+   bridgeOccupied;boolean that announces if the bridge can be entered
+   bridgeWait; time between the movement of the unit on the bridge
    randomrunnum    ;crappy hack to get unique filenames for each run in behaviourspace experiments
    filename        ;place for aforementioned filename
    fInfAccuracy
@@ -42,9 +42,9 @@ soldiers-own[
   numArtillary
   startingArtillary; 
   hitsTaken
-  destinationX
+  destinationX;where the unit is heading
   destinationY
-  destinationNum
+  destinationNum;the position the unit has chosen to wait in
   state; 1 ready, 2 moving, 3 crossing bridge, 4 crossed bridge
 ]
 
@@ -56,7 +56,7 @@ to setup
   setupSoldiers
 end
 to setup-patches
-  import-drawing "AbbevilleBridge.png"
+  import-drawing "AbbevilleBridge.png";background image
 end
 to setup-globals
   set randomrunnum random 999999
@@ -87,7 +87,6 @@ end
 to setupSoldiers
   create-soldiers (10)[
     if who < 10[
-      
       set effectiveness 100
       set startingInfantry 30000
       set numInfantry startingInfantry
@@ -107,8 +106,11 @@ to setupSoldiers
       set destinationY -1
       set destinationNum -1
       set size 10
-      set heading 90
-      set shape "TankRight"
+      set heading 40
+      set shape "Default"
+      if(who = 5 or who = 9)[
+        set shape "TankRight"
+      ]
       set color blue
     ]    
   ]
@@ -134,6 +136,9 @@ to setupSoldiers
       set size 10
       set heading 220
       set shape "Default"
+      if(who = 19 or who = 10)[
+       set shape "TankLeft" 
+      ]
       set color red
     ]    
   ]
@@ -175,35 +180,40 @@ to Steps
 end
 
 to move
-  if(state = 2)[
+  if(state = 2)[;if the unit is moving toward a waiting position go toward it until it's too close to move farther
     ifelse(absolute-value (destinationX - xcor) < speed and absolute-value (destinationY - ycor) < speed)[
+      ;if the unit reached its waiting position face the enemies and set its state to ready to move
       facexy 125 125
       set state 1
-
     ]
     [
+      ;if it hasn't reached its waiting point move toward it at its normal speed
       facexy destinationX destinationY
       forward speed
     ]
   ]
   if(state = 3)[
+    ;if the unit is crossing the bridge wait a set time, then move a step across
     ifelse(bridgeWait = 0)[
-     set bridgeWait 4
+     set bridgeWait 4;reset the wait time after he moves
      facexy destinationX destinationY
      forward 1 
     ]
     [
-      set bridgeWait (bridgeWait - 1)
+      set bridgeWait (bridgeWait - 1);decrease the wait time if it isn't ready to move
     ]
   ]
 end
+
 to getMoveOrders
-  if(state = 1 and allegience = 2)[
+  if(state = 1 and allegience = 2)[;for the ready germans
     let i 0
     let goal -1
+    ;find the nearest empty waiting spot to fill in at
     repeat 10[
       if(goal = -1 and array:item que i = false)[
         set goal i
+        ;set that waiting spot as the units destination and state that the spot is occupied
         set state 2
         set destinationX (array:item x i) 
         set destinationY (array:item y i)
@@ -213,7 +223,9 @@ to getMoveOrders
       set i (i + 1)
     ]
   ]
+  ;if the bridge is empty and the unit nearest the bridge is ready for orders
   if(destinationNum = 0 and state = 1 and bridgeOccupied = false)[
+   ;set it to crossing the bridge and announce that its space is now available for someone else to take
    set destinationNum -1
    set state 3
    set destinationX (array:item bridgeX 1)
@@ -221,14 +233,15 @@ to getMoveOrders
    array:set que 0 false 
    set bridgeOccupied true
   ]
-
+  ;if the unit has gotten across the bridge
   if(state = 3 and absolute-value ((array:item bridgeX 1) - xcor) < speed and absolute-value ((array:item bridgeY 1) - ycor) < speed)[
+    ;set its state to having crossed the bridge and announce that the bridge is empty and ready for someone else to cross
    set state 4
-   set destinationX (array:item bridgeX 1)
-   set destinationY (array:item bridgeY 1)
    set bridgeOccupied false
   ]
+  ;if a unit has crossed the bridge
   if(state = 4)[
+    ;move toward the nearest opponent if there are any, otherwise move to the bottom left of the map
     let opponent 0     
     ifelse(any? soldiers with [color = blue])[
       set opponent nearest other-turtles with[allegience = 1];opponent always exists because of conditional in integrate function
@@ -266,7 +279,7 @@ to go
       set WaitCount WaitCount - 1;if we are waiting to move then continue the count down until we do
     ]          
   ]
-  if time-units >= 42800[ ;after a set amount of time stop the simulation
+  if time-units >= 4200[ ;after a set amount of time stop the simulation
     file-close
     stop
   ]            
@@ -274,6 +287,7 @@ end
 
 to applyDamage
   if(allegience = 1)[
+    ;for every hit the unit took assign a random soldier within the unit to die
      repeat hitsTaken[
         let whatsHit random (numInfantry + numTanks + numArtillary + numHedgehogs + 1 )
         if(whatsHit <= numInfantry)[
@@ -302,12 +316,11 @@ to applyDamage
         ]
         ]
       ]
+     ;once all the hits have been applied reset the counter
       set hitsTaken 0
       set effectiveness (numInfantry + numHedgehogs + numTanks + numArtillary) / (startingInfantry + startingHedgehogs + startingTanks + startingArtillary)
       if( effectiveness = 0)[
-        if(state = 3)[
-          set bridgeOccupied false
-        ]
+        ;if there are no soldiers left inside the unit
         die
       ]
    ]
@@ -346,6 +359,7 @@ end
 to attack     
   let opponent 0
   set opponent nearest other-turtles;opponent always exists because of conditional in integrate function
+  ;currently finds the nearest enemy unit and starts shooting at them. 
   if(distance opponent <= maxRange)[
     if( allegience = 1)[
       repeat (numInfantry / 100)[
@@ -388,7 +402,7 @@ to attack
     ]  
   ]     
 end   
-
+;removes negatives, used for finding distance to someone
 to-report absolute-value [number]
   ifelse number >= 0
     [ report number ]
@@ -745,25 +759,45 @@ true
 0
 Polygon -7500403 true true 150 0 180 135 255 255 225 240 150 180 75 240 45 255 120 135
 
+tankleft
+true
+15
+Rectangle -2674135 true false 60 60 90 270
+Rectangle -2674135 true false 90 45 150 285
+Circle -16777216 true false 54 234 42
+Circle -16777216 true false 54 189 42
+Circle -16777216 true false 54 144 42
+Circle -16777216 true false 54 99 42
+Circle -16777216 true false 54 54 42
+Rectangle -2674135 true false 180 15 225 105
+Rectangle -2674135 true false 180 0 240 15
+Rectangle -2674135 true false 255 135 270 195
+Rectangle -2674135 true false 135 270 150 300
+Rectangle -2674135 true false 120 285 135 300
+Rectangle -2674135 true false 120 30 150 45
+Rectangle -2674135 true false 135 15 150 30
+Rectangle -2674135 true false 165 225 240 240
+Rectangle -2674135 true false 150 105 255 225
+
 tankright
 true
 15
-Rectangle -13345367 true false 165 60 225 270
-Rectangle -13345367 true false 90 105 150 210
+Rectangle -13345367 true false 210 60 240 270
 Rectangle -13345367 true false 150 45 210 285
-Circle -16777216 true false 189 234 42
-Circle -16777216 true false 189 189 42
-Circle -16777216 true false 189 144 42
-Circle -16777216 true false 189 99 42
-Circle -16777216 true false 189 54 42
-Rectangle -13345367 true false 105 15 135 105
-Rectangle -13345367 true false 90 0 135 15
-Rectangle -13345367 true false 75 150 90 195
+Circle -16777216 true false 204 234 42
+Circle -16777216 true false 204 189 42
+Circle -16777216 true false 204 144 42
+Circle -16777216 true false 204 99 42
+Circle -16777216 true false 204 54 42
+Rectangle -13345367 true false 75 15 120 105
+Rectangle -13345367 true false 60 0 120 15
+Rectangle -13345367 true false 30 135 45 195
 Rectangle -13345367 true false 150 270 165 300
 Rectangle -13345367 true false 165 285 180 300
 Rectangle -13345367 true false 150 30 180 45
 Rectangle -13345367 true false 150 15 165 30
-Rectangle -13345367 true false 90 210 135 225
+Rectangle -13345367 true false 60 225 135 240
+Rectangle -13345367 true false 45 105 150 225
 
 thin-arrow
 true
