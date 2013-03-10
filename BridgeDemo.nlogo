@@ -1,8 +1,11 @@
+extensions [array]
 globals[
   WaitCount
    time-units      ;monitor to show the number of  goes 
    x
    y
+   bridgeX
+   bridgeY
    randomrunnum    ;crappy hack to get unique filenames for each run in behaviourspace experiments
    filename        ;place for aforementioned filename
    fInfAccuracy
@@ -23,7 +26,6 @@ globals[
 
 breed [soldiers soldier]
 soldiers-own[
-  name;
   allegience;are they fighting for side 1 or 2?
   effectiveness
   maxRange;
@@ -49,10 +51,14 @@ to setup
   setupSoldiers
 end
 to setup-patches
-  import-drawing "Abbeville.png"
+  import-drawing "AbbevilleBridge.png"
 end
 to setup-globals
   set randomrunnum random 999999
+  set x array:from-list [148 142 157 134 164 154 161 145 136 166]
+  set y array:from-list [178 179 172 181 168 186 181 192 195 176]
+  set bridgeX array:from-list [153 139]
+  set bridgeY array:from-list [168 140]
   set WaitCount 10
   set fInfAccuracy 20; in percent out of 100
   set fHedgAccuracy 22
@@ -73,9 +79,8 @@ end
 to setupSoldiers
   create-soldiers (FrenchDivisions)[
     if who < FrenchDivisions[
-      set color blue
+      
       set effectiveness 100
-      set name "4nd Division"
       set startingInfantry FrenchInfantry
       set numInfantry startingInfantry
       set startingHedgehogs FrenchHedgehogs
@@ -90,15 +95,14 @@ to setupSoldiers
       set speed 2
       set allegience 1
       set state 1
-      set size 6
+      set size 10
       set heading 90
-      set shape "default"
+      set shape "TankRight"
+      set color blue
     ]    
   ]
   create-soldiers (GermanDivisions)[
     if who < FrenchDivisions + GermanDivisions[
-      set color red
-      set name "Panzer Division"
       set startingInfantry GermanInfantry
       set numInfantry startingInfantry
       set startingHedgehogs 0
@@ -113,9 +117,10 @@ to setupSoldiers
       set allegience 2
       set hitsTaken 0
       set state 1
-      set size 6
+      set size 10
       set heading 220
-      set shape "default"
+      set shape "Default"
+      set color red
     ]    
   ]
   ask soldiers[
@@ -137,12 +142,46 @@ to Step
   set time-units time-units + 1;increase the counter for the total number of ticks that have gone by so far 
   ask soldiers[
     if(any? soldiers with [color = red] and any? soldiers with [color = blue])[
-        interact
+        attack
     ]
       
   ]
   ask soldiers[
-   if(allegience = 1)[
+    applyDamage 
+  ]
+end
+
+to Steps
+  repeat 50[
+   Step 
+  ]
+end
+
+to move
+  
+  
+end
+
+;run procedure
+to go 
+  ask soldiers [ 
+    ;wait x ticks between each move so everything is visible
+    ifelse (WaitCount <= 0)[
+      Step
+      set WaitCount  10; set up to wait for 10 ticks until each unit moves again
+    ]
+    [
+      set WaitCount WaitCount - 1;if we are waiting to move then continue the count down until we do
+    ]          
+  ]
+  if time-units >= 42800[ ;after a set amount of time stop the simulation
+    file-close
+    stop
+  ]            
+end  
+
+to applyDamage
+  if(allegience = 1)[
      repeat hitsTaken[
         let whatsHit random (numInfantry + numTanks + numArtillary + numHedgehogs + 1 )
         show whatsHit
@@ -207,42 +246,13 @@ to Step
       if( effectiveness = 0)[
         die
       ]
-   ] 
-    
-  ]
-end
-
-to Steps
-  repeat 50[
-   Step 
-  ]
-end
-
-;run procedure
-to go 
-  ask soldiers [ 
-    ;wait x ticks between each move so everything is visible
-    ifelse (WaitCount <= 0)[
-      Step
-      set WaitCount  10; set up to wait for 10 ticks until each unit moves again
-    ]
-    [
-      set WaitCount WaitCount - 1;if we are waiting to move then continue the count down until we do
-    ]          
-  ]
-  if time-units >= 42800[ ;after a set amount of time stop the simulation
-    file-close
-    stop
-  ]            
-end  
-                                
-to interact     
-  let winner 0
-  let loser 0
+   ]
+end                                
+to attack     
   let opponent 0
   set opponent nearest other-turtles;opponent always exists because of conditional in integrate function
   set heading towards opponent
-  ifelse distance opponent <= maxRange[
+  if(distance opponent <= maxRange)[
     if( allegience = 1)[
       
       repeat numInfantry[
@@ -286,10 +296,7 @@ to interact
         ]
       ]
     ]  
-  ]
-  [
-   forward speed 
-  ]      
+  ]     
 end   
 
 to-report nearest [agentset]
@@ -716,6 +723,26 @@ spacecraft
 true
 0
 Polygon -7500403 true true 150 0 180 135 255 255 225 240 150 180 75 240 45 255 120 135
+
+tankright
+true
+15
+Rectangle -13345367 true false 165 60 225 270
+Rectangle -13345367 true false 90 105 150 210
+Rectangle -13345367 true false 150 45 210 285
+Circle -16777216 true false 189 234 42
+Circle -16777216 true false 189 189 42
+Circle -16777216 true false 189 144 42
+Circle -16777216 true false 189 99 42
+Circle -16777216 true false 189 54 42
+Rectangle -13345367 true false 105 15 135 105
+Rectangle -13345367 true false 90 0 135 15
+Rectangle -13345367 true false 75 150 90 195
+Rectangle -13345367 true false 150 270 165 300
+Rectangle -13345367 true false 165 285 180 300
+Rectangle -13345367 true false 150 30 180 45
+Rectangle -13345367 true false 150 15 165 30
+Rectangle -13345367 true false 90 210 135 225
 
 thin-arrow
 true
