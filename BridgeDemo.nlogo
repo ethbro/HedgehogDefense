@@ -1,5 +1,12 @@
 extensions [array]
 globals[
+  ;MACROS
+  UNIT_NAME
+  UNIT_ICON
+  UNIT_FORMATION
+  COLOR_FR
+  COLOR_GR
+
   WaitCount
    time-units      ;monitor to show the number of  goes 
    x; waiting positions for the units while they wait to cross the bridge
@@ -25,6 +32,8 @@ globals[
    gInfDmg
    gTankDmg
    gArtDmg
+   FrUnits
+   GrUnits
 ]
 breed [soldiers soldier]
 soldiers-own[
@@ -59,10 +68,41 @@ to setup-patches
   import-drawing "AbbevilleBridge.png";background image
 end
 to setup-globals
+  ; MACROS
+  set UNIT_NAME 0
+  set UNIT_ICON 1
+  set UNIT_FORMATION 2
+  set COLOR_FR 96   ; aka NATO friendly "light blue"
+  set COLOR_GR 16   ; aka NATO hostile "light red"
+
   set randomrunnum random 999999
   set x array:from-list [145 142 157 134 164 154 161 145 136 166]
   set y array:from-list [174 179 172 181 168 186 181 192 195 176]
   set que array:from-list [false false false false false false false false false false]
+
+  ; List of French Units
+  ; Unit name, appropriate shape name, commanding unit name
+  set FrUnits [["3rd Cavalry Brigade" "brigade cavalry" "2nd Light Cavalry Division" ]
+               ["12th Light Mechanized Brigade" "brigade light mechanized" "2nd Light Cavalry Division"]
+               ["73rd Artillery Regiment" "brigade artillery" "2nd Light Cavalry Division"]
+               ["6th Cavalry Brigade" "brigade cavalry" "5th Light Cavalry Division"]
+               ["15th Light Mechanized Brigade" "brigade light mechanized" "5th Light Cavalry Division"]
+               ["78th Artillery Regiment" "brigade artillery" "5th Light Cavalry Division"]
+               ;FIXME French units need proper positioning (2nd Cav Div in close, 5th Cav Div farther back)
+  ]
+
+  ; List of German units (see above for formatting)
+  set GrUnits [["25th Panzer Regiment" "brigade armored" "7th Panzer Division"]
+               ["6th Motorized Infantry Regiment" "brigade motorized" "7th Panzer Division"]
+               ["7th Motorized Infantry Regiment" "brigade motorized" "7th Panzer Division"]
+               ["78th Motorized Artillery Regiment" "brigade artillery" "7th Panzer Division"]
+               ;FIXME need to make a motorized artillery icon /\
+               ["X Panzer Regiment" "brigade armored" "X Panzer Division"]
+               ["Y Motorized Infantry Regiment" "brigade motorized" "X Panzer Division"]
+               ["Z Motorized Infantry Regiment" "brigade motorized" "X Panzer Division"]
+               ["A Motorized Artillery Regiment" "brigade artillery" "X Panzer Division"]
+               ;FIXME need actual German units attacking from the Abbeville bridgehead
+  ]
   set bridgeX array:from-list [153 139]
   set bridgeY array:from-list [168 140]
   set bridgeOccupied false
@@ -85,74 +125,78 @@ to setup-globals
 end
 
 to setupSoldiers
-  create-soldiers (10)[
-    if who < 10[
-      set effectiveness 100
-      set startingInfantry 30000
-      set numInfantry startingInfantry
-      set startingHedgehogs 0
-      set numHedgehogs startingHedgehogs
-      set startingTanks FrenchTanks
-      set numTanks startingTanks
-      set startingArtillary FrenchArtillary
-      set numArtillary startingArtillary
-      set maxRange 100
-      set minRange 10
-      set hitsTaken 0
-      set speed 2
-      set allegience 1
-      set state 1
-      set destinationX -1
-      set destinationY -1
-      set destinationNum -1
-      set size 10
-      set heading 40
-      set shape "Default"
-      if(who = 5 or who = 9)[
-        set shape "TankRight"
-      ]
-      set color blue
-    ]    
+  ; Create French units
+  let i 0
+  create-soldiers (length FrUnits) [
+    let unitInfo (item i FrUnits)
+    set i (i + 1)
+
+    let thisIcon (item UNIT_ICON UnitInfo)
+    set shape (word thisIcon)
+    set color COLOR_FR
+
+    set effectiveness 100
+    set startingInfantry 30000
+    set numInfantry startingInfantry
+    set startingHedgehogs 0
+    set numHedgehogs startingHedgehogs
+    set startingTanks FrenchTanks
+    set numTanks startingTanks
+    set startingArtillary FrenchArtillary
+    set numArtillary startingArtillary
+    set maxRange 100
+    set minRange 10
+    set hitsTaken 0
+    set speed 2
+    set allegience 1
+    set state 1
+    set destinationX -1
+    set destinationY -1
+    set destinationNum -1
+    set size 10
+    set heading 40
   ]
-  create-soldiers (10)[
-    if who < 10 + 10[
-      set startingInfantry 16000
-      set numInfantry startingInfantry
-      set startingHedgehogs 0
-      set numHedgehogs startingHedgehogs
-      set startingTanks GermanTanks
-      set numTanks startingTanks
-      set startingArtillary GermanArtillary
-      set numArtillary startingArtillary
-      set maxRange 100
-      set minRange 10
-      set speed 2
-      set allegience 2
-      set hitsTaken 0
-      set state 1
-      set destinationX -1
-      set destinationY -1
-      set destinationNum -1
-      set size 10
-      set heading 220
-      set shape "Default"
-      if(who = 19 or who = 10)[
-       set shape "TankLeft" 
-      ]
-      set color red
-    ]    
+
+  ; Create German units
+  set i 0
+  create-soldiers (length GrUnits)[
+    let unitInfo (item i GrUnits)
+    set i (i + 1)
+
+    let thisIcon (item UNIT_ICON UnitInfo)
+    set shape (word thisIcon)
+    set color COLOR_GR
+
+    set startingInfantry 16000
+    set numInfantry startingInfantry
+    set startingHedgehogs 0
+    set numHedgehogs startingHedgehogs
+    set startingTanks GermanTanks
+    set numTanks startingTanks
+    set startingArtillary GermanArtillary
+    set numArtillary startingArtillary
+    set maxRange 100
+    set minRange 10
+    set speed 2
+    set allegience 2
+    set hitsTaken 0
+    set state 1
+    set destinationX -1
+    set destinationY -1
+    set destinationNum -1
+    set size 10
+    set heading 220
   ]
   ask soldiers[
-    ifelse color = red[
+    ifelse color = COLOR_GR [
       setxy 120 + 5 * who (270 - 5 * who)
-    ]
-    [
-     if(who < 5)[
-       setxy 140 - 5 * who (120 + 5 * who)
-     ]
-     if(who > 4)[
+    ] [
+      if(who < 5)[
+        setxy 140 - 5 * who (120 + 5 * who)
+      ]
+      if(who > 4)[
        setxy 170 - 5 * who (100 + 5 * who)
-     ]
+      ]
     ]
   ]
 end
@@ -160,7 +204,7 @@ end
 to Step
   set time-units time-units + 1;increase the counter for the total number of ticks that have gone by so far 
   ask soldiers[
-    if(any? soldiers with [color = red] and any? soldiers with [color = blue])[
+    if(any? soldiers with [color = COLOR_GR] and any? soldiers with [color = COLOR_FR])[
         attack
     ]  
   ]
@@ -243,7 +287,7 @@ to getMoveOrders
   if(state = 4)[
     ;move toward the nearest opponent if there are any, otherwise move to the bottom left of the map
     let opponent 0     
-    ifelse(any? soldiers with [color = blue])[
+    ifelse(any? soldiers with [color = COLOR_FR])[
       set opponent nearest other-turtles with[allegience = 1];opponent always exists because of conditional in integrate function
       ifelse(distance opponent < speed)[
         set heading towards opponent
@@ -410,11 +454,11 @@ to-report absolute-value [number]
 end
 
 to-report nearest [agentset]
-  ifelse color = red[
-    report min-one-of agentset with [color = blue] [distance myself]          ;;find nearest agent in a group    
+  ifelse color = COLOR_GR [
+    report min-one-of agentset with [color = COLOR_FR] [distance myself]          ;;find nearest agent in a group    
   ]
   [
-    report min-one-of agentset with [color = red] [distance myself]          ;;find nearest agent in a group
+    report min-one-of agentset with [color = COLOR_GR] [distance myself]          ;;find nearest agent in a group
   ]
 end
 
@@ -714,6 +758,98 @@ box
 true
 0
 Polygon -7500403 true true 45 255 255 255 255 45 45 45
+
+brigade
+false
+0
+Rectangle -16777216 true false 0 75 300 255
+Rectangle -7500403 true true 15 90 285 240
+Polygon -16777216 true false 165 60 180 60 135 15 120 15 165 60
+Polygon -16777216 true false 165 15 180 15 135 60 120 60
+
+brigade armored
+false
+0
+Rectangle -16777216 true false 0 75 300 255
+Rectangle -7500403 true true 15 90 285 240
+Polygon -16777216 true false 165 60 180 60 135 15 120 15 165 60
+Polygon -16777216 true false 165 15 180 15 135 60 120 60
+Circle -16777216 true false 45 120 90
+Circle -16777216 true false 165 120 90
+Rectangle -16777216 true false 90 120 210 210
+Circle -7500403 true true 60 135 60
+Circle -7500403 true true 180 135 60
+Rectangle -7500403 true true 90 135 210 195
+
+brigade artillery
+false
+0
+Rectangle -16777216 true false 0 75 300 255
+Rectangle -7500403 true true 15 90 285 240
+Polygon -16777216 true false 165 60 180 60 135 15 120 15 165 60
+Polygon -16777216 true false 165 15 180 15 135 60 120 60
+Circle -16777216 true false 120 135 60
+
+brigade cavalry
+false
+0
+Rectangle -16777216 true false 0 75 300 255
+Rectangle -7500403 true true 15 90 285 240
+Polygon -16777216 true false 165 60 180 60 135 15 120 15 165 60
+Polygon -16777216 true false 165 15 180 15 135 60 120 60
+Polygon -16777216 true false 270 90 285 90 285 105 30 240 15 240 15 225
+
+brigade infantry
+false
+0
+Rectangle -16777216 true false 0 75 300 255
+Rectangle -7500403 true true 15 90 285 240
+Polygon -16777216 true false 165 60 180 60 135 15 120 15 165 60
+Polygon -16777216 true false 165 15 180 15 135 60 120 60
+Polygon -16777216 true false 30 90 15 90 15 105 270 240 285 240 285 225
+Polygon -16777216 true false 15 225 15 240 30 240 285 105 285 90 270 90
+
+brigade light mechanized
+false
+0
+Rectangle -16777216 true false 0 75 300 255
+Rectangle -7500403 true true 15 90 285 240
+Polygon -16777216 true false 165 60 180 60 135 15 120 15 165 60
+Polygon -16777216 true false 165 15 180 15 135 60 120 60
+Circle -16777216 true false 45 120 90
+Circle -16777216 true false 165 120 90
+Rectangle -16777216 true false 90 120 210 210
+Circle -7500403 true true 60 135 60
+Circle -7500403 true true 180 135 60
+Rectangle -7500403 true true 90 135 210 195
+Polygon -16777216 true false 270 90 285 90 285 105 30 240 15 240 15 225
+
+brigade mechanized
+false
+0
+Rectangle -16777216 true false 0 75 300 255
+Rectangle -7500403 true true 15 90 285 240
+Polygon -16777216 true false 165 60 180 60 135 15 120 15 165 60
+Polygon -16777216 true false 165 15 180 15 135 60 120 60
+Circle -16777216 true false 45 120 90
+Circle -16777216 true false 165 120 90
+Rectangle -16777216 true false 90 120 210 210
+Circle -7500403 true true 60 135 60
+Circle -7500403 true true 180 135 60
+Rectangle -7500403 true true 90 135 210 195
+Polygon -16777216 true false 270 90 285 90 285 105 30 240 15 240 15 225
+Polygon -16777216 true false 30 90 15 90 15 105 270 240 285 240 285 225
+
+brigade motorized
+false
+0
+Rectangle -16777216 true false 0 75 300 255
+Rectangle -7500403 true true 15 90 285 240
+Polygon -16777216 true false 165 60 180 60 135 15 120 15 165 60
+Polygon -16777216 true false 165 15 180 15 135 60 120 60
+Polygon -16777216 true false 30 90 15 90 15 105 270 240 285 240 285 225
+Polygon -16777216 true false 15 225 15 240 30 240 285 105 285 90 270 90
+Rectangle -16777216 true false 137 90 162 240
 
 butterfly1
 true
