@@ -19,3 +19,21 @@ unknown number of french brigades,
 These numbers are fudged
 132 turtles
 116 brigades, 6 light brigade, 10 armor brigades
+
+
+orietnation
+positioning
+clustering around cities
+
+german from (116, 503) to (629, same)
+
+370 346 is v bottom, 105th who is there
+
+631 387  is v right
+
+
+FRENCH
+
+left v is 110, 481
+middle is 363 312
+right is 631, 344

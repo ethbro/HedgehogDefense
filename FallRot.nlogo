@@ -74,31 +74,201 @@ to setup-globals
 end
 
 to setupSoldiers
-  create-soldiers (240)[
-    if who = 0[
-      set color blue
+  create-soldiers (188)[
+    if who < 188[
+      set name "German infantry"
+      set color red
+      set startingInfantry 1
       set effectiveness 100
-      set name "4nd Division"
-      set startingInfantry 0
-      set numInfantry startingInfantry
+      set startingInfantry 30000
+      set numInfantry 1
+      ;set startingHedgehogs 0
+      ;set numHedgehogs 1
       set startingAntiTanks 0
-      set numAntiTanks startingAntiTanks
-      set startingTanks 0
-      set numTanks startingTanks
-      set startingArtillary 0
-      set numArtillary startingArtillary
+      set numAntiTanks 1
+      set startingTanks 1
+      set numTanks 1
+      set startingArtillary 1
+      set numArtillary 1
       set maxRange 100
       set minRange 10
       set hitsTaken 0
       set speed 2
       set allegience 1
       set state 1
-      setxy array:item x 0  array:item x 4
-      set size 5 
-      set heading 90
-      set shape "default"
+      ;set destinationX -1
+      ;set destinationY -1
+      ;set destinationNum -1
+      set size 10
+      set heading 225
+      set shape "Default"
+      ;if(who = 5 or who = 9)[
+      ;  set shape "TankRight"
+      ;]
+      ;setxy array:item x 0  array:item x 4
     ]    
   ]
+  
+  create-soldiers (24)[
+    if who < 212[
+      set name "German tank"
+      set color red
+      set startingInfantry 1
+      set effectiveness 100
+      set startingInfantry 30000
+      set numInfantry 1
+      ;set startingHedgehogs 0
+      ;set numHedgehogs 1
+      set startingAntiTanks 0
+      set numAntiTanks 1
+      set startingTanks 1
+      set numTanks 1
+      set startingArtillary 1
+      set numArtillary 1
+      set maxRange 100
+      set minRange 10
+      set hitsTaken 0
+      set speed 2
+      set allegience 1
+      set state 1
+      ;set destinationX -1
+      ;set destinationY -1
+      ;set destinationNum -1
+      set size 10
+      set heading 225
+      set shape "Default"
+      ;if(who = 5 or who = 9)[
+      ;  set shape "TankRight"
+      ;]
+      ;setxy array:item x 0  array:item x 4
+    ]    
+  ]  
+  
+  create-soldiers (116)[
+    if who < 328[
+      set name "French infantry"
+      set color blue
+      set startingInfantry 1
+      set effectiveness 100
+      set startingInfantry 30000
+      set numInfantry 1
+      ;set startingHedgehogs 0
+      ;set numHedgehogs 1
+      set startingAntiTanks 0
+      set numAntiTanks 1
+      set startingTanks 1
+      set numTanks 1
+      set startingArtillary 1
+      set numArtillary 1
+      set maxRange 100
+      set minRange 10
+      set hitsTaken 0
+      set speed 2
+      set allegience 1
+      set state 1
+      ;set destinationX -1
+      ;set destinationY -1
+      ;set destinationNum -1
+      set size 10
+      set heading 45
+      set shape "Default"
+      ;if(who = 5 or who = 9)[
+      ;  set shape "TankRight"
+      ;]
+      ;setxy array:item x 0  array:item x 4
+    ]    
+  ]
+  
+  create-soldiers (6)[
+    if who < 334[
+      set name "French light"
+      set color blue
+      set startingInfantry 1
+      set effectiveness 100
+      set startingInfantry 30000
+      set numInfantry 1
+      ;set startingHedgehogs 0
+      ;set numHedgehogs 1
+      set startingAntiTanks 0
+      set numAntiTanks 1
+      set startingTanks 1
+      set numTanks 1
+      set startingArtillary 1
+      set numArtillary 1
+      set maxRange 100
+      set minRange 10
+      set hitsTaken 0
+      set speed 2
+      set allegience 1
+      set state 1
+      ;set destinationX -1
+      ;set destinationY -1
+      ;set destinationNum -1
+      set size 10
+      set heading 45
+      set shape "Default"
+      ;if(who = 5 or who = 9)[
+      ;  set shape "TankRight"
+      ;]
+      ;setxy array:item x 0  array:item x 4
+    ]    
+  ]
+  
+  create-soldiers (10)[
+    if who < 344[
+      set name "French armor"
+      set color blue
+      set startingInfantry 1
+      set effectiveness 100
+      set startingInfantry 30000
+      set numInfantry 1
+      ;set startingHedgehogs 0
+      ;set numHedgehogs 1
+      set startingAntiTanks 0
+      set numAntiTanks 1
+      set startingTanks 1
+      set numTanks 1
+      set startingArtillary 1
+      set numArtillary 1
+      set maxRange 100
+      set minRange 10
+      set hitsTaken 0
+      set speed 2
+      set allegience 1
+      set state 1
+      ;set destinationX -1
+      ;set destinationY -1
+      ;set destinationNum -1
+      set size 10
+      set heading 45
+      set shape "Default"
+      ;if(who = 5 or who = 9)[
+      ;  set shape "TankRight"
+      ;]
+      ;setxy array:item x 0  array:item x 4
+    ]    
+  ]      
+  
+  ask soldiers[
+    ifelse color = red[
+      ifelse who < 106  [
+        setxy (116 + round(2.4 * who)) (503 + round(-1.5 * who))
+      ]
+      [
+        setxy (116 + round(2.4 * who)) (346 + round(0.4 * (who - 106)))         
+      ]  
+    ]
+    [
+      ifelse who < 278  [
+        setxy (110 + round(3.83 * (who - 212))) (481 + round(-2.56 * (who - 212))) + (remainder who 2) * 8
+      ]
+      [
+        setxy (363 + round(4.06 * (who - 278))) (312 + round(.5 * (who - 278))) + (remainder who 2) * 8     
+      ] 
+    ]
+  ]
+  
+    
 end
 
 to Step
