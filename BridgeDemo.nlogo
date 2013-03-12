@@ -103,7 +103,7 @@ to setup-globals
                ["A Motorized Artillery Regiment" "brigade artillery" "X Panzer Division"]
                ;FIXME need actual German units attacking from the Abbeville bridgehead
   ]
-  set bridgeX array:from-list [153 139]
+  set bridgeX array:from-list [153 141]
   set bridgeY array:from-list [168 140]
   set bridgeOccupied false
   set bridgeWait 4
@@ -112,7 +112,7 @@ to setup-globals
   set fHedgAccuracy 7
   set fTankAccuracy 5
   set fArtAccuracy 7
-  set gInfAccuracy 7
+  set gInfAccuracy 1
   set gTankAccuracy 5
   set gArtAccuracy 5
   set fInfDmg 1;number of units it kills
@@ -127,16 +127,16 @@ end
 to setupSoldiers
   ; Create French units
   let i 0
-  create-soldiers (length FrUnits) [
-    let unitInfo (item i FrUnits)
+  create-soldiers (10) [
+    ;let unitInfo (item i FrUnits)
     set i (i + 1)
 
-    let thisIcon (item UNIT_ICON UnitInfo)
-    set shape (word thisIcon)
+    ;let thisIcon (item UNIT_ICON UnitInfo)
+    set shape ("brigade infantry")
     set color COLOR_FR
 
     set effectiveness 100
-    set startingInfantry 30000
+    set startingInfantry 4000
     set numInfantry startingInfantry
     set startingHedgehogs 0
     set numHedgehogs startingHedgehogs
@@ -153,21 +153,22 @@ to setupSoldiers
     set destinationX -1
     set destinationY -1
     set destinationNum -1
-    set size 10
+    set size 7
     set heading 40
   ]
 
   ; Create German units
   set i 0
-  create-soldiers (length GrUnits)[
-    let unitInfo (item i GrUnits)
+  create-soldiers (10)[
+    ;let unitInfo (item i GrUnits)
     set i (i + 1)
 
-    let thisIcon (item UNIT_ICON UnitInfo)
-    set shape (word thisIcon)
+    ;let thisIcon (item UNIT_ICON UnitInfo)
+    ;set shape (word thisIcon)
+    set shape ("brigade infantry")
     set color COLOR_GR
 
-    set startingInfantry 16000
+    set startingInfantry 4000
     set numInfantry startingInfantry
     set startingHedgehogs 0
     set numHedgehogs startingHedgehogs
@@ -184,7 +185,7 @@ to setupSoldiers
     set destinationX -1
     set destinationY -1
     set destinationNum -1
-    set size 10
+    set size 7
     set heading 220
   ]
   ask soldiers[
@@ -210,7 +211,28 @@ to Step
   ]
   ask soldiers[
     getMoveOrders
+;    show que
     move
+  ]
+  ask soldiers[
+  let i 0
+  repeat 10[
+    ;if not(any? soldiers with [destinationNum = i and state = 2])[
+     ; array:set que i false
+    ;]
+    ;ifelse(destinationNum = i and state = 2)[
+    ; array:set que i true   
+   ; ]
+   ; [
+   ;   if(destinationNum = i and state = 1)[
+   ;     if not(xcor = (array:item x i) and ycor = (array:item y i))[
+   ;       array:set que i false
+   ;       
+   ;     ]
+   ;   ]
+   ; ]
+   ; set i (i + 1)
+  ]
   ]
   ask soldiers[
     applyDamage 
@@ -227,6 +249,7 @@ to move
   if(state = 2)[;if the unit is moving toward a waiting position go toward it until it's too close to move farther
     ifelse(absolute-value (destinationX - xcor) < speed and absolute-value (destinationY - ycor) < speed)[
       ;if the unit reached its waiting position face the enemies and set its state to ready to move
+      setxy destinationX destinationY
       facexy 125 125
       set state 1
     ]
@@ -250,17 +273,33 @@ to move
 end
 
 to getMoveOrders
-  if(state = 1 and allegience = 2)[;for the ready germans
+  if(destinationNum > 0 and state = 1 and allegience = 2)[
+    let i 9
+    let goal -1
+    repeat 10[
+      if(array:item que i = false)[
+        set goal i
+      ]
+    ]
+    if(goal > -1)[
+      array:set que destinationNum false
+      array:set que goal true
+      set destinationNum goal
+      set state 2
+    ]
+  ]
+  if(state = 1 and allegience = 2 and destinationNum = -1)[;for the ready germans
     let i 0
     let goal -1
     ;find the nearest empty waiting spot to fill in at
     repeat 10[
-      if(goal = -1 and array:item que i = false)[
+      if(goal = -1 and array:item que i = false and state = 1)[
         set goal i
         ;set that waiting spot as the units destination and state that the spot is occupied
         set state 2
         set destinationX (array:item x i) 
         set destinationY (array:item y i)
+        ;if(destinationNum > -1 and i < destinationNum)[ array:set que destinationNum false]
         set destinationNum i
         array:set que i true
       ]
@@ -323,7 +362,7 @@ to go
       set WaitCount WaitCount - 1;if we are waiting to move then continue the count down until we do
     ]          
   ]
-  if time-units >= 4200[ ;after a set amount of time stop the simulation
+  if time-units >= 5000[ ;after a set amount of time stop the simulation
     file-close
     stop
   ]            
@@ -395,6 +434,10 @@ to applyDamage
         if(state = 3)[
           set bridgeOccupied false
         ]
+        if(destinationNum >= 0)[
+          array:set que destinationNum false
+          set destinationNum -1
+        ]
         die
       ]
    ]
@@ -406,7 +449,7 @@ to attack
   ;currently finds the nearest enemy unit and starts shooting at them. 
   if(distance opponent <= maxRange)[
     if( allegience = 1)[
-      repeat (numInfantry / 100)[
+      repeat (numInfantry / 10)[
         if(random 100 <=  fInfAccuracy)[
           ask opponent[ set hitsTaken hitsTaken + fInfDmg]
         ]
@@ -428,7 +471,7 @@ to attack
       ]
     ]
     if( allegience = 2)[
-      repeat (numInfantry / 100)[
+      repeat (numInfantry / 10)[
         if(random 100 <=  gInfAccuracy)[
           ask opponent[ set hitsTaken hitsTaken + gInfDmg]
         ]
@@ -740,7 +783,7 @@ Polygon -16777216 true false 165 15 180 15 135 60 120 60
 Polygon -16777216 true false 270 90 285 90 285 105 30 240 15 240 15 225
 
 brigade infantry
-false
+true
 0
 Rectangle -16777216 true false 0 75 300 255
 Rectangle -7500403 true true 15 90 285 240
