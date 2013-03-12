@@ -140,9 +140,9 @@ to setupSoldiers
     set numInfantry startingInfantry
     set startingHedgehogs 0
     set numHedgehogs startingHedgehogs
-    set startingTanks FrenchTanks
+    set startingTanks 0
     set numTanks startingTanks
-    set startingArtillary FrenchArtillary
+    set startingArtillary 0
     set numArtillary startingArtillary
     set maxRange 100
     set minRange 10
@@ -171,9 +171,9 @@ to setupSoldiers
     set numInfantry startingInfantry
     set startingHedgehogs 0
     set numHedgehogs startingHedgehogs
-    set startingTanks GermanTanks
+    set startingTanks 0
     set numTanks startingTanks
-    set startingArtillary GermanArtillary
+    set startingArtillary 0
     set numArtillary startingArtillary
     set maxRange 100
     set minRange 10
@@ -538,36 +538,6 @@ time-units
 1
 11
 
-SLIDER
-222
-236
-394
-269
-GermanTanks
-GermanTanks
-0
-1000
-656
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-11
-235
-183
-268
-FrenchTanks
-FrenchTanks
-0
-1000
-293
-1
-1
-NIL
-HORIZONTAL
-
 BUTTON
 82
 65
@@ -601,36 +571,6 @@ NIL
 NIL
 NIL
 1
-
-SLIDER
-12
-282
-184
-315
-FrenchArtillary
-FrenchArtillary
-0
-1000
-41
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-223
-280
-395
-313
-GermanArtillary
-GermanArtillary
-0
-1000
-49
-1
-1
-NIL
-HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
