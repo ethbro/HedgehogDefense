@@ -11,7 +11,6 @@ globals[
    time-units      ;monitor to show the number of  goes 
    x; waiting positions for the units while they wait to cross the bridge
    y
-   que; lets units know what spots are available to wait in
    bridgeX; the start and end of the bridge
    bridgeY
    bridgeOccupied;boolean that announces if the bridge can be entered
@@ -78,7 +77,6 @@ to setup-globals
   set randomrunnum random 999999
   set x array:from-list [145 142 157 134 164 154 161 145 136 166]
   set y array:from-list [174 179 172 181 168 186 181 192 195 176]
-  set que array:from-list [false false false false false false false false false false]
 
   ; List of French Units
   ; Unit name, appropriate shape name, commanding unit name
@@ -147,7 +145,7 @@ to setupSoldiers
     set maxRange 100
     set minRange 10
     set hitsTaken 0
-    set speed 2
+    set speed 1
     set allegience 1
     set state 1
     set destinationX -1
@@ -178,7 +176,7 @@ to setupSoldiers
     set numArtillary startingArtillary
     set maxRange 100
     set minRange 10
-    set speed 2
+    set speed 1
     set allegience 2
     set hitsTaken 0
     set state 1
@@ -211,28 +209,7 @@ to Step
   ]
   ask soldiers[
     getMoveOrders
-;    show que
     move
-  ]
-  ask soldiers[
-  let i 0
-  repeat 10[
-    ;if not(any? soldiers with [destinationNum = i and state = 2])[
-     ; array:set que i false
-    ;]
-    ;ifelse(destinationNum = i and state = 2)[
-    ; array:set que i true   
-   ; ]
-   ; [
-   ;   if(destinationNum = i and state = 1)[
-   ;     if not(xcor = (array:item x i) and ycor = (array:item y i))[
-   ;       array:set que i false
-   ;       
-   ;     ]
-   ;   ]
-   ; ]
-   ; set i (i + 1)
-  ]
   ]
   ask soldiers[
     applyDamage 
@@ -273,35 +250,22 @@ to move
 end
 
 to getMoveOrders
-  if(destinationNum > 0 and state = 1 and allegience = 2)[
-    let i 9
-    let goal -1
-    repeat 10[
-      if(array:item que i = false)[
-        set goal i
-      ]
-    ]
-    if(goal > -1)[
-      array:set que destinationNum false
-      array:set que goal true
-      set destinationNum goal
-      set state 2
-    ]
-  ]
-  if(state = 1 and allegience = 2 and destinationNum = -1)[;for the ready germans
+  if(state = 1 and allegience = 2)[;for the ready germans
     let i 0
     let goal -1
     ;find the nearest empty waiting spot to fill in at
     repeat 10[
-      if(goal = -1 and array:item que i = false and state = 1)[
-        set goal i
-        ;set that waiting spot as the units destination and state that the spot is occupied
-        set state 2
-        set destinationX (array:item x i) 
-        set destinationY (array:item y i)
-        ;if(destinationNum > -1 and i < destinationNum)[ array:set que destinationNum false]
-        set destinationNum i
-        array:set que i true
+      if(goal = -1)[
+        if not(any? soldiers with[destinationNum = i])[
+          if(i < destinationNum or destinationNum = -1)[
+            set goal i
+            ;set that waiting spot as the units destination and state that the spot is occupied
+            set state 2
+            set destinationX (array:item x i) 
+            set destinationY (array:item y i)
+            set destinationNum i
+          ]
+        ]
       ]
       set i (i + 1)
     ]
@@ -313,7 +277,6 @@ to getMoveOrders
    set state 3
    set destinationX (array:item bridgeX 1)
    set destinationY (array:item bridgeY 1)
-   array:set que 0 false 
    set bridgeOccupied true
   ]
   ;if the unit has gotten across the bridge
@@ -435,7 +398,6 @@ to applyDamage
           set bridgeOccupied false
         ]
         if(destinationNum >= 0)[
-          array:set que destinationNum false
           set destinationNum -1
         ]
         die
