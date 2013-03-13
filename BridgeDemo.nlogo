@@ -178,7 +178,7 @@ to setupSoldiers
     set numArtillary startingArtillary
     set maxRange 70
     set minRange 0
-    set speed 5
+    set speed 1
     set allegience 2
     set hitsTaken 0
     set state 1
@@ -240,7 +240,7 @@ to move
     ]
   ]
   if(state = 3)[
-    set numCrossed numCrossed + 220
+    set numCrossed numCrossed + 37
     if(numCrossed > numInfantry)[
       set numCrossed numInfantry
     ]
@@ -291,7 +291,7 @@ to getMoveOrders
     let opponent 0     
     ifelse(any? soldiers with [color = COLOR_FR])[
       set opponent nearest other-turtles with[allegience = 1];opponent always exists because of conditional in integrate function
-      ifelse(distance opponent < (speed * 1))[
+      ifelse(distance opponent < (speed * 2))[
         set heading towards opponent
       ]
       [
@@ -421,7 +421,7 @@ to attack
   ;currently finds the nearest enemy unit and starts shooting at them. 
   if(distance opponent <= maxRange)[
     if( allegience = 1)[
-      repeat (numInfantry)[
+      repeat (numInfantry / 10)[
         if(random 100 <=  fInfAccuracy)[
           ask opponent[ set hitsTaken hitsTaken + fInfDmg]
         ]
@@ -443,7 +443,7 @@ to attack
       ]
     ]
     if( allegience = 2)[
-      repeat (numInfantry)[
+      repeat (numInfantry / 10)[
         if(random 100 <=  gInfAccuracy)[
           ask opponent[ set hitsTaken hitsTaken + gInfDmg]
         ]
