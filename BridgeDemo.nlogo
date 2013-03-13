@@ -15,6 +15,7 @@ globals[
    bridgeY
    bridgeOccupied;boolean that announces if the bridge can be entered
    bridgeWait; time between the movement of the unit on the bridge
+   numCrossed
    randomrunnum    ;crappy hack to get unique filenames for each run in behaviourspace experiments
    filename        ;place for aforementioned filename
    fInfAccuracy
@@ -64,7 +65,7 @@ to setup
   setupSoldiers
 end
 to setup-patches
-  import-drawing "AbbevilleBridge.png";background image
+  import-drawing "AbbevilleBridge2.png";background image
 end
 to setup-globals
   ; MACROS
@@ -75,9 +76,10 @@ to setup-globals
   set COLOR_GR 16   ; aka NATO hostile "light red"
 
   set randomrunnum random 999999
-  set x array:from-list [145 142 157 134 164 154 161 145 136 166]
-  set y array:from-list [174 179 172 181 168 186 181 192 195 176]
-
+  set x array:from-list [146 131 161 116 176 151 136 166 121 181]
+  ;set x array:from-list [145 142 157 134 164 154 161 145 136 166]
+  ;set y array:from-list [176 179 173 182 170 186 181 192 195 176]
+  set y array:from-list [183 192 174 201 165 193 202 184 211 175]
   ; List of French Units
   ; Unit name, appropriate shape name, commanding unit name
   set FrUnits [["3rd Cavalry Brigade" "brigade cavalry" "2nd Light Cavalry Division" ]
@@ -101,8 +103,8 @@ to setup-globals
                ["A Motorized Artillery Regiment" "brigade artillery" "X Panzer Division"]
                ;FIXME need actual German units attacking from the Abbeville bridgehead
   ]
-  set bridgeX array:from-list [153 141]
-  set bridgeY array:from-list [168 140]
+  set bridgeX array:from-list [146 141]
+  set bridgeY array:from-list [183 140]
   set bridgeOccupied false
   set bridgeWait 4
   set WaitCount 10
@@ -134,7 +136,7 @@ to setupSoldiers
     set color COLOR_FR
 
     set effectiveness 100
-    set startingInfantry 4000
+    set startingInfantry FrenchInfantry
     set numInfantry startingInfantry
     set startingHedgehogs 0
     set numHedgehogs startingHedgehogs
@@ -142,10 +144,10 @@ to setupSoldiers
     set numTanks startingTanks
     set startingArtillary 0
     set numArtillary startingArtillary
-    set maxRange 100
-    set minRange 10
+    set maxRange 70
+    set minRange 0
     set hitsTaken 0
-    set speed 1
+    set speed .6
     set allegience 1
     set state 1
     set destinationX -1
@@ -166,7 +168,7 @@ to setupSoldiers
     set shape ("brigade infantry")
     set color COLOR_GR
 
-    set startingInfantry 4000
+    set startingInfantry GermanInfantry
     set numInfantry startingInfantry
     set startingHedgehogs 0
     set numHedgehogs startingHedgehogs
@@ -174,9 +176,9 @@ to setupSoldiers
     set numTanks startingTanks
     set startingArtillary 0
     set numArtillary startingArtillary
-    set maxRange 100
-    set minRange 10
-    set speed 1
+    set maxRange 70
+    set minRange 0
+    set speed 5
     set allegience 2
     set hitsTaken 0
     set state 1
@@ -188,13 +190,13 @@ to setupSoldiers
   ]
   ask soldiers[
     ifelse color = COLOR_GR [
-      setxy 120 + 5 * who (270 - 5 * who)
+      setxy 100 + 7 * who (300 - 5 * who)
     ] [
       if(who < 5)[
-        setxy 140 - 5 * who (120 + 5 * who)
+        setxy 170 - 15 * who (120 + 8 * who)
       ]
       if(who > 4)[
-       setxy 170 - 5 * who (100 + 5 * who)
+       setxy 244 - 15 * who (70 + 8 * who)
       ]
     ]
   ]
@@ -204,7 +206,7 @@ to Step
   set time-units time-units + 1;increase the counter for the total number of ticks that have gone by so far 
   ask soldiers[
     if(any? soldiers with [color = COLOR_GR] and any? soldiers with [color = COLOR_FR])[
-        attack
+      attack
     ]  
   ]
   ask soldiers[
@@ -214,10 +216,11 @@ to Step
   ask soldiers[
     applyDamage 
   ]
+  ;show numCrossed
 end
 
 to Steps
-  repeat 50[
+  repeat 10[
    Step 
   ]
 end
@@ -237,15 +240,11 @@ to move
     ]
   ]
   if(state = 3)[
-    ;if the unit is crossing the bridge wait a set time, then move a step across
-    ifelse(bridgeWait = 0)[
-     set bridgeWait 4;reset the wait time after he moves
-     facexy destinationX destinationY
-     forward 1 
+    set numCrossed numCrossed + 220
+    if(numCrossed > numInfantry)[
+      set numCrossed numInfantry
     ]
-    [
-      set bridgeWait (bridgeWait - 1);decrease the wait time if it isn't ready to move
-    ]
+    setxy ((array:item bridgeX 0) - (((array:item bridgeX 0) - (array:item bridgeX 1)) * (numCrossed / numInfantry))) ((array:item bridgeY 0) - (((array:item bridgeY 0) - (array:item bridgeY 1)) * (numCrossed / numInfantry)))
   ]
 end
 
@@ -257,7 +256,7 @@ to getMoveOrders
     repeat 10[
       if(goal = -1)[
         if not(any? soldiers with[destinationNum = i])[
-          if(i < destinationNum or destinationNum = -1)[
+          if(i < (destinationNum - 1) or destinationNum = -1 or i = 0 or (i = 5 and destinationNum = 6) or (i = 7 and destinationNum = 8) or (i = 4 and destinationNum = 5)or (i = 2 and destinationNum = 3))[
             set goal i
             ;set that waiting spot as the units destination and state that the spot is occupied
             set state 2
@@ -283,6 +282,7 @@ to getMoveOrders
   if(state = 3 and absolute-value ((array:item bridgeX 1) - xcor) < speed and absolute-value ((array:item bridgeY 1) - ycor) < speed)[
     ;set its state to having crossed the bridge and announce that the bridge is empty and ready for someone else to cross
    set state 4
+   set numCrossed 0
    set bridgeOccupied false
   ]
   ;if a unit has crossed the bridge
@@ -291,7 +291,7 @@ to getMoveOrders
     let opponent 0     
     ifelse(any? soldiers with [color = COLOR_FR])[
       set opponent nearest other-turtles with[allegience = 1];opponent always exists because of conditional in integrate function
-      ifelse(distance opponent < speed)[
+      ifelse(distance opponent < (speed * 1))[
         set heading towards opponent
       ]
       [
@@ -300,8 +300,8 @@ to getMoveOrders
       ]        
     ]
     [
-      set destinationX 0
-      set destinationY 0
+      set destinationX 50
+      set destinationY 50
       ifelse(absolute-value (destinationX - xcor) > speed and absolute-value (destinationY - ycor) > speed)[
         facexy destinationX destinationY
         forward speed
@@ -374,6 +374,15 @@ to applyDamage
      repeat hitsTaken[
         let whatsHit random (numInfantry + numTanks + numArtillary + 1)
         if(whatsHit <= numInfantry)[
+          if(state = 3)[
+            if(numCrossed > 0)[
+              let whatInfantry random (numInfantry)
+              if(whatInfantry < numCrossed)[
+                set numCrossed (numCrossed - 1)
+                
+              ]
+            ]
+          ]
           set numInfantry numInfantry - 1
           if(numInfantry < 0)[
             set numInfantry 0
@@ -396,6 +405,7 @@ to applyDamage
       if( effectiveness = 0)[
         if(state = 3)[
           set bridgeOccupied false
+          set numCrossed 0
         ]
         if(destinationNum >= 0)[
           set destinationNum -1
@@ -411,7 +421,7 @@ to attack
   ;currently finds the nearest enemy unit and starts shooting at them. 
   if(distance opponent <= maxRange)[
     if( allegience = 1)[
-      repeat (numInfantry / 10)[
+      repeat (numInfantry)[
         if(random 100 <=  fInfAccuracy)[
           ask opponent[ set hitsTaken hitsTaken + fInfDmg]
         ]
@@ -433,7 +443,7 @@ to attack
       ]
     ]
     if( allegience = 2)[
-      repeat (numInfantry / 10)[
+      repeat (numInfantry)[
         if(random 100 <=  gInfAccuracy)[
           ask opponent[ set hitsTaken hitsTaken + gInfDmg]
         ]
@@ -565,7 +575,7 @@ BUTTON
 63
 251
 96
-Step (50)
+Step (10)
 Steps
 NIL
 1
@@ -576,6 +586,36 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+6
+134
+178
+167
+FrenchInfantry
+FrenchInfantry
+100
+4000
+4000
+100
+1
+NIL
+HORIZONTAL
+
+SLIDER
+204
+134
+376
+167
+GermanInfantry
+GermanInfantry
+100
+4000
+4000
+100
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -745,7 +785,7 @@ Polygon -16777216 true false 165 15 180 15 135 60 120 60
 Polygon -16777216 true false 270 90 285 90 285 105 30 240 15 240 15 225
 
 brigade infantry
-true
+false
 0
 Rectangle -16777216 true false 0 75 300 255
 Rectangle -7500403 true true 15 90 285 240
