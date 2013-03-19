@@ -257,12 +257,17 @@ to getMoveOrders
       if(goal = -1)[
         if not(any? soldiers with[destinationNum = i])[
           if(i < (destinationNum - 1) or destinationNum = -1 or i = 0 or (i = 5 and destinationNum = 6) or (i = 7 and destinationNum = 8) or (i = 4 and destinationNum = 5)or (i = 2 and destinationNum = 3))[
-            set goal i
-            ;set that waiting spot as the units destination and state that the spot is occupied
-            set state 2
-            set destinationX (array:item x i) 
-            set destinationY (array:item y i)
-            set destinationNum i
+            let myDistance sqrt((absolute-value((array:item x i) - xcor) * absolute-value((array:item x i) - xcor)) + (absolute-value((array:item y i) - ycor) * absolute-value((array:item y i) - ycor)))
+            ;show myDistance
+            if not(any? soldiers with[allegience = 2 and destinationNum > i + 1 and sqrt((absolute-value((array:item x i) - xcor) * absolute-value((array:item x i) - xcor)) + (absolute-value((array:item y i) - ycor) * absolute-value((array:item y i) - ycor))) < myDistance])[
+                
+              set goal i
+              ;set that waiting spot as the units destination and state that the spot is occupied
+              set state 2
+              set destinationX (array:item x i) 
+              set destinationY (array:item y i)
+              set destinationNum i
+            ]
           ]
         ]
       ]
@@ -278,14 +283,14 @@ to getMoveOrders
    set destinationY (array:item bridgeY 1)
    set bridgeOccupied true
   ]
-  ;if the unit has gotten across the bridge
+  ;if the unit has just gotten across the bridge
   if(state = 3 and absolute-value ((array:item bridgeX 1) - xcor) < speed and absolute-value ((array:item bridgeY 1) - ycor) < speed)[
     ;set its state to having crossed the bridge and announce that the bridge is empty and ready for someone else to cross
    set state 4
    set numCrossed 0
    set bridgeOccupied false
   ]
-  ;if a unit has crossed the bridge
+  ;if a unit has already crossed the bridge
   if(state = 4)[
     ;move toward the nearest opponent if there are any, otherwise move to the bottom left of the map
     let opponent 0     

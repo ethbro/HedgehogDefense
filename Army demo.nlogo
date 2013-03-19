@@ -19,8 +19,7 @@ globals[
    gInfDmg
    gTankDmg
    gArtDmg
-];another  manny comment
-
+]
 breed [soldiers soldier]
 soldiers-own[
   name;
@@ -31,16 +30,15 @@ soldiers-own[
   speed; amount they move when its time
   numInfantry;
   startingInfantry;
-  numHedgehogs;
-  startingHedgehogs
+  numantiTanks;
+  startingantiTanks
   numTanks
   startingTanks;
   numArtillary
   startingArtillary; 
   hitsTaken
   state; 1 attack, 2 defend, 3 something else yet to come?
-];hi
-
+]
 to setup
   __clear-all-and-reset-ticks;clear the screen
   
@@ -71,15 +69,15 @@ to setup-globals
 end
 
 to setupSoldiers
-  create-soldiers (FrenchDivisions)[
-    if who < FrenchDivisions[
+  create-soldiers (FrenchBrigades)[
+    if who < FrenchBrigades[
       set color blue
       set effectiveness 100
       set name "4nd Division"
       set startingInfantry FrenchInfantry
       set numInfantry startingInfantry
-      set startingHedgehogs FrenchHedgehogs
-      set numHedgehogs startingHedgehogs
+      set startingAntiTanks FrenchAntiTanks
+      set numAntiTanks startingAntiTanks
       set startingTanks FrenchTanks
       set numTanks startingTanks
       set startingArtillary FrenchArtillary
@@ -95,14 +93,14 @@ to setupSoldiers
       set shape "default"
     ]    
   ]
-  create-soldiers (GermanDivisions)[
-    if who < FrenchDivisions + GermanDivisions[
+  create-soldiers (GermanBrigades)[
+    if who < FrenchBrigades + GermanBrigades[
       set color red
       set name "Panzer Division"
       set startingInfantry GermanInfantry
       set numInfantry startingInfantry
-      set startingHedgehogs 0
-      set numHedgehogs startingHedgehogs
+      set startingAntiTanks GermanAntiTanks
+      set numAntiTanks startingAntiTanks
       set startingTanks GermanTanks
       set numTanks startingTanks
       set startingArtillary GermanArtillary
@@ -139,8 +137,7 @@ to Step
   ask soldiers[
    if(allegience = 1)[
      repeat hitsTaken[
-        let whatsHit random (numInfantry + numTanks + numArtillary + numHedgehogs + 1 )
-        show whatsHit
+        let whatsHit random (numInfantry + numTanks + numArtillary + numAntiTanks + 1 )
         if(whatsHit <= numInfantry)[
           
           set numInfantry numInfantry - 1
@@ -161,16 +158,15 @@ to Step
           ]
         ] 
         [
-         set numHedgehogs numHedgehogs - 1 
-         if(numHedgehogs < 0)[
-            set numHedgehogs  0
+         set numAntiTanks numAntiTanks - 1 
+         if(numAntiTanks < 0)[
+            set numAntiTanks  0
           ]
         ]
         ]
       ]
       set hitsTaken 0
-      set effectiveness (numInfantry + numHedgehogs + numTanks + numArtillary) / (startingInfantry + startingHedgehogs + startingTanks + startingArtillary)
-      show effectiveness
+      set effectiveness (numInfantry + numAntiTanks + numTanks + numArtillary) / (startingInfantry + startingAntiTanks + startingTanks + startingArtillary)
       if( effectiveness = 0)[
         die
       ]
@@ -198,7 +194,6 @@ to Step
       ]
       set hitsTaken 0
       set effectiveness (numInfantry + numTanks + numArtillary) / (startingInfantry + startingTanks + startingArtillary)
-      show effectiveness
       if( effectiveness = 0)[
         die
       ]
@@ -232,8 +227,6 @@ to go
 end  
                                 
 to interact     
-  let winner 0
-  let loser 0
   let opponent 0
   set opponent nearest other-turtles;opponent always exists because of conditional in integrate function
   set heading towards opponent
@@ -245,7 +238,7 @@ to interact
           ask opponent[ set hitsTaken hitsTaken + fInfDmg]
         ]
       ]
-      repeat numHedgehogs[
+      repeat numAntiTanks[
         if(random 100 <=  fHedgAccuracy)[
           ask opponent[ set hitsTaken hitsTaken + fHedgeDmg]
         ]
@@ -410,7 +403,7 @@ SLIDER
 FrenchInfantry
 FrenchInfantry
 0
-1000
+4000
 1000
 1
 1
@@ -459,7 +452,7 @@ SLIDER
 GermanInfantry
 GermanInfantry
 0
-1000
+4000
 1000
 1
 1
@@ -471,8 +464,8 @@ SLIDER
 193
 189
 226
-FrenchHedgehogs
-FrenchHedgehogs
+FrenchAntiTanks
+FrenchAntiTanks
 0
 1000
 54
@@ -516,8 +509,8 @@ SLIDER
 111
 183
 144
-FrenchDivisions
-FrenchDivisions
+FrenchBrigades
+FrenchBrigades
 0
 10
 10
@@ -531,11 +524,26 @@ SLIDER
 113
 396
 146
-GermanDivisions
-GermanDivisions
+GermanBrigades
+GermanBrigades
 0
 10
 10
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+224
+194
+402
+227
+GermanAntiTanks
+GermanAntiTanks
+0
+1000
+50
 1
 1
 NIL
