@@ -263,12 +263,12 @@ to getMoveOrders
             ;show myDistance
             if not(any? soldiers with[allegience = 2 and destinationNum > i + 1 and sqrt((absolute-value((array:item x i) - xcor) * absolute-value((array:item x i) - xcor)) + (absolute-value((array:item y i) - ycor) * absolute-value((array:item y i) - ycor))) < myDistance])[
                 
-              set goal i
+             ; set goal i
               ;set that waiting spot as the units destination and state that the spot is occupied
-              set state 2
-              set destinationX (array:item x i) 
-              set destinationY (array:item y i)
-              set destinationNum i
+         ;     set state 2
+          ;    set destinationX (array:item x i) 
+           ;   set destinationY (array:item y i)
+            ;  set destinationNum i
             ;make sure we let the closest soldier fill in the spot by checking to see if any are more near to it than this one
             if not(any? soldiers with[allegience = 2 and destinationNum > i + 1 and sqrt((absolute-value((array:item x i) - xcor) * absolute-value((array:item x i) - xcor)) + (absolute-value((array:item y i) - ycor) * absolute-value((array:item y i) - ycor))) < myDistance])[
                 ;these cases check to see if moving to a position would put a brigade in a spot where it needs to criss-cross
