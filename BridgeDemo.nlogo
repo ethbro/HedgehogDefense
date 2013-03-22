@@ -252,10 +252,8 @@ to getMoveOrders
   if(state = 1 and allegience = 2)[;for the ready germans
     let i 0
     let goal -1
-    let valid 1
     ;find the nearest empty waiting spot to fill in at
     repeat 10[
-      set valid 1
       if(goal = -1)[
         if not(any? soldiers with[destinationNum = i])[
           if(i < (destinationNum - 1) or destinationNum = -1 or i = 0 or (i = 5 and destinationNum = 6) or (i = 7 and destinationNum = 8) or (i = 4 and destinationNum = 5)or (i = 2 and destinationNum = 3))[
@@ -269,31 +267,6 @@ to getMoveOrders
               set destinationX (array:item x i) 
               set destinationY (array:item y i)
               set destinationNum i
-            ;make sure we let the closest soldier fill in the spot by checking to see if any are more near to it than this one
-            if not(any? soldiers with[allegience = 2 and destinationNum > i + 1 and sqrt((absolute-value((array:item x i) - xcor) * absolute-value((array:item x i) - xcor)) + (absolute-value((array:item y i) - ycor) * absolute-value((array:item y i) - ycor))) < myDistance])[
-                ;these cases check to see if moving to a position would put a brigade in a spot where it needs to criss-cross
-                ;another unit and prevents it from happeneing allowing another unit to take the spot instead
-                if(destinationNum = 2 and i = 0 and any? soldiers with[destinationNum = 3] and not any? soldiers with[destinationNum = 4])[
-                 set valid 0
-                ]
-                if(destinationNum = 1 and i = 0 and any? soldiers with[destinationNum = 4] and not any? soldiers with[destinationNum = 3])[
-                  set valid 0
-                ]
-                if(destinationNum = 6 and i = 5 and any? soldiers with[destinationNum = 9] and not any? soldiers with[destinationNum = 8])[
-                 set valid 0 
-                ]
-                if(destinationNum = 7 and i = 5 and any? soldiers with[destinationNum = 8] and not any? soldiers with[destinationNum = 9])[
-                 set valid 0 
-                ]
-                if(valid = 1)[
-                  set goal i
-                  ;set that waiting spot as the units destination and state that the spot is occupied
-                  set state 2
-                  set destinationX (array:item x i) 
-                  set destinationY (array:item y i)
-                  set destinationNum i
-                ]
-            ]
             ]
           ]
         ]
@@ -559,9 +532,9 @@ NIL
 
 BUTTON
 277
-63
+62
 340
-96
+95
 NIL
 go
 T
