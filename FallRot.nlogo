@@ -20,10 +20,16 @@ globals[
    gInfDmg
    gTankDmg
    gArtDmg
+   
+   ;;staging areas
+   abStagingX
+   abStagingY
+   abShiftX
+   abShiftY
 ]
 
-breed [soldiers soldier]
-soldiers-own[
+breed [brigades brigade]
+brigades-own[
   name;
   allegience;are they fighting for side 1 or 2?
   effectiveness
@@ -39,7 +45,8 @@ soldiers-own[
   numArtillary
   startingArtillary; 
   hitsTaken
-  state; 1 attack, 2 defend, 3 something else yet to come?
+  targetBridge;0 none, already crossed, 1 abbevile bridge, 2 amien bridge, 3 perrone bridge
+  state; 1 ready for orders, 2 moving to position, 3 crossing bridge, 4 ready for orders after crosssed, 5 moving after crossed
 ];hi
 
 to setup
@@ -47,7 +54,7 @@ to setup
   
   setup-globals;get all the fields set to their starting values 
   setup-patches
-  setupSoldiers
+  setupbrigades
 end
 to setup-patches
  import-drawing "Map.png"
@@ -56,6 +63,13 @@ to setup-globals
   set randomrunnum random 999999
   set x array:from-list [50 50 50 50 50 50]
   set y array:from-list [50 50 50 50 50 50]
+  
+  ;; how the formation looks      10  8   6   4   2   0   1   3   5   7   9
+  ;; how the positions are stored 0   1   2   3   4   5   6   7   8   9  10
+  set abStagingX array:from-list[185 187 183 189 181 191 179 193 177 195 175]
+  set abStagingY array:from-list[458 456 460 454 462 452 464 450 466 448 468]
+  set abShiftX 2
+  set abShiftY 2
   set WaitCount 10
   set fInfAccuracy 20; in percent out of 100
   set fATAccuracy 22
@@ -73,8 +87,8 @@ to setup-globals
   set gArtDmg 2
 end
 
-to setupSoldiers
-  create-soldiers (188)[
+to setupbrigades
+  create-brigades (188)[
     if who < 188[
       set name "German infantry"
       set color red
@@ -94,7 +108,7 @@ to setupSoldiers
       set minRange 10
       set hitsTaken 0
       set speed 2
-      set allegience 1
+      set allegience 2
       set state 1
       ;set destinationX -1
       ;set destinationY -1
@@ -109,7 +123,7 @@ to setupSoldiers
     ]    
   ]
   
-  create-soldiers (24)[
+  create-brigades (24)[
     if who < 212[
       set name "German tank"
       set color red
@@ -129,7 +143,7 @@ to setupSoldiers
       set minRange 10
       set hitsTaken 0
       set speed 2
-      set allegience 1
+      set allegience 2
       set state 1
       ;set destinationX -1
       ;set destinationY -1
@@ -144,7 +158,7 @@ to setupSoldiers
     ]    
   ]  
   
-  create-soldiers (116)[
+  create-brigades (116)[
     if who < 328[
       set name "French infantry"
       set color blue
@@ -179,7 +193,7 @@ to setupSoldiers
     ]    
   ]
   
-  create-soldiers (6)[
+  create-brigades (6)[
     if who < 334[
       set name "French light"
       set color blue
@@ -214,7 +228,7 @@ to setupSoldiers
     ]    
   ]
   
-  create-soldiers (10)[
+  create-brigades (10)[
     if who < 344[
       set name "French armor"
       set color blue
@@ -249,7 +263,7 @@ to setupSoldiers
     ]    
   ]      
   
-  ask soldiers[
+  ask brigades[
     ifelse color = red[
       ifelse who < 106  [
         setxy (116 + round(2.4 * who)) (503 + round(-1.5 * who))
@@ -273,8 +287,8 @@ end
 
 to Step
   set time-units time-units + 1;increase the counter for the total number of ticks that have gone by so far 
-  ask soldiers[
-    if(any? soldiers with [color = red] and any? soldiers with [color = blue])[
+  ask brigades[
+    if(any? brigades with [color = red] and any? brigades with [color = blue])[
         interact
     ]
       
@@ -289,7 +303,7 @@ end
 
 ;run procedure
 to go 
-  ask soldiers [ 
+  ask brigades [ 
     ;wait x ticks between each move so everything is visible
     ifelse (WaitCount <= 0)[
       Step
@@ -302,14 +316,41 @@ to go
   if time-units >= 42800[ ;after a set amount of time stop the simulation
     file-close
     stop
-  ]            
+  ]           
 end  
                                 
 to interact
   let opponent 0     
   set opponent nearest other-turtles;opponent always exists because of conditional in integrate function
-  ;set heading towards opponent      
+  
+  ;if the brigade is waiting for orders
+  if(state = 1 and allegience = 2)[
+    let i 0;; the counter that determines what spot we are currently looking to fill
+    let goal -1;; a marker for wether or not this soldier has chosen a spot to fill
+    let valid 1;;a check for if the spot we're looking at is valid for this soldier
+    ;find the nearest empty waiting spot to fill in at
+    repeat 99[
+      set valid 1;;assume the spot we're looking at is valid until proven otherwise
+      if(goal = -1)[;;if this brigade hasn't chosen a spot yet have them look for one
+        ;;this handles units looking to cross the abbevile bridge
+        if(targetBridge = 1)[
+          ;;find the distance to the spot we're looking at for our reference
+          ;;let currentShift
+          ;;let goalX ((array:item abStagingX i) + ((i/ 11) * abShiftX))
+          ;;let myDistance sqrt((absolute-value((array:item abStagingX i) - xcor) * absolute-value((array:item abStagingX i) - xcor)) + (absolute-value((array:item abStagingY i) - ycor) * absolute-value((array:item abStagingY i) - ycor)))
+        ]
+      ]
+      set i (i + 1);;after we've looked at a spot incriment so we can look at the next one on the next pass
+    ]
+  ]      
 end   
+
+;removes negatives, used for finding distance to someone
+to-report absolute-value [number]
+  ifelse number >= 0
+    [ report number ]
+    [ report (- number) ]
+end
 
 to-report nearest [agentset]
   ifelse color = red[
