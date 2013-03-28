@@ -24,8 +24,12 @@ globals[
    ;;staging areas
    abStagingX
    abStagingY
+   abX
+   abY
    abShiftX
    abShiftY
+   abOccupied
+   abCrossed
 ]
 
 breed [brigades brigade]
@@ -46,6 +50,7 @@ brigades-own[
   startingArtillary; 
   hitsTaken
   targetBridge;0 none, already crossed, 1 abbevile bridge, 2 amien bridge, 3 perrone bridge
+  bridgeCrossed
   destinationNum
   destinationX
   destinationY
@@ -71,8 +76,12 @@ to setup-globals
   ;; how the positions are stored 0   1   2   3   4   5   6   7   8   9  10
   set abStagingX array:from-list[185 187 183 189 181 191 179 193 177 195 175]
   set abStagingY array:from-list[458 456 460 454 462 452 464 450 466 448 468]
+  set abX 173
+  set abY 450
   set abShiftX 2
   set abShiftY 2
+  set abOccupied false
+  set abCrossed 0
   set WaitCount 10
   set fInfAccuracy 20; in percent out of 100
   set fATAccuracy 22
@@ -97,7 +106,7 @@ to setupbrigades
       set color red
       set startingInfantry 1
       set effectiveness 100
-      set startingInfantry 30000
+      set startingInfantry 3000
       set numInfantry 1
       ;set startingHedgehogs 0
       ;set numHedgehogs 1
@@ -136,7 +145,7 @@ to setupbrigades
       set color red
       set startingInfantry 1
       set effectiveness 100
-      set startingInfantry 30000
+      set startingInfantry 3000
       set numInfantry 1
       ;set startingHedgehogs 0
       ;set numHedgehogs 1
@@ -328,9 +337,26 @@ to go
 end  
        
 to move
+  ;move to a relay point if unable to find a specific destination
   if(state = 1 and destinationX > 100 and destinationY > 100 and destinationNum = -1 and targetBridge = 1)[
     facexy destinationX destinationY
     forward speed
+  ]
+  ;if the brigade is stationary and ready for orders
+  if(state = 1 and allegience = 2)[
+    ;if the brigade is the first in line at the bridge
+    if(destinationNum = 0)[
+      ;if this is a going toward the abbevile bridge
+      if(targetBridge = 1)[
+        set abCrossed abCrossed + 60
+        facexy abX abY
+        forward 1
+        if(xcor <= abX and ycor <= abY)[
+          set state 4
+          set destinationNum -1
+        ]
+      ] 
+    ] 
   ]
   if(state = 2)[;if the unit is moving toward a waiting position go toward it until it's too close to move farther
     ifelse(absolute-value (destinationX - xcor) < speed and absolute-value (destinationY - ycor) < speed)[
@@ -414,6 +440,15 @@ to interact
         ]
       ]
       set i (i + 1);;after we've looked at a spot incriment so we can look at the next one on the next pass
+    ]
+    ;if the bridge is empty and the unit nearest the bridge is ready for orders
+    if(destinationNum = 0 and state = 1 and abOccupied = false)[
+      ;set it to crossing the bridge and announce that its space is now available for someone else to take
+      set destinationNum -1
+      set state 3
+      set destinationX (abX)
+      set destinationY (abY)
+      set abOccupied true
     ]
     if(destinationNum = -1 and state = 1)[
       set destinationX 214
