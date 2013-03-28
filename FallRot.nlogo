@@ -46,8 +46,11 @@ brigades-own[
   startingArtillary; 
   hitsTaken
   targetBridge;0 none, already crossed, 1 abbevile bridge, 2 amien bridge, 3 perrone bridge
+  destinationNum
+  destinationX
+  destinationY
   state; 1 ready for orders, 2 moving to position, 3 crossing bridge, 4 ready for orders after crosssed, 5 moving after crossed
-];hi
+]
 
 to setup
   __clear-all-and-reset-ticks;clear the screen
@@ -112,8 +115,12 @@ to setupbrigades
       set state 1
       ;set destinationX -1
       ;set destinationY -1
-      ;set destinationNum -1
-      set size 10
+      set destinationNum -1
+      set targetBridge 2
+      if(who < 99)[
+        set targetBridge 1
+      ]
+      set size 5
       set heading 225
       set shape "Default"
       ;if(who = 5 or who = 9)[
@@ -290,6 +297,7 @@ to Step
   ask brigades[
     if(any? brigades with [color = red] and any? brigades with [color = blue])[
         interact
+        move
     ]
       
   ]
@@ -318,7 +326,26 @@ to go
     stop
   ]           
 end  
-                                
+       
+to move
+  if(state = 1 and destinationX > 100 and destinationY > 100 and destinationNum = -1 and targetBridge = 1)[
+    facexy destinationX destinationY
+    forward speed
+  ]
+  if(state = 2)[;if the unit is moving toward a waiting position go toward it until it's too close to move farther
+    ifelse(absolute-value (destinationX - xcor) < speed and absolute-value (destinationY - ycor) < speed)[
+      ;if the unit reached its waiting position face the enemies and set its state to ready to move
+      setxy destinationX destinationY
+      set state 1
+      facexy 170 450
+    ]
+    [
+      ;if it hasn't reached its waiting point move toward it at its normal speed
+      facexy destinationX destinationY
+      forward speed
+    ]
+  ]
+end                                  
 to interact
   let opponent 0     
   set opponent nearest other-turtles;opponent always exists because of conditional in integrate function
@@ -332,15 +359,65 @@ to interact
     repeat 99[
       set valid 1;;assume the spot we're looking at is valid until proven otherwise
       if(goal = -1)[;;if this brigade hasn't chosen a spot yet have them look for one
+        ;;what row of the formation are we looking at?
+        let row 0
+        if(i > 10 and i < 22)[
+          set row 1
+        ]
+        if(i > 21 and i < 33)[
+          set row 2
+        ]
+        if(i > 32 and i < 44)[
+          set row 3
+        ]
+        if(i > 43 and i < 55)[
+          set row 4
+        ]
+        if(i > 54 and i < 66)[
+          set row 5
+        ]
+        if(i > 65 and i < 77)[
+          set row 6
+        ]
+        if(i > 76 and i < 88)[
+          set row 7
+        ]
+        if(i > 87 and i < 99)[
+          set row 8
+        ]
         ;;this handles units looking to cross the abbevile bridge
         if(targetBridge = 1)[
-          ;;find the distance to the spot we're looking at for our reference
-          ;;let currentShift
-          ;;let goalX ((array:item abStagingX i) + ((i/ 11) * abShiftX))
-          ;;let myDistance sqrt((absolute-value((array:item abStagingX i) - xcor) * absolute-value((array:item abStagingX i) - xcor)) + (absolute-value((array:item abStagingY i) - ycor) * absolute-value((array:item abStagingY i) - ycor)))
+          ;find the location of this destination by finding the base location and shifting by the row it's in
+          let goalX ((array:item abStagingX (i - (11 * row))) + (row * abShiftX))
+          let goalY ((array:item abStagingY (i - (11 * row))) + (row * abShiftY))
+          let myDistance sqrt((absolute-value(goalX - xcor) * absolute-value(goalX - xcor)) + (absolute-value(goalY - ycor) * absolute-value(goalY - ycor)))
+          ;this isn' a valid spot if someone else is going to use it
+          if(any? brigades with[destinationNum = i and targetBridge = 1 and allegience = 2])[
+            set valid 0
+          ]
+          ;this isn't a valid spot if a closer brigade needs to move toward it
+          if(any? brigades with[allegience = 2 and (destinationNum > i + 1 or destinationNum = -1) and sqrt((absolute-value(goalX - xcor) * absolute-value(goalX - xcor)) + (absolute-value(goalY - ycor) * absolute-value(goalY - ycor))) < myDistance])[
+            set valid 0
+          ]
+          ;the spot is not valid if it is farther from the bridge than the current destination
+          if(i > destinationNum and destinationNum > -1)[
+            set valid 0
+          ]
+          if(valid = 1)[
+            ;we are setting this brigade to move to destination i, no others can move here now
+            set destinationNum i
+            set destinationX goalX
+            set destinationY goalY
+            set state 2
+            set goal 1
+          ]
         ]
       ]
       set i (i + 1);;after we've looked at a spot incriment so we can look at the next one on the next pass
+    ]
+    if(destinationNum = -1 and state = 1)[
+      set destinationX 214
+      set destinationY 483
     ]
   ]      
 end   
