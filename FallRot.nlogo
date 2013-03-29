@@ -45,6 +45,9 @@ globals[
    peShiftX
    peShiftY
    peCrossed
+   
+   channel
+   bracer
 ]
 
 breed [brigades brigade]
@@ -457,8 +460,8 @@ to interact
       ]
     ]
     if(destinationNum = -1 and state = 1)[
-      set destinationX 200
-      set destinationY 480
+      ;set destinationX 200
+      ;set destinationY 480
     ]
   ]      
 end   
