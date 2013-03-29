@@ -107,7 +107,7 @@ to setupbrigades
       set startingInfantry 1
       set effectiveness 100
       set startingInfantry 3000
-      set numInfantry 1
+      set numInfantry startingInfantry
       ;set startingHedgehogs 0
       ;set numHedgehogs 1
       set startingAntiTanks 0
@@ -343,22 +343,6 @@ to move
     forward speed
   ]
   ;if the brigade is stationary and ready for orders
-  if(state = 3 and allegience = 2)[
-    ;if the brigade is the first in line at the bridge
-    ;if(destinationNum = 0)[
-      ;if this is a going toward the abbevile bridge
-      if(targetBridge = 1)[
-        set abCrossed abCrossed + 60
-        facexy abX abY
-        forward 1
-        if(xcor <= abX and ycor <= abY)[
-          set state 4
-          set abOccupied false
-          set destinationNum -1
-        ]
-      ] 
-    ;] 
-  ]
   if(state = 2)[;if the unit is moving toward a waiting position go toward it until it's too close to move farther
     ifelse(absolute-value (destinationX - xcor) < speed and absolute-value (destinationY - ycor) < speed)[
       ;if the unit reached its waiting position face the enemies and set its state to ready to move
@@ -372,8 +356,18 @@ to move
       forward speed
     ]
   ]
-  if(state = 3)[
+  if(state = 3 and allegience = 2)[
     set destinationNum -1
+      if(targetBridge = 1)[
+        set abCrossed abCrossed + 60
+        setxy (array:item abStagingX 0) - ((array:item abStagingX 0 - abX) * (abCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary))) array:item abStagingY 0 - ((array:item abStagingY 0 - abY) * (abCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary)))
+        forward 1
+        if(xcor <= abX and ycor <= abY)[
+          set state 4
+          set abCrossed 0
+          set destinationNum -1
+        ]
+      ] 
   ]
 end                                  
 to interact
@@ -446,28 +440,19 @@ to interact
       set i (i + 1);;after we've looked at a spot incriment so we can look at the next one on the next pass
     ]
     ;if the bridge is empty and the unit nearest the bridge is ready for orders
-    if(destinationNum = 0 and state = 1 and abOccupied = false)[
-      ;set it to crossing the bridge and announce that its space is now available for someone else to take
-      
-      set destinationX (abX)
-      set destinationY (abY)
-      set abOccupied true
-      set destinationNum -1
-      set state 3
+    if(destinationNum = 0 and state = 1)[
+      if not(any? brigades with[state = 3 and allegience = 2 and targetBridge = 1])[
+      ;set it to crossing the bridge and announce that its space is now available for someone else to take 
+        set destinationX (abX)
+        set destinationY (abY)
+        set state 3
+        set destinationNum -1
+        
+      ]
     ]
-    show abOccupied
     if(destinationNum = -1 and state = 1)[
-      set destinationX 214
-      set destinationY 483
-    ]
-    if not(any? brigades with[destinationNum = 0])[
-      show "no 0"
-    ]
-    ifelse(destinationNum = 0)[
-      set color orange
-    ]
-    [
-      set color red
+      set destinationX 200
+      set destinationY 480
     ]
   ]      
 end   
