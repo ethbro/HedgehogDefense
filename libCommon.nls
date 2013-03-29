@@ -1,0 +1,106 @@
+;libCommon
+;  Common variables used by all simulations
+
+globals [
+  CurrentTicks    ;elapsed ticks
+  TimeScale       ;how many hours (or portions of one) in a tick
+  
+  ;General Index Macros
+  FRENCH
+  GERMAN
+  i_INF
+  i_TANK
+  i_AT
+  i_ART
+  
+  ;Tables of historical values
+  SystemRanges
+  
+  ;Utility variables
+  i j k
+  DefaultUnit
+  
+]
+
+breed [units unit]
+
+units-own [
+  name            ;the unit's historical name
+  superior        ;the historical larger formation the unit is attached to
+  allegiance      ;which side the units is part of (French = 0, German = 1)
+
+  ;Unit's starting statistics
+  startInf
+  startTanks
+  startAT
+  startArt
+  maxSpeed        ;in km per day
+  maxRange
+
+  ;Unit's current statistics
+  curInf
+  curTanks
+  curAT
+  curArt
+  curSpeed
+  curRange
+  
+  engaged
+  
+
+  hitsTaken
+  state; 1 attack, 2 defend, 3 something else yet to come?
+]
+
+;Main setup, should always be called once at the beginning
+to setup-Common
+  __clear-all-and-reset-ticks  ;clear the screen
+  set TimeScale 1
+  
+  ;General index macros for 2D lists
+  set FRENCH 0
+  set GERMAN 1
+  set i_INF 0
+  set i_TANK 1
+  set i_AT 2
+  set i_ART 3
+  
+  ;Contains effective ranges (in meters) for the system types
+  ;  Note: these are average effective ranges to hit - penetration et al. are included in Lanchester constants
+  ;  (Infantry, Tanks, AT, Artillery)
+  set SystemRanges [ [350 500 700 8500]
+                     [400 550 700 8500] ]
+  
+  ;Default (scratch) unit statistics
+  ;  (name, superior, allegiance, startInf, startTanks, startAT, startArt, maxSpeed, maxRange)
+  set DefaultUnit [ "X Composite Brigade" "Y Composite Division" 99 3500 80 90 12 19.5 25]
+end
+
+to c_writeUnit [ statsList ]
+  set name (item 0 statsList)
+  set superior (item 1 statsList)
+  set allegiance (item 2 statsList)
+  set startInf (item 3 statsList)
+  set startTanks (item 4 statsList)
+  set startAT (item 5 statsList)
+  set startArt (item 6 statsList)
+  set maxSpeed (item 7 statsList)
+  set maxRange (item 8 statsList)
+  
+  set curInf startInf
+  set curTanks startTanks
+  set curAT startAT
+  set curArt startArt
+  set curSpeed maxSpeed
+  set curRange maxRange
+  
+  set engaged false
+end
+
+to-report c_nearestEnemy
+  ifelse color = red [
+    report min-one-of units with [color = blue] [distance myself]   ;find nearest agent in a group    
+  ] [
+    report min-one-of units with [color = red] [distance myself]
+  ]
+end

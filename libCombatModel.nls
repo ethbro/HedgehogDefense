@@ -1,0 +1,39 @@
+;libCombatModel
+;  Variables and procedures specific to the combat model
+
+globals [
+  ; Variables used in the calculation of the combat model
+  CMvars
+  cm_a
+  cm_b
+]
+
+to setup-CombatModel
+  ;Turkes linear Lanchester numbers
+  set cm_a .0000000668
+  set cm_b .0000000268
+end
+
+to cm_engage [ opponent ]
+  ask opponent [set engaged true]
+  
+  ;Simple infantry-only Lanchester combat model
+  let x0 [curInf] of self
+  let y0 [curInf] of opponent
+  
+  ;calc bx0 - ay0
+  let temp1 (cm_b * x0 - cm_a * y0)
+  let temp2 e ^ ((- temp1) * TimeScale)
+  
+  
+end
+
+;Notes
+;- look at Hughes salvo models for AT-tank and tank-tank combat (SimplerModels)
+;essentially
+; dA = bB / a1
+; dB = aA / b1
+; where dA & dB are attrition rates
+;   a & b are the number of aimed shots fired per unit per time step
+;   A & B are the number of units
+;   a1 & b1 are the number of shots required to put a unit out of commission
