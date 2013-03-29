@@ -28,8 +28,23 @@ globals[
    abY
    abShiftX
    abShiftY
-   abOccupied
    abCrossed
+   
+   amStagingX
+   amStagingY
+   amX
+   amY
+   amShiftX
+   amShiftY
+   amCrossed
+   
+   peStagingX
+   peStagingY
+   peX
+   peY
+   peShiftX
+   peShiftY
+   peCrossed
 ]
 
 breed [brigades brigade]
@@ -76,12 +91,25 @@ to setup-globals
   ;; how the positions are stored 0   1   2   3   4   5   6   7   8   9  10
   set abStagingX array:from-list[185 187 183 189 181 191 179 193 177 195 175]
   set abStagingY array:from-list[458 456 460 454 462 452 464 450 466 448 468]
-  set abX 173
+  set amStagingX array:from-list[366 368 364 370 362 372 360 374 358 376 356]
+  set amStagingY array:from-list[342 344 340 346 338 348 336 350 334 352 332]
+  ;set peStagingX array:from-list[
+  ;set peStagingY array:from-list[
+  set abX 173;the position accross the abevile bridge units will move to
   set abY 450
-  set abShiftX 2
+  set amX 357
+  set amY 336
+  ;set peX
+  ;set peY
+  set abShiftX 2;the amount each row of units is shifted in the ranks at the abbevile bridge
   set abShiftY 2
-  set abOccupied false
-  set abCrossed 0
+  set amShiftX 2
+  set amShiftY 2
+  set peShiftX 2
+  set peShiftY 2
+  set abCrossed 0;number of units in the current brigade that have crossed the abbevile bridge
+  set amCrossed 0
+  set peCrossed 0
   set WaitCount 10
   set fInfAccuracy 20; in percent out of 100
   set fATAccuracy 22
@@ -104,12 +132,9 @@ to setupbrigades
     if who < 188[
       set name "German infantry"
       set color red
-      set startingInfantry 1
       set effectiveness 100
-      set startingInfantry 3000
+      set startingInfantry 3000;use the start value to set numInfantry at the begining, this is the same for all troop numbers
       set numInfantry startingInfantry
-      ;set startingHedgehogs 0
-      ;set numHedgehogs 1
       set startingAntiTanks 0
       set numAntiTanks 1
       set startingTanks 1
@@ -122,8 +147,8 @@ to setupbrigades
       set speed 2
       set allegience 2
       set state 1
-      ;set destinationX -1
-      ;set destinationY -1
+      set destinationX -1
+      set destinationY -1
       set destinationNum -1
       set targetBridge 2
       if(who < 99)[
@@ -143,27 +168,24 @@ to setupbrigades
     if who < 212[
       set name "German tank"
       set color red
-      set startingInfantry 1
       set effectiveness 100
-      set startingInfantry 3000
-      set numInfantry 1
-      ;set startingHedgehogs 0
-      ;set numHedgehogs 1
+      set startingInfantry 3000;use the start value to set numInfantry at the begining, this is the same for all troop numbers
+      set numInfantry startingInfantry
       set startingAntiTanks 0
-      set numAntiTanks 1
+      set numAntiTanks startingAntiTanks
       set startingTanks 1
-      set numTanks 1
+      set numTanks startingTanks
       set startingArtillary 1
-      set numArtillary 1
+      set numArtillary startingArtillary
       set maxRange 100
       set minRange 10
       set hitsTaken 0
       set speed 2
       set allegience 2
       set state 1
-      ;set destinationX -1
-      ;set destinationY -1
-      ;set destinationNum -1
+      set destinationX -1
+      set destinationY -1
+      set destinationNum -1
       set size 10
       set heading 225
       set shape "Default"
@@ -178,33 +200,27 @@ to setupbrigades
     if who < 328[
       set name "French infantry"
       set color blue
-      set startingInfantry 1
       set effectiveness 100
-      set startingInfantry 30000
-      set numInfantry 1
-      ;set startingHedgehogs 0
-      ;set numHedgehogs 1
+      set startingInfantry 3000
+      set numInfantry startingInfantry;use the start value to set numInfantry at the begining, this is the same for all troop numbers
       set startingAntiTanks 0
-      set numAntiTanks 1
+      set numAntiTanks startingAntiTanks
       set startingTanks 1
-      set numTanks 1
+      set numTanks startingTanks
       set startingArtillary 1
-      set numArtillary 1
+      set numArtillary startingArtillary
       set maxRange 100
       set minRange 10
       set hitsTaken 0
       set speed 2
       set allegience 1
       set state 1
-      ;set destinationX -1
-      ;set destinationY -1
-      ;set destinationNum -1
+      set destinationX -1
+      set destinationY -1
+      set destinationNum -1
       set size 10
       set heading 45
       set shape "Default"
-      ;if(who = 5 or who = 9)[
-      ;  set shape "TankRight"
-      ;]
       ;setxy array:item x 0  array:item x 4
     ]    
   ]
@@ -213,27 +229,24 @@ to setupbrigades
     if who < 334[
       set name "French light"
       set color blue
-      set startingInfantry 1
       set effectiveness 100
-      set startingInfantry 30000
-      set numInfantry 1
-      ;set startingHedgehogs 0
-      ;set numHedgehogs 1
+      set startingInfantry 3000;use the start value to set numInfantry at the begining, this is the same for all troop numbers
+      set numInfantry startingInfantry
       set startingAntiTanks 0
-      set numAntiTanks 1
+      set numAntiTanks startingAntiTanks
       set startingTanks 1
-      set numTanks 1
+      set numTanks startingTanks
       set startingArtillary 1
-      set numArtillary 1
+      set numArtillary startingArtillary
       set maxRange 100
       set minRange 10
       set hitsTaken 0
       set speed 2
       set allegience 1
       set state 1
-      ;set destinationX -1
-      ;set destinationY -1
-      ;set destinationNum -1
+      set destinationX -1
+      set destinationY -1
+      set destinationNum -1
       set size 10
       set heading 45
       set shape "Default"
@@ -248,33 +261,27 @@ to setupbrigades
     if who < 344[
       set name "French armor"
       set color blue
-      set startingInfantry 1
       set effectiveness 100
-      set startingInfantry 30000
-      set numInfantry 1
-      ;set startingHedgehogs 0
-      ;set numHedgehogs 1
+      set startingInfantry 3000;use the start value to set numInfantry at the begining, this is the same for all troop numbers
+      set numInfantry startingInfantry
       set startingAntiTanks 0
-      set numAntiTanks 1
+      set numAntiTanks startingAntiTanks
       set startingTanks 1
-      set numTanks 1
+      set numTanks startingTanks
       set startingArtillary 1
-      set numArtillary 1
+      set numArtillary startingTanks
       set maxRange 100
       set minRange 10
       set hitsTaken 0
       set speed 2
       set allegience 1
       set state 1
-      ;set destinationX -1
-      ;set destinationY -1
-      ;set destinationNum -1
+      set destinationX -1
+      set destinationY -1
+      set destinationNum -1
       set size 10
       set heading 45
       set shape "Default"
-      ;if(who = 5 or who = 9)[
-      ;  set shape "TankRight"
-      ;]
       ;setxy array:item x 0  array:item x 4
     ]    
   ]      
@@ -446,8 +453,7 @@ to interact
         set destinationX (abX)
         set destinationY (abY)
         set state 3
-        set destinationNum -1
-        
+        set destinationNum -1  
       ]
     ]
     if(destinationNum = -1 and state = 1)[
