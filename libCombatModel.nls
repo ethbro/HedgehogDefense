@@ -3,29 +3,36 @@
 
 globals [
   ; Variables used in the calculation of the combat model
-  CMvars
-  cm_a
-  cm_b
+  cm_coeffs
 ]
 
 to setup-CombatModel
   ;Turkes linear Lanchester numbers
-  set cm_a .0000000668
-  set cm_b .0000000268
+  ;  French and German, respectively
+  set cm_coeffs [ .0000000268 .0000000668 ]
 end
 
 to cm_engage [ opponent ]
-  ask opponent [set engaged true]
+  let mySide [allegiance] of self
+  let oppSide [allegiance] of opponent
+
+  let a (item mySide cm_coeffs)
+  let b (item oppSide cm_coeffs)  
   
   ;Simple infantry-only Lanchester combat model
-  let x0 [curInf] of self
-  let y0 [curInf] of opponent
+  let x0 [curInf] of opponent
+  let y0 [curInf] of self
   
-  ;calc bx0 - ay0
-  let temp1 (cm_b * x0 - cm_a * y0)
-  let temp2 e ^ ((- temp1) * TimeScale)
-  
-  
+  ;Using the solution from Combat Models, Session 4, Slide 18
+  let temp1 (b * x0 - a * y0)
+  let temp2 (a * y0 * e ^ ((- temp1) * TimeScale))
+  set temp2 (b * x0 - temp2)
+  ask opponent [
+    set curInf (x0 * temp1 / temp2)
+    if (curInf <= 0.7 * startInf) [
+      set state 5                     ;run away!
+    ]
+  ]
 end
 
 ;Notes

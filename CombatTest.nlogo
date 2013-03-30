@@ -40,10 +40,15 @@ end
 to step
   ask units [
     let opponent c_nearestEnemy
-    ifelse (distance opponent <= [curRange] of self) [
-      cm_engage opponent
+    ifelse (state != 5) [
+      ifelse (distance opponent <= [curRange] of self) [
+        cm_engage opponent
+      ] [
+        face opponent
+        forward curSpeed
+      ]
     ] [
-      set heading towards opponent
+      set heading (((towards opponent) + 180) mod 360)
       forward curSpeed
     ]
   ]
@@ -74,8 +79,8 @@ GRAPHICS-WINDOW
 1
 1
 0
-1
-1
+0
+0
 1
 -150
 150
@@ -184,23 +189,6 @@ BUTTON
 95
 Step
 step
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-157
-63
-251
-96
-Step (50)
-Steps
 NIL
 1
 T

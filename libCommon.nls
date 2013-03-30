@@ -17,9 +17,7 @@ globals [
   SystemRanges
   
   ;Utility variables
-  i j k
   DefaultUnit
-  
 ]
 
 breed [units unit]
@@ -44,12 +42,7 @@ units-own [
   curArt
   curSpeed
   curRange
-  
-  engaged
-  
-
-  hitsTaken
-  state; 1 attack, 2 defend, 3 something else yet to come?
+  state           ;5 running
 ]
 
 ;Main setup, should always be called once at the beginning
@@ -93,12 +86,10 @@ to c_writeUnit [ statsList ]
   set curArt startArt
   set curSpeed maxSpeed
   set curRange maxRange
-  
-  set engaged false
 end
 
 to-report c_nearestEnemy
-  ifelse color = red [
+  ifelse (color = red) [
     report min-one-of units with [color = blue] [distance myself]   ;find nearest agent in a group    
   ] [
     report min-one-of units with [color = red] [distance myself]
