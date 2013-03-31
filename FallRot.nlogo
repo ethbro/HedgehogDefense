@@ -112,9 +112,9 @@ to setup-globals
   set amStagingX array:from-list[366 368 364 370 362 372 360 374 358 376 356]
   set amStagingY array:from-list[342 340 344 338 346 336 348 334 350 332 352]
   set brStagingX array:from-list[526 528 524 530 522 532 520 534 518 536 516]
-  set brStagingY array:from-list[324 326 322 328 320 330 318 332 316 334 314]
+  set brStagingY array:from-list[364 366 362 368 360 370 358 372 356 374 354]
   set peStagingX array:from-list[596 598 594 600 592 602 590 604 588 606 586]
-  set peStagingY array:from-list[322 324 320 326 318 328 316 330 314 332 312]
+  set peStagingY array:from-list[352 350 354 348 356 346 358 344 360 342 362]
   set chX 128
   set chY 483
   set abX 173;the position accross the abevile bridge units will move to
@@ -122,9 +122,9 @@ to setup-globals
   set amX 357
   set amY 336
   set brX 528
-  set brY 312
-  set peX 594
-  set peY 316
+  set brY 342
+  set peX 586
+  set peY 346
   set chShiftX 2
   set chShiftY 2
   set abShiftX 2;the amount each row of units is shifted in the ranks at the abbevile bridge
@@ -185,13 +185,13 @@ to setupbrigades
       if(who > 80)[
         set targetBridge 3
       ]
-      if(who > 100)[
+      if(who > 140)[
         set targetBridge 4
       ]
       if(who > 160)[
         set targetBridge 5
       ]
-      set size 5
+      set size 6
       set heading 225
       set shape "Default"
       ;if(who = 5 or who = 9)[
@@ -224,7 +224,7 @@ to setupbrigades
       set destinationY -1
       set destinationNum -1
       set targetBridge 5
-      set size 10
+      set size 6
       set heading 225
       set shape "Default"
       ;if(who = 5 or who = 9)[
@@ -383,7 +383,7 @@ end
        
 to move
   ;move to a relay point if unable to find a specific destination
-  if(state = 1 and destinationX > 100 and destinationY > 100 and destinationNum = -1 and targetBridge = 2)[
+  if(state = 1 and allegience = 2 and destinationNum = -1)[
     facexy destinationX destinationY
     forward speed
   ]
@@ -430,6 +430,26 @@ to move
         if(xcor <= amX and ycor <= amY)[
           set state 4
           set amCrossed 0
+          set destinationNum -1
+        ]
+      ]
+      if(targetBridge = 4)[
+        set brCrossed brCrossed + 60
+        setxy (array:item brStagingX 0) - ((array:item brStagingX 0 - brX) * (brCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary))) array:item brStagingY 0 - ((array:item brStagingY 0 - brY) * (brCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary)))
+        forward 1
+        if(xcor <= brX and ycor <= brY)[
+          set state 4
+          set brCrossed 0
+          set destinationNum -1
+        ]
+      ] 
+      if(targetBridge = 5)[
+        set peCrossed peCrossed + 60
+        setxy (array:item peStagingX 0) - ((array:item peStagingX 0 - peX) * (peCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary))) array:item peStagingY 0 - ((array:item peStagingY 0 - peY) * (peCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary)))
+        forward 1
+        if(xcor <= peX and ycor <= peY)[
+          set state 5
+          set peCrossed 0
           set destinationNum -1
         ]
       ] 
@@ -556,6 +576,58 @@ to interact
             set goal 1
           ]
         ]
+        if(targetBridge = 4)[
+          ;find the location of this destination by finding the base location and shifting by the row it's in
+          let goalX ((array:item brStagingX (i - (11 * row))) + (row * brShiftX))
+          let goalY ((array:item brStagingY (i - (11 * row))) + (row * brShiftY))
+          let myDistance sqrt((absolute-value(goalX - xcor) * absolute-value(goalX - xcor)) + (absolute-value(goalY - ycor) * absolute-value(goalY - ycor)))
+          ;this isn' a valid spot if someone else is going to use it
+          if(any? brigades with[destinationNum = i and targetBridge = 4 and allegience = 2])[
+            set valid 0
+          ]
+          ;this isn't a valid spot if a closer brigade needs to move toward it
+          if(any? brigades with[targetBridge = 4 and allegience = 2 and (destinationNum > i + 1 or destinationNum = -1) and sqrt((absolute-value(goalX - xcor) * absolute-value(goalX - xcor)) + (absolute-value(goalY - ycor) * absolute-value(goalY - ycor))) < myDistance])[
+            set valid 0
+          ]
+          ;the spot is not valid if it is farther from the bridge than the current destination
+          if(i > destinationNum and destinationNum > -1)[
+            set valid 0
+          ]
+          if(valid = 1)[
+            ;we are setting this brigade to move to destination i, no others can move here now
+            set destinationNum i
+            set destinationX goalX
+            set destinationY goalY
+            set state 2
+            set goal 1
+          ]
+        ]
+        if(targetBridge = 5)[
+          ;find the location of this destination by finding the base location and shifting by the row it's in
+          let goalX ((array:item peStagingX (i - (11 * row))) + (row * peShiftX))
+          let goalY ((array:item peStagingY (i - (11 * row))) + (row * peShiftY))
+          let myDistance sqrt((absolute-value(goalX - xcor) * absolute-value(goalX - xcor)) + (absolute-value(goalY - ycor) * absolute-value(goalY - ycor)))
+          ;this isn' a valid spot if someone else is going to use it
+          if(any? brigades with[destinationNum = i and targetBridge = 5 and allegience = 2])[
+            set valid 0
+          ]
+          ;this isn't a valid spot if a closer brigade needs to move toward it
+          if(any? brigades with[targetBridge = 5 and allegience = 2 and (destinationNum > i + 1 or destinationNum = -1) and sqrt((absolute-value(goalX - xcor) * absolute-value(goalX - xcor)) + (absolute-value(goalY - ycor) * absolute-value(goalY - ycor))) < myDistance])[
+            set valid 0
+          ]
+          ;the spot is not valid if it is farther from the bridge than the current destination
+          if(i > destinationNum and destinationNum > -1)[
+            set valid 0
+          ]
+          if(valid = 1)[
+            ;we are setting this brigade to move to destination i, no others can move here now
+            set destinationNum i
+            set destinationX goalX
+            set destinationY goalY
+            set state 2
+            set goal 1
+          ]
+        ]
       ]
       set i (i + 1);;after we've looked at a spot incriment so we can look at the next one on the next pass
     ]
@@ -582,10 +654,40 @@ to interact
         set state 3
         set destinationNum -1  
       ]
+      if not(any? brigades with[state = 3 and allegience = 2 and targetBridge = 4])[
+      ;set it to crossing the bridge and announce that its space is now available for someone else to take 
+        set destinationX (brX)
+        set destinationY (brY)
+        set state 3
+        set destinationNum -1  
+      ]
+      if not(any? brigades with[state = 3 and allegience = 2 and targetBridge = 5])[
+      ;set it to crossing the bridge and announce that its space is now available for someone else to take 
+        set destinationX (peX)
+        set destinationY (peY)
+        set state 3
+        set destinationNum -1  
+      ]
+    ]
+    if(destinationNum = -1 and state = 1 and targetBridge = 1)[
+      set destinationX 146
+      set destinationY 501
     ]
     if(destinationNum = -1 and state = 1 and targetBridge = 2)[
       set destinationX 200
       set destinationY 480
+    ]
+    if(destinationNum = -1 and state = 1 and targetBridge = 3)[
+      set destinationX 364
+      set destinationY 352
+    ]
+    if(destinationNum = -1 and state = 1 and targetBridge = 4)[
+      set destinationX 515
+      set destinationY 371
+    ]
+    if(destinationNum = -1 and state = 1 and targetBridge = 5)[
+      set destinationX 601
+      set destinationY 364
     ]
   ]      
 end   
