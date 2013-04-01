@@ -66,7 +66,7 @@ globals[
 breed [brigades brigade]
 brigades-own[
   name;
-  allegience;are they fighting for side 1 or 2?
+  allegience;are they fighting for side 1 (french) or 2 (german)?
   effectiveness
   maxRange;
   minRange;
@@ -95,9 +95,7 @@ to setup
   setup-patches
   setupbrigades
 end
-to setup-patches
- import-drawing "Map.png"
-end
+
 to setup-globals
   set randomrunnum random 999999
   set x array:from-list [50 50 50 50 50 50]
@@ -153,6 +151,10 @@ to setup-globals
   set gInfDmg 1
   set gTankDmg 2
   set gArtDmg 2
+end
+
+to setup-patches
+ import-drawing "Map.png"
 end
 
 to setupbrigades
@@ -380,91 +382,15 @@ to go
     stop
   ]           
 end  
-       
-to move
-  ;move to a relay point if unable to find a specific destination
-  if(state = 1 and allegience = 2 and destinationNum = -1)[
-    facexy destinationX destinationY
-    forward speed
-  ]
-  ;if the brigade is stationary and ready for orders
-  if(state = 2)[;if the unit is moving toward a waiting position go toward it until it's too close to move farther
-    ifelse(absolute-value (destinationX - xcor) < speed and absolute-value (destinationY - ycor) < speed)[
-      ;if the unit reached its waiting position face the enemies and set its state to ready to move
-      setxy destinationX destinationY
-      set state 1
-      facexy 170 450
-    ]
-    [
-      ;if it hasn't reached its waiting point move toward it at its normal speed
-      facexy destinationX destinationY
-      forward speed
-    ]
-  ]
-  if(state = 3 and allegience = 2)[
-    set destinationNum -1
-     if(targetBridge = 1)[
-        set chCrossed chCrossed + 60
-        setxy (array:item chStagingX 0) - ((array:item chStagingX 0 - chX) * (chCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary))) array:item chStagingY 0 - ((array:item chStagingY 0 - chY) * (chCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary)))
-        forward 1
-        if(xcor <= chX and ycor <= chY)[
-          set state 4
-          set chCrossed 0
-          set destinationNum -1
-        ]
-      ]
-      if(targetBridge = 2)[
-        set abCrossed abCrossed + 60
-        setxy (array:item abStagingX 0) - ((array:item abStagingX 0 - abX) * (abCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary))) array:item abStagingY 0 - ((array:item abStagingY 0 - abY) * (abCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary)))
-        forward 1
-        if(xcor <= abX and ycor <= abY)[
-          set state 4
-          set abCrossed 0
-          set destinationNum -1
-        ]
-      ] 
-      if(targetBridge = 3)[
-        set amCrossed amCrossed + 60
-        setxy (array:item amStagingX 0) - ((array:item amStagingX 0 - amX) * (amCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary))) array:item amStagingY 0 - ((array:item amStagingY 0 - amY) * (amCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary)))
-        forward 1
-        if(xcor <= amX and ycor <= amY)[
-          set state 4
-          set amCrossed 0
-          set destinationNum -1
-        ]
-      ]
-      if(targetBridge = 4)[
-        set brCrossed brCrossed + 60
-        setxy (array:item brStagingX 0) - ((array:item brStagingX 0 - brX) * (brCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary))) array:item brStagingY 0 - ((array:item brStagingY 0 - brY) * (brCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary)))
-        forward 1
-        if(xcor <= brX and ycor <= brY)[
-          set state 4
-          set brCrossed 0
-          set destinationNum -1
-        ]
-      ] 
-      if(targetBridge = 5)[
-        set peCrossed peCrossed + 60
-        setxy (array:item peStagingX 0) - ((array:item peStagingX 0 - peX) * (peCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary))) array:item peStagingY 0 - ((array:item peStagingY 0 - peY) * (peCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary)))
-        forward 1
-        if(xcor <= peX and ycor <= peY)[
-          set state 5
-          set peCrossed 0
-          set destinationNum -1
-        ]
-      ] 
-  ]
-  
-end                                  
+
 to interact
   let opponent 0     
   set opponent nearest other-turtles;opponent always exists because of conditional in integrate function
-  
-  ;if the brigade is waiting for orders
-  if(state = 1 and allegience = 2)[
+
+  if(state = 1 and allegience = 2)[ ; if brigade is german and ready for orders
     let i 0;; the counter that determines what spot we are currently looking to fill
-    let goal -1;; a marker for wether or not this soldier has chosen a spot to fill
-    let valid 1;;a check for if the spot we're looking at is valid for this soldier
+    let goal -1;; a marker for wether or not this brigade has chosen a spot to fill
+    let valid 1;;a check for if the spot we're looking at is valid for this brigade
     ;find the nearest empty waiting spot to fill in at
     repeat 99[
       set valid 1;;assume the spot we're looking at is valid until proven otherwise
@@ -630,8 +556,9 @@ to interact
         ]
       ]
       set i (i + 1);;after we've looked at a spot incriment so we can look at the next one on the next pass
-    ]
-    ;if the bridge is empty and the unit nearest the bridge is ready for orders
+    ]; 99 loop ends here
+    
+    ;if the bridge is empty and the unit nearest the brigade is ready for orders
     if(destinationNum = 0 and state = 1)[
       if not(any? brigades with[state = 3 and allegience = 2 and targetBridge = 1])[
       ;set it to crossing the bridge and announce that its space is now available for someone else to take 
@@ -691,6 +618,83 @@ to interact
     ]
   ]      
 end   
+       
+to move
+  ;move to a relay point if unable to find a specific destination
+  if(state = 1 and allegience = 2 and destinationNum = -1)[
+    facexy destinationX destinationY
+    forward speed
+  ]
+  ;if the brigade is stationary and ready for orders
+  if(state = 2)[;if the unit is moving toward a waiting position go toward it until it's too close to move farther
+    ifelse(absolute-value (destinationX - xcor) < speed and absolute-value (destinationY - ycor) < speed)[
+      ;if the unit reached its waiting position face the enemies and set its state to ready to move
+      setxy destinationX destinationY
+      set state 1
+      facexy 170 450
+    ]
+    [
+      ;if it hasn't reached its waiting point move toward it at its normal speed
+      facexy destinationX destinationY
+      forward speed
+    ]
+  ]
+  if(state = 3 and allegience = 2)[ ; if german and currently crossing the bridge
+    set destinationNum -1
+     if(targetBridge = 1)[
+        set chCrossed chCrossed + 60
+        setxy (array:item chStagingX 0) - ((array:item chStagingX 0 - chX) * (chCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary))) array:item chStagingY 0 - ((array:item chStagingY 0 - chY) * (chCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary)))
+        forward 1
+        if(xcor <= chX and ycor <= chY)[
+          set state 4
+          set chCrossed 0
+          set destinationNum -1
+        ]
+      ]
+      if(targetBridge = 2)[
+        set abCrossed abCrossed + 60
+        setxy (array:item abStagingX 0) - ((array:item abStagingX 0 - abX) * (abCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary))) array:item abStagingY 0 - ((array:item abStagingY 0 - abY) * (abCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary)))
+        forward 1
+        if(xcor <= abX and ycor <= abY)[
+          set state 4
+          set abCrossed 0
+          set destinationNum -1
+        ]
+      ] 
+      if(targetBridge = 3)[
+        set amCrossed amCrossed + 60
+        setxy (array:item amStagingX 0) - ((array:item amStagingX 0 - amX) * (amCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary))) array:item amStagingY 0 - ((array:item amStagingY 0 - amY) * (amCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary)))
+        forward 1
+        if(xcor <= amX and ycor <= amY)[
+          set state 4
+          set amCrossed 0
+          set destinationNum -1
+        ]
+      ]
+      if(targetBridge = 4)[
+        set brCrossed brCrossed + 60
+        setxy (array:item brStagingX 0) - ((array:item brStagingX 0 - brX) * (brCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary))) array:item brStagingY 0 - ((array:item brStagingY 0 - brY) * (brCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary)))
+        forward 1
+        if(xcor <= brX and ycor <= brY)[
+          set state 4
+          set brCrossed 0
+          set destinationNum -1
+        ]
+      ] 
+      if(targetBridge = 5)[
+        set peCrossed peCrossed + 60
+        setxy (array:item peStagingX 0) - ((array:item peStagingX 0 - peX) * (peCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary))) array:item peStagingY 0 - ((array:item peStagingY 0 - peY) * (peCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary)))
+        forward 1
+        if(xcor <= peX and ycor <= peY)[
+          set state 5
+          set peCrossed 0
+          set destinationNum -1
+        ]
+      ] 
+  ]
+  
+end                                  
+
 
 ;removes negatives, used for finding distance to someone
 to-report absolute-value [number]
