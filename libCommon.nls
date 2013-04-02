@@ -35,14 +35,28 @@ units-own [
   maxSpeed        ;in km per day
   maxRange
 
-  ;Unit's current statistics
+  ;Unit's current scurtatistics
   curInf
   curTanks
   curAT
   curArt
   curSpeed
   curRange
-  state           ;5 running
+  
+  ;Combat variables
+  engaged
+  effectiveness   ;unit's remaining strength, out of 100(%)
+  
+  ;Bridge variables
+  targetBridge    ;0 none, already crossed, 1 abbevile bridge, 2 amien bridge, 3 perrone bridge
+  bridgeCrossed
+  destinationNum
+  destinationX
+  destinationY
+  
+  state; 1 ready for orders, 2 moving to position (nazi)/retreat (french), 3 crossing bridge, 4 ready for orders after crosssed, 5 moving after crossed
+  retreatState ; 1 for retreating to the line of 70% remaining effectiveness, 2 for 50%, 3 for 30%
+  stepsTaken ; number of ticks a given french brigade has spent retreating
 ]
 
 ;Main setup, should always be called once at the beginning
@@ -86,12 +100,35 @@ to c_writeUnit [ statsList ]
   set curArt startArt
   set curSpeed maxSpeed
   set curRange maxRange
+  
+  set shape "Default"
+  set engaged 0
+  set effectiveness 100
 end
 
 to-report c_nearestEnemy
-  ifelse (color = red) [
-    report min-one-of units with [color = blue] [distance myself]   ;find nearest agent in a group    
+  let otherSide 99
+  ifelse (allegiance = GERMAN) [
+    set otherSide FRENCH
   ] [
-    report min-one-of units with [color = red] [distance myself]
+    set otherSide GERMAN
+  ]
+  report min-one-of units with [allegiance = otherSide] [distance myself]
+end
+
+to-report c_nearestUnengagedEnemy
+  let otherSide 99
+  ifelse (allegiance = GERMAN) [
+    set otherSide FRENCH
+  ] [
+    set otherSide GERMAN
+  ]
+  let otherUnits units with [allegiance = otherSide]
+  report min-one-of otherUnits with [engaged = 0] [distance myself]
+end
+
+to c_clearEngaged
+  ask units [
+    set engaged 0
   ]
 end

@@ -39,7 +39,8 @@ end
 
 to step
   ask units [
-    let opponent c_nearestEnemy
+    let opponent c_nearestUnengagedEnemy
+    if (opponent = nobody) [stop]
     ifelse (state != 5) [
       ifelse (distance opponent <= [curRange] of self) [
         cm_engage opponent
@@ -52,6 +53,8 @@ to step
       forward curSpeed
     ]
   ]
+  
+  c_clearEngaged
   
   set CurrentTicks (CurrentTicks + 1) ; increment the tick counter
 end
@@ -110,10 +113,10 @@ NIL
 1
 
 BUTTON
-277
-62
-340
-95
+45
+101
+108
+134
 NIL
 go
 T
@@ -127,9 +130,9 @@ NIL
 1
 
 MONITOR
-350
+201
 11
-432
+283
 56
 NIL
 CurrentTicks
@@ -137,56 +140,11 @@ CurrentTicks
 1
 11
 
-SLIDER
-222
-236
-394
-269
-GermanTanks
-GermanTanks
-0
-1000
-389
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-11
-235
-183
-268
-FrenchTanks
-FrenchTanks
-0
-1000
-62
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-11
-152
-183
-185
-FrenchInfantry
-FrenchInfantry
-0
-4000
-1000
-1
-1
-NIL
-HORIZONTAL
-
 BUTTON
-80
-62
-143
-95
+45
+56
+108
+89
 Step
 step
 NIL
@@ -200,30 +158,15 @@ NIL
 1
 
 SLIDER
-224
-153
-396
-186
-GermanInfantry
-GermanInfantry
+13
+147
+185
+180
+FrenchBrigades
+FrenchBrigades
 0
-4000
-1000
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
 10
-193
-189
-226
-FrenchAntiTanks
-FrenchAntiTanks
-0
-1000
-54
+10
 1
 1
 NIL
@@ -231,74 +174,14 @@ HORIZONTAL
 
 SLIDER
 12
-282
+188
 184
-315
-FrenchArtillary
-FrenchArtillary
-0
-1000
-41
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-223
-280
-395
-313
-GermanArtillary
-GermanArtillary
-0
-1000
-49
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-11
-111
-183
-144
-FrenchBrigades
-FrenchBrigades
-0
-10
-10
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-224
-113
-396
-146
+221
 GermanBrigades
 GermanBrigades
 0
 10
 10
-1
-1
-NIL
-HORIZONTAL
-
-SLIDER
-224
-194
-402
-227
-GermanAntiTanks
-GermanAntiTanks
-0
-1000
-50
 1
 1
 NIL

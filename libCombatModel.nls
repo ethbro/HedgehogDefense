@@ -7,31 +7,71 @@ globals [
 ]
 
 to setup-CombatModel
-  ;Turkes linear Lanchester numbers
-  ;  French and German, respectively
-  set cm_coeffs [ .0000000268 .0000000668 ]
+  ;Turkes linear Lanchester numbers, derived from Battle of Kursk
+  ;  Soviet (aka French) and German, respectively
+  ;  set cm_coeffs [ .0000000268 .0000000668 ]
+  set cm_coeffs [ .000000268 .000000668 ]
 end
 
 to cm_engage [ opponent ]
-  let mySide [allegiance] of self
+  let mySide allegiance
   let oppSide [allegiance] of opponent
 
   let a (item mySide cm_coeffs)
   let b (item oppSide cm_coeffs)  
   
   ;Simple infantry-only Lanchester combat model
-  let x0 [curInf] of opponent
-  let y0 [curInf] of self
+  ;  incorporates weights of various combat systems from Bracken
+  ;  with addition of AT=10 (Bracken used 5 to represent APCs)
+  let x0 cm_reportCurStrength opponent
+  let y0 cm_reportCurStrength self
   
   ;Using the solution from Combat Models, Session 4, Slide 18
-  let temp1 (b * x0 - a * y0)
-  let temp2 (a * y0 * e ^ ((- temp1) * TimeScale))
-  set temp2 (b * x0 - temp2)
+  let opp1 (b * x0 - a * y0)
+  let opp2 (a * y0 * e ^ ((- opp1) * TimeScale))
+  set opp2 (b * x0 - opp2)
+
+  let self1 (a * y0 - b * x0)
+  let self2 (b * x0 * e ^ ((- self1) * TimeScale))
+  set self2 (a * y0 - self2)
+
   ask opponent [
-    set curInf (x0 * temp1 / temp2)
+    set engaged 1
+    cm_updateStrength self (x0 * opp1 / opp2)
     if (curInf <= 0.7 * startInf) [
       set state 5                     ;run away!
     ]
+  ]
+  
+  set engaged 1
+  cm_updateStrength self (y0 * self1 / self2)
+  if (curInf <= 0.7 * startInf) [
+    set state 5
+  ]
+end
+
+to-report cm_reportCurStrength [ unit ]
+  report ([curInf] of unit) + (10 * [curAT] of unit) + (20 * [curTanks] of unit) + (40 * [curArt] of unit)
+end
+
+to-report cm_reportMaxStrength [ unit ]
+  report ([startInf] of unit) + (10 * [startAT] of unit) + (20 * [startTanks] of unit) + (40 * [startArt] of unit)
+end
+
+to cm_updateStrength [ unit newStrength ]
+  let attrition (newStrength / cm_reportCurStrength unit)
+
+  let myInf [curInf] of unit
+  let myAT [curAT] of unit
+  let myTanks [curTanks] of unit
+  let myArt [curArt] of unit
+  
+  ask unit [
+    set effectiveness (newStrength / cm_reportMaxStrength self)
+    set curInf myInf * attrition
+    set curAT myAT * attrition
+    set curTanks myTanks * attrition
+    set curArt myArt * attrition
   ]
 end
 

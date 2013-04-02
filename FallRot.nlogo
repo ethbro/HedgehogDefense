@@ -1,108 +1,66 @@
+__includes ["libCommon.nls" "libCombatModel.nls"]
+
 extensions [array]
 globals[
-  WaitCount
-   time-units      ;monitor to show the number of  goes 
-   x
-   y
-   randomrunnum    ;crappy hack to get unique filenames for each run in behaviourspace experiments
-   filename        ;place for aforementioned filename
-   fInfAccuracy
-   fATAccuracy
-   fTankAccuracy
-   fArtAccuracy
-   gInfAccuracy
-   gTankAccuracy
-   gArtAccuracy
-   fInfDmg
-   fATDmg
-   fTankDmg
-   fArtDmg
-   gInfDmg
-   gTankDmg
-   gArtDmg
+  x
+  y
    
-   ;;staging areas
-   chStagingX;;the channel bridge
-   chStagingY
-   chX
-   chY
-   chShiftX
-   chShiftY
-   chCrossed
+  ;;staging areas
+  chStagingX;;the channel bridge
+  chStagingY
+  chX
+  chY
+  chShiftX
+  chShiftY
+  chCrossed
    
-   abStagingX
-   abStagingY
-   abX
-   abY
-   abShiftX
-   abShiftY
-   abCrossed
-   
-   amStagingX
-   amStagingY
-   amX
-   amY
-   amShiftX
-   amShiftY
-   amCrossed
-   
-   brStagingX;;bracer
-   brStagingY
-   brX
-   brY
-   brShiftX
-   brShiftY
-   brCrossed
-   
-   peStagingX
-   peStagingY
-   peX
-   peY
-   peShiftX
-   peShiftY
-   peCrossed
-   
-   nrTicksToNextRetreatline
-]
-
-breed [brigades brigade]
-brigades-own[
-  name;
-  allegience;are they fighting for side 1 (french) or 2 (german)?
-  effectiveness
-  maxRange;
-  minRange;
-  speed; amount they move when its time
-  numInfantry;
-  startingInfantry;
-  numAntiTanks;
-  startingAntiTanks
-  numTanks
-  startingTanks;
-  numArtillary
-  startingArtillary; 
-  hitsTaken
-  targetBridge;0 none, already crossed, 1 abbevile bridge, 2 amien bridge, 3 perrone bridge
-  bridgeCrossed
-  destinationNum
-  destinationX
-  destinationY
-  state; 1 ready for orders, 2 moving to position (nazi)/retreat (french), 3 crossing bridge, 4 ready for orders after crosssed, 5 moving after crossed
-  retreatState ; 1 for retreating to the line of 70% remaining effectiveness, 2 for 50%, 3 for 30%
-  stepsTaken ; number of ticks a given french brigade has spent retreating
+  abStagingX
+  abStagingY
+  abX
+  abY
+  abShiftX
+  abShiftY
+  abCrossed
   
+  amStagingX
+  amStagingY
+  amX
+  amY
+  amShiftX
+  amShiftY
+  amCrossed
+  
+  brStagingX;;bracer
+  brStagingY
+  brX
+  brY
+  brShiftX
+  brShiftY
+  brCrossed
+  
+  peStagingX
+  peStagingY
+  peX
+  peY
+  peShiftX
+  peShiftY
+  peCrossed
+  
+  nrTicksToNextRetreatline
 ]
 
 to setup
   __clear-all-and-reset-ticks;clear the screen
   
+  setup-Common
+  setup-CombatModel
+  
   setup-globals;get all the fields set to their starting values 
   setup-patches
-  setupbrigades
+  setup-units
 end
 
 to setup-globals
-  set randomrunnum random 999999
   set x array:from-list [50 50 50 50 50 50]
   set y array:from-list [50 50 50 50 50 50]
   
@@ -141,21 +99,6 @@ to setup-globals
   set abCrossed 0;number of units in the current brigade that have crossed the abbevile bridge
   set amCrossed 0
   set peCrossed 0
-  set WaitCount 10
-  set fInfAccuracy 20; in percent out of 100
-  set fATAccuracy 22
-  set fTankAccuracy 26
-  set fArtAccuracy 20
-  set gInfAccuracy 21
-  set gTankAccuracy 21
-  set gArtAccuracy 21
-  set fInfDmg 1;number of units it kills
-  set fATDmg 1
-  set fTankDmg 2
-  set fArtDmg 2
-  set gInfDmg 1
-  set gTankDmg 2
-  set gArtDmg 2
   set nrTicksToNextRetreatline 15
 end
 
@@ -163,242 +106,149 @@ to setup-patches
  import-drawing "Map.png"
 end
 
-to setupbrigades
-  create-brigades (188)[
-    if who < 188[
-      set name "German infantry"
-      set color red
-      set effectiveness 100
-      set startingInfantry 3000;use the start value to set numInfantry at the begining, this is the same for all troop numbers
-      set numInfantry startingInfantry
-      set startingAntiTanks 0
-      set numAntiTanks 1
-      set startingTanks 1
-      set numTanks 1
-      set startingArtillary 1
-      set numArtillary 1
-      set maxRange 100
-      set minRange 10
-      set hitsTaken 0
-      set speed 2
-      set allegience 2
-      set state 1
-      set destinationX -1
-      set destinationY -1
-      set destinationNum -1
-      set targetBridge 1   
-      if(who > 30)[
-        set targetBridge 2
-      ]
-      if(who > 80)[
-        set targetBridge 3
-      ]
-      if(who > 140)[
-        set targetBridge 4
-      ]
-      if(who > 160)[
-        set targetBridge 5
-      ]
-      set size 6
-      set heading 225
-      set shape "Default"
-      ;if(who = 5 or who = 9)[
-      ;  set shape "TankRight"
-      ;]
-      ;setxy array:item x 0  array:item x 4
-    ]    
+to setup-units
+  create-units (188) [
+    c_writeUnit DefaultUnit
+    
+    set name "German infantry"
+    set allegiance GERMAN
+    set size 5
+    set heading 225
+    set color red
+
+    set state 1
+    set destinationX -1
+    set destinationY -1
+    set destinationNum -1
+    set targetBridge 1   
+
+    if(who > 30) [
+      set targetBridge 2
+    ]
+    if(who > 80) [
+      set targetBridge 3
+    ]
+    if(who > 140) [
+      set targetBridge 4
+    ]
+    if(who > 160) [
+      set targetBridge 5
+    ]
   ]
   
-  create-brigades (24)[
-    if who < 212[
-      set name "German tank"
-      set color red
-      set effectiveness 100
-      set startingInfantry 3000;use the start value to set numInfantry at the begining, this is the same for all troop numbers
-      set numInfantry startingInfantry
-      set startingAntiTanks 0
-      set numAntiTanks startingAntiTanks
-      set startingTanks 1
-      set numTanks startingTanks
-      set startingArtillary 1
-      set numArtillary startingArtillary
-      set maxRange 100
-      set minRange 10
-      set hitsTaken 0
-      set speed 2
-      set allegience 2
-      set state 1
-      set destinationX -1
-      set destinationY -1
-      set destinationNum -1
-      set targetBridge 5
-      set size 6
-      set heading 225
-      set shape "Default"
-      ;if(who = 5 or who = 9)[
-      ;  set shape "TankRight"
-      ;]
-      ;setxy array:item x 0  array:item x 4
-    ]    
+  create-units (24) [
+    c_writeUnit DefaultUnit
+    
+    set name "German tank"
+    set allegiance GERMAN
+    set size 5
+    set heading 225  
+    set color red
+      
+    set state 1
+    set destinationX -1
+    set destinationY -1
+    set destinationNum -1
+    set targetBridge 5
+    set size 6
   ]  
   
-  create-brigades (116)[
-    if who < 328[
-      set name "French infantry"
-      set color blue
-      set effectiveness 100
-      set startingInfantry 3000
-      set numInfantry startingInfantry;use the start value to set numInfantry at the begining, this is the same for all troop numbers
-      set startingAntiTanks 0
-      set numAntiTanks startingAntiTanks
-      set startingTanks 1
-      set numTanks startingTanks
-      set startingArtillary 1
-      set numArtillary startingArtillary
-      set maxRange 100
-      set minRange 10
-      set hitsTaken 0
-      set speed 2
-      set allegience 1
-      set state 1
-      set destinationX -1
-      set destinationY -1
-      set destinationNum -1
-      set size 10
-      set heading 45
-      set shape "Default"
-      set stepsTaken 0
-      ;setxy array:item x 0  array:item x 4
-    ]    
+  create-units (116)[
+    c_writeUnit DefaultUnit
+    
+    set name "French infantry"
+    set allegiance FRENCH
+    set size 10
+    set heading 45
+    set color blue
+
+    set state 1
+    set destinationX -1
+    set destinationY -1
+    set destinationNum -1
+    set stepsTaken 0
   ]
   
-  create-brigades (6)[
-    if who < 334[
-      set name "French light"
-      set color blue
-      set effectiveness 100
-      set startingInfantry 3000;use the start value to set numInfantry at the begining, this is the same for all troop numbers
-      set numInfantry startingInfantry
-      set startingAntiTanks 0
-      set numAntiTanks startingAntiTanks
-      set startingTanks 1
-      set numTanks startingTanks
-      set startingArtillary 1
-      set numArtillary startingArtillary
-      set maxRange 100
-      set minRange 10
-      set hitsTaken 0
-      set speed 2
-      set allegience 1
-      set state 1
-      set destinationX -1
-      set destinationY -1
-      set destinationNum -1
-      set size 10
-      set heading 45
-      set shape "Default"
-      set stepsTaken 0
-      ;if(who = 5 or who = 9)[
-      ;  set shape "TankRight"
-      ;]
-      ;setxy array:item x 0  array:item x 4
-    ]    
+  create-units (6) [
+    c_writeUnit DefaultUnit
+    
+    set name "French light"
+    set allegiance FRENCH
+    set size 10
+    set heading 45
+    set color blue
+
+    set state 1
+    set destinationX -1
+    set destinationY -1
+    set destinationNum -1
+    set stepsTaken 0
   ]
   
-  create-brigades (10)[
-    if who < 344[
-      set name "French armor"
-      set color blue
-      set effectiveness 100
-      set startingInfantry 3000;use the start value to set numInfantry at the begining, this is the same for all troop numbers
-      set numInfantry startingInfantry
-      set startingAntiTanks 0
-      set numAntiTanks startingAntiTanks
-      set startingTanks 1
-      set numTanks startingTanks
-      set startingArtillary 1
-      set numArtillary startingTanks
-      set maxRange 100
-      set minRange 10
-      set hitsTaken 0
-      set speed 2
-      set allegience 1
-      set state 1
-      set destinationX -1
-      set destinationY -1
-      set destinationNum -1
-      set size 10
-      set heading 45
-      set shape "Default"
-      set stepsTaken 0
-      ;setxy array:item x 0  array:item x 4
-    ]    
+  create-units (10) [
+    c_writeUnit DefaultUnit
+
+    set name "French armor"
+    set allegiance FRENCH
+    set size 10
+    set heading 45
+    set color blue
+
+    set state 1
+    set destinationX -1
+    set destinationY -1
+    set destinationNum -1
+    set stepsTaken 0
   ]      
   
-  ask brigades[
-    ifelse color = red[
-      ifelse who < 106  [
+  ask units [
+    ifelse (allegiance = GERMAN) [
+      ifelse (who < 106) [
         setxy (116 + round(2.4 * who)) (533 + round(-1.5 * who))
-      ]
-      [
+      ] [
         setxy (116 + round(2.4 * who)) (376 + round(0.4 * (who - 106)))         
-      ]  
-    ]
-    [
-      ifelse who < 278  [
-        setxy (110 + round(3.83 * (who - 212))) (481 + round(-2.56 * (who - 212))) + (remainder who 2) * 8
       ]
-      [
+    ] [
+      ifelse (who < 278) [
+        setxy (110 + round(3.83 * (who - 212))) (481 + round(-2.56 * (who - 212))) + (remainder who 2) * 8
+      ] [
         setxy (363 + round(4.06 * (who - 278))) (312 + round(.5 * (who - 278))) + (remainder who 2) * 8     
-      ] 
+      ]
     ]
   ]
-  
-    
 end
 
 to Step
-  set time-units time-units + 1;increase the counter for the total number of ticks that have gone by so far 
-  ask brigades[
-    if(any? brigades with [color = red] and any? brigades with [color = blue])[
+  ask units [
+    if(any? units with [color = red] and any? units with [color = blue])[
         interact
         dealArtificialDmgToFrench
         decideFrenchRetreat
         move
     ]
-      
   ]
+  set CurrentTicks (CurrentTicks + 1)
 end
 
 to Steps
-  repeat 50[
-   Step 
+  repeat 50 [
+    Step 
   ]
 end
 
 ;run procedure
-to go 
-  ask brigades [ 
-    ;wait x ticks between each move so everything is visible
-    ifelse (WaitCount <= 0)[
-      Step
-      set WaitCount  10; set up to wait for 10 ticks until each unit moves again
-    ]
-    [
-      set WaitCount WaitCount - 1;if we are waiting to move then continue the count down until we do
-    ]          
-  ]
-  if time-units >= 42800[ ;after a set amount of time stop the simulation
-    file-close
+to go
+  Step
+
+  if (CurrentTicks >= 42800) [ ;after a set amount of time stop the simulation
     stop
   ]           
 end  
 
 to interact
-  let opponent 0     
-  set opponent nearest other-turtles;opponent always exists because of conditional in integrate function
+  let opponent c_nearestEnemy
 
-  if(state = 1 and allegience = 2)[ ; if brigade is german and ready for orders
+  if(state = 1 and allegiance = GERMAN)[ ; if brigade is german and ready for orders
     let i 0;; the counter that determines what spot we are currently looking to fill
     let goal -1;; a marker for wether or not this brigade has chosen a spot to fill
     let valid 1;;a check for if the spot we're looking at is valid for this brigade
@@ -437,13 +287,13 @@ to interact
           ;find the location of this destination by finding the base location and shifting by the row it's in
           let goalX ((array:item chStagingX (i - (11 * row))) + (row * chShiftX))
           let goalY ((array:item chStagingY (i - (11 * row))) + (row * chShiftY))
-          let myDistance sqrt((absolute-value(goalX - xcor) * absolute-value(goalX - xcor)) + (absolute-value(goalY - ycor) * absolute-value(goalY - ycor)))
+          let myDistance sqrt((abs(goalX - xcor) * abs(goalX - xcor)) + (abs(goalY - ycor) * abs(goalY - ycor)))
           ;this isn' a valid spot if someone else is going to use it
-          if(any? brigades with[destinationNum = i and targetBridge = 1 and allegience = 2])[
+          if(any? units with[destinationNum = i and targetBridge = 1 and allegiance = GERMAN])[
             set valid 0
           ]
           ;this isn't a valid spot if a closer brigade needs to move toward it
-          if(any? brigades with[targetBridge = 1 and allegience = 2 and (destinationNum > i + 1 or destinationNum = -1) and sqrt((absolute-value(goalX - xcor) * absolute-value(goalX - xcor)) + (absolute-value(goalY - ycor) * absolute-value(goalY - ycor))) < myDistance])[
+          if(any? units with[targetBridge = 1 and allegiance = GERMAN and (destinationNum > i + 1 or destinationNum = -1) and sqrt((abs(goalX - xcor) * abs(goalX - xcor)) + (abs(goalY - ycor) * abs(goalY - ycor))) < myDistance])[
             set valid 0
           ]
           ;the spot is not valid if it is farther from the bridge than the current destination
@@ -464,13 +314,13 @@ to interact
           ;find the location of this destination by finding the base location and shifting by the row it's in
           let goalX ((array:item abStagingX (i - (11 * row))) + (row * abShiftX))
           let goalY ((array:item abStagingY (i - (11 * row))) + (row * abShiftY))
-          let myDistance sqrt((absolute-value(goalX - xcor) * absolute-value(goalX - xcor)) + (absolute-value(goalY - ycor) * absolute-value(goalY - ycor)))
+          let myDistance sqrt((abs(goalX - xcor) * abs(goalX - xcor)) + (abs(goalY - ycor) * abs(goalY - ycor)))
           ;this isn' a valid spot if someone else is going to use it
-          if(any? brigades with[destinationNum = i and targetBridge = 2 and allegience = 2])[
+          if(any? units with[destinationNum = i and targetBridge = 2 and allegiance = GERMAN])[
             set valid 0
           ]
           ;this isn't a valid spot if a closer brigade needs to move toward it
-          if(any? brigades with[targetBridge = 2 and allegience = 2 and (destinationNum > i + 1 or destinationNum = -1) and sqrt((absolute-value(goalX - xcor) * absolute-value(goalX - xcor)) + (absolute-value(goalY - ycor) * absolute-value(goalY - ycor))) < myDistance])[
+          if(any? units with[targetBridge = 2 and allegiance = GERMAN and (destinationNum > i + 1 or destinationNum = -1) and sqrt((abs(goalX - xcor) * abs(goalX - xcor)) + (abs(goalY - ycor) * abs(goalY - ycor))) < myDistance])[
             set valid 0
           ]
           ;the spot is not valid if it is farther from the bridge than the current destination
@@ -491,13 +341,13 @@ to interact
           ;find the location of this destination by finding the base location and shifting by the row it's in
           let goalX ((array:item amStagingX (i - (11 * row))) + (row * amShiftX))
           let goalY ((array:item amStagingY (i - (11 * row))) + (row * amShiftY))
-          let myDistance sqrt((absolute-value(goalX - xcor) * absolute-value(goalX - xcor)) + (absolute-value(goalY - ycor) * absolute-value(goalY - ycor)))
+          let myDistance sqrt((abs(goalX - xcor) * abs(goalX - xcor)) + (abs(goalY - ycor) * abs(goalY - ycor)))
           ;this isn' a valid spot if someone else is going to use it
-          if(any? brigades with[destinationNum = i and targetBridge = 3 and allegience = 2])[
+          if(any? units with[destinationNum = i and targetBridge = 3 and allegiance = GERMAN])[
             set valid 0
           ]
           ;this isn't a valid spot if a closer brigade needs to move toward it
-          if(any? brigades with[targetBridge = 3 and allegience = 2 and (destinationNum > i + 1 or destinationNum = -1) and sqrt((absolute-value(goalX - xcor) * absolute-value(goalX - xcor)) + (absolute-value(goalY - ycor) * absolute-value(goalY - ycor))) < myDistance])[
+          if(any? units with[targetBridge = 3 and allegiance = GERMAN and (destinationNum > i + 1 or destinationNum = -1) and sqrt((abs(goalX - xcor) * abs(goalX - xcor)) + (abs(goalY - ycor) * abs(goalY - ycor))) < myDistance])[
             set valid 0
           ]
           ;the spot is not valid if it is farther from the bridge than the current destination
@@ -517,13 +367,13 @@ to interact
           ;find the location of this destination by finding the base location and shifting by the row it's in
           let goalX ((array:item brStagingX (i - (11 * row))) + (row * brShiftX))
           let goalY ((array:item brStagingY (i - (11 * row))) + (row * brShiftY))
-          let myDistance sqrt((absolute-value(goalX - xcor) * absolute-value(goalX - xcor)) + (absolute-value(goalY - ycor) * absolute-value(goalY - ycor)))
+          let myDistance sqrt((abs(goalX - xcor) * abs(goalX - xcor)) + (abs(goalY - ycor) * abs(goalY - ycor)))
           ;this isn' a valid spot if someone else is going to use it
-          if(any? brigades with[destinationNum = i and targetBridge = 4 and allegience = 2])[
+          if(any? units with[destinationNum = i and targetBridge = 4 and allegiance = GERMAN])[
             set valid 0
           ]
           ;this isn't a valid spot if a closer brigade needs to move toward it
-          if(any? brigades with[targetBridge = 4 and allegience = 2 and (destinationNum > i + 1 or destinationNum = -1) and sqrt((absolute-value(goalX - xcor) * absolute-value(goalX - xcor)) + (absolute-value(goalY - ycor) * absolute-value(goalY - ycor))) < myDistance])[
+          if(any? units with[targetBridge = 4 and allegiance = GERMAN and (destinationNum > i + 1 or destinationNum = -1) and sqrt((abs(goalX - xcor) * abs(goalX - xcor)) + (abs(goalY - ycor) * abs(goalY - ycor))) < myDistance])[
             set valid 0
           ]
           ;the spot is not valid if it is farther from the bridge than the current destination
@@ -543,13 +393,13 @@ to interact
           ;find the location of this destination by finding the base location and shifting by the row it's in
           let goalX ((array:item peStagingX (i - (11 * row))) + (row * peShiftX))
           let goalY ((array:item peStagingY (i - (11 * row))) + (row * peShiftY))
-          let myDistance sqrt((absolute-value(goalX - xcor) * absolute-value(goalX - xcor)) + (absolute-value(goalY - ycor) * absolute-value(goalY - ycor)))
+          let myDistance sqrt((abs(goalX - xcor) * abs(goalX - xcor)) + (abs(goalY - ycor) * abs(goalY - ycor)))
           ;this isn' a valid spot if someone else is going to use it
-          if(any? brigades with[destinationNum = i and targetBridge = 5 and allegience = 2])[
+          if(any? units with[destinationNum = i and targetBridge = 5 and allegiance = GERMAN])[
             set valid 0
           ]
           ;this isn't a valid spot if a closer brigade needs to move toward it
-          if(any? brigades with[targetBridge = 5 and allegience = 2 and (destinationNum > i + 1 or destinationNum = -1) and sqrt((absolute-value(goalX - xcor) * absolute-value(goalX - xcor)) + (absolute-value(goalY - ycor) * absolute-value(goalY - ycor))) < myDistance])[
+          if(any? units with[targetBridge = 5 and allegiance = GERMAN and (destinationNum > i + 1 or destinationNum = -1) and sqrt((abs(goalX - xcor) * abs(goalX - xcor)) + (abs(goalY - ycor) * abs(goalY - ycor))) < myDistance])[
             set valid 0
           ]
           ;the spot is not valid if it is farther from the bridge than the current destination
@@ -571,35 +421,35 @@ to interact
     
     ;if the bridge is empty and the unit nearest the brigade is ready for orders
     if(destinationNum = 0 and state = 1)[
-      if not(any? brigades with[state = 3 and allegience = 2 and targetBridge = 1])[
+      if not(any? units with[state = 3 and allegiance = GERMAN and targetBridge = 1])[
       ;set it to crossing the bridge and announce that its space is now available for someone else to take 
         set destinationX (chX)
         set destinationY (chY)
         set state 3
         set destinationNum -1  
       ]
-      if not(any? brigades with[state = 3 and allegience = 2 and targetBridge = 2])[
+      if not(any? units with[state = 3 and allegiance = GERMAN and targetBridge = 2])[
       ;set it to crossing the bridge and announce that its space is now available for someone else to take 
         set destinationX (abX)
         set destinationY (abY)
         set state 3
         set destinationNum -1  
       ]
-      if not(any? brigades with[state = 3 and allegience = 2 and targetBridge = 3])[
+      if not(any? units with[state = 3 and allegiance = GERMAN and targetBridge = 3])[
       ;set it to crossing the bridge and announce that its space is now available for someone else to take 
         set destinationX (amX)
         set destinationY (amY)
         set state 3
         set destinationNum -1  
       ]
-      if not(any? brigades with[state = 3 and allegience = 2 and targetBridge = 4])[
+      if not(any? units with[state = 3 and allegiance = GERMAN and targetBridge = 4])[
       ;set it to crossing the bridge and announce that its space is now available for someone else to take 
         set destinationX (brX)
         set destinationY (brY)
         set state 3
         set destinationNum -1  
       ]
-      if not(any? brigades with[state = 3 and allegience = 2 and targetBridge = 5])[
+      if not(any? units with[state = 3 and allegiance = GERMAN and targetBridge = 5])[
       ;set it to crossing the bridge and announce that its space is now available for someone else to take 
         set destinationX (peX)
         set destinationY (peY)
@@ -632,13 +482,13 @@ end
        
 to move
   ;move to a relay point if unable to find a specific destination
-  if(state = 1 and allegience = 2 and destinationNum = -1)[
+  if(state = 1 and allegiance = GERMAN and destinationNum = -1)[
     facexy destinationX destinationY
-    forward speed
+    forward curSpeed
   ]
   ;if the nazi brigade is stationary and ready for orders
   if(state = 2 )[;if the unit is moving toward a waiting position go toward it until it's too close to move farther
-    ifelse(absolute-value (destinationX - xcor) < speed and absolute-value (destinationY - ycor) < speed)[
+    ifelse(abs (destinationX - xcor) < curSpeed and abs (destinationY - ycor) < curSpeed)[
       ;if the unit reached its waiting position face the enemies and set its state to ready to move
       setxy destinationX destinationY
       set state 1
@@ -647,7 +497,7 @@ to move
     [
       ;if it hasn't reached its waiting point move toward it at its normal speed
       facexy destinationX destinationY
-      forward speed
+      forward curSpeed
     ]
   ]
 
@@ -661,7 +511,7 @@ to move
       rt 180
     ][
       if ( stepsTaken <  nrTicksToNextRetreatline ) [
-        forward speed
+        forward curSpeed
       ] 
     ]  
     if not ( stepsTaken > nrTicksToNextRetreatline ) [
@@ -679,7 +529,7 @@ to move
       rt 180
     ][
       if ( stepsTaken <  2 * nrTicksToNextRetreatline ) [
-        forward speed
+        forward curSpeed
       ]  
     ]  
     if not ( stepsTaken > 2 * nrTicksToNextRetreatline ) [
@@ -698,7 +548,7 @@ to move
       rt 180
     ][
       if ( stepsTaken <  3 * nrTicksToNextRetreatline ) [
-        forward speed
+        forward curSpeed
       ]  
     ]  
     if not ( stepsTaken > 3 * nrTicksToNextRetreatline ) [
@@ -709,11 +559,11 @@ to move
 
   
   
-  if(state = 3 and allegience = 2)[ ; if german and currently crossing the bridge
+  if(state = 3 and allegiance = GERMAN)[ ; if german and currently crossing the bridge
     set destinationNum -1
      if(targetBridge = 1)[
         set chCrossed chCrossed + 60
-        setxy (array:item chStagingX 0) - ((array:item chStagingX 0 - chX) * (chCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary))) array:item chStagingY 0 - ((array:item chStagingY 0 - chY) * (chCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary)))
+        setxy (array:item chStagingX 0) - ((array:item chStagingX 0 - chX) * (chCrossed /(curInf + curAT + curTanks + curArt))) array:item chStagingY 0 - ((array:item chStagingY 0 - chY) * (chCrossed /(curInf + curAT + curTanks + curArt)))
         forward 1
         if(xcor <= chX and ycor <= chY)[
           set state 4
@@ -723,7 +573,7 @@ to move
       ]
       if(targetBridge = 2)[
         set abCrossed abCrossed + 60
-        setxy (array:item abStagingX 0) - ((array:item abStagingX 0 - abX) * (abCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary))) array:item abStagingY 0 - ((array:item abStagingY 0 - abY) * (abCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary)))
+        setxy (array:item abStagingX 0) - ((array:item abStagingX 0 - abX) * (abCrossed /(curInf + curAT + curTanks + curArt))) array:item abStagingY 0 - ((array:item abStagingY 0 - abY) * (abCrossed /(curInf + curAT + curTanks + curArt)))
         forward 1
         if(xcor <= abX and ycor <= abY)[
           set state 4
@@ -733,7 +583,7 @@ to move
       ] 
       if(targetBridge = 3)[
         set amCrossed amCrossed + 60
-        setxy (array:item amStagingX 0) - ((array:item amStagingX 0 - amX) * (amCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary))) array:item amStagingY 0 - ((array:item amStagingY 0 - amY) * (amCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary)))
+        setxy (array:item amStagingX 0) - ((array:item amStagingX 0 - amX) * (amCrossed /(curInf + curAT + curTanks + curArt))) array:item amStagingY 0 - ((array:item amStagingY 0 - amY) * (amCrossed /(curInf + curAT + curTanks + curArt)))
         forward 1
         if(xcor <= amX and ycor <= amY)[
           set state 4
@@ -743,7 +593,7 @@ to move
       ]
       if(targetBridge = 4)[
         set brCrossed brCrossed + 60
-        setxy (array:item brStagingX 0) - ((array:item brStagingX 0 - brX) * (brCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary))) array:item brStagingY 0 - ((array:item brStagingY 0 - brY) * (brCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary)))
+        setxy (array:item brStagingX 0) - ((array:item brStagingX 0 - brX) * (brCrossed /(curInf + curAT + curTanks + curArt))) array:item brStagingY 0 - ((array:item brStagingY 0 - brY) * (brCrossed /(curInf + curAT + curTanks + curArt)))
         forward 1
         if(xcor <= brX and ycor <= brY)[
           set state 4
@@ -753,7 +603,7 @@ to move
       ] 
       if(targetBridge = 5)[
         set peCrossed peCrossed + 60
-        setxy (array:item peStagingX 0) - ((array:item peStagingX 0 - peX) * (peCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary))) array:item peStagingY 0 - ((array:item peStagingY 0 - peY) * (peCrossed /(numInfantry + numAntiTanks + numTanks + numArtillary)))
+        setxy (array:item peStagingX 0) - ((array:item peStagingX 0 - peX) * (peCrossed /(curInf + curAT + curTanks + curArt))) array:item peStagingY 0 - ((array:item peStagingY 0 - peY) * (peCrossed /(curInf + curAT + curTanks + curArt)))
         forward 1
         if(xcor <= peX and ycor <= peY)[
           set state 5
@@ -767,7 +617,7 @@ end
 
 to dealArtificialDmgToFrench
   ;move to a relay point if unable to find a specific destination
-  if(allegience = 1)[
+  if(allegiance = FRENCH)[
     set effectiveness (effectiveness - 1)
   ]
 end 
@@ -782,26 +632,6 @@ to decideFrenchRetreat
   if (effectiveness < 31) [
     set retreatState 3 
   ]      
-end 
-                                 
-;removes negatives, used for finding distance to someone
-to-report absolute-value [number]
-  ifelse number >= 0
-    [ report number ]
-    [ report (- number) ]
-end
-
-to-report nearest [agentset]
-  ifelse color = red[
-    report min-one-of agentset with [color = blue] [distance myself]          ;;find nearest agent in a group    
-  ]
-  [
-    report min-one-of agentset with [color = red] [distance myself]          ;;find nearest agent in a group
-  ]
-end
-
-to-report other-turtles
-   report turtles with [self != myself] 
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -825,8 +655,8 @@ GRAPHICS-WINDOW
 639
 0
 639
-0
-0
+1
+1
 1
 ticks
 30.0
@@ -868,10 +698,10 @@ NIL
 MONITOR
 350
 11
-428
+432
 56
 NIL
-time-units
+CurrentTicks
 0
 1
 11
