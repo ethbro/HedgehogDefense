@@ -61,6 +61,8 @@ globals[
    peShiftX
    peShiftY
    peCrossed
+   
+   nrTicksToNextRetreatline
 ]
 
 breed [brigades brigade]
@@ -85,7 +87,10 @@ brigades-own[
   destinationNum
   destinationX
   destinationY
-  state; 1 ready for orders, 2 moving to position, 3 crossing bridge, 4 ready for orders after crosssed, 5 moving after crossed
+  state; 1 ready for orders, 2 moving to position (nazi)/retreat (french), 3 crossing bridge, 4 ready for orders after crosssed, 5 moving after crossed
+  retreatState ; 1 for retreating to the line of 70% remaining effectiveness, 2 for 50%, 3 for 30%
+  stepsTaken ; number of ticks a given french brigade has spent retreating
+  
 ]
 
 to setup
@@ -151,6 +156,7 @@ to setup-globals
   set gInfDmg 1
   set gTankDmg 2
   set gArtDmg 2
+  set nrTicksToNextRetreatline 15
 end
 
 to setup-patches
@@ -261,6 +267,7 @@ to setupbrigades
       set size 10
       set heading 45
       set shape "Default"
+      set stepsTaken 0
       ;setxy array:item x 0  array:item x 4
     ]    
   ]
@@ -290,6 +297,7 @@ to setupbrigades
       set size 10
       set heading 45
       set shape "Default"
+      set stepsTaken 0
       ;if(who = 5 or who = 9)[
       ;  set shape "TankRight"
       ;]
@@ -322,6 +330,7 @@ to setupbrigades
       set size 10
       set heading 45
       set shape "Default"
+      set stepsTaken 0
       ;setxy array:item x 0  array:item x 4
     ]    
   ]      
@@ -353,6 +362,8 @@ to Step
   ask brigades[
     if(any? brigades with [color = red] and any? brigades with [color = blue])[
         interact
+        dealArtificialDmgToFrench
+        decideFrenchRetreat
         move
     ]
       
@@ -625,8 +636,8 @@ to move
     facexy destinationX destinationY
     forward speed
   ]
-  ;if the brigade is stationary and ready for orders
-  if(state = 2)[;if the unit is moving toward a waiting position go toward it until it's too close to move farther
+  ;if the nazi brigade is stationary and ready for orders
+  if(state = 2 )[;if the unit is moving toward a waiting position go toward it until it's too close to move farther
     ifelse(absolute-value (destinationX - xcor) < speed and absolute-value (destinationY - ycor) < speed)[
       ;if the unit reached its waiting position face the enemies and set its state to ready to move
       setxy destinationX destinationY
@@ -639,6 +650,65 @@ to move
       forward speed
     ]
   ]
+
+  ;if the french brigade has less than 70% left, it retreats to the first zone
+  if(retreatState = 1)[
+    if ( stepsTaken = 0 ) [
+      rt 180
+    ]
+    
+    ifelse ( stepsTaken = nrTicksToNextRetreatline ) [
+      rt 180
+    ][
+      if ( stepsTaken <  nrTicksToNextRetreatline ) [
+        forward speed
+      ] 
+    ]  
+    if not ( stepsTaken > nrTicksToNextRetreatline ) [
+       set stepsTaken (stepsTaken + 1)
+    ]
+  ]
+  
+  ;if the french brigade has less than 50% left, it retreats to the second zone
+  if(retreatState = 2)[
+    if ( stepsTaken = nrTicksToNextRetreatline + 1 ) [
+      rt 180
+    ]
+    
+    ifelse ( stepsTaken = 2 * nrTicksToNextRetreatline ) [
+      rt 180
+    ][
+      if ( stepsTaken <  2 * nrTicksToNextRetreatline ) [
+        forward speed
+      ]  
+    ]  
+    if not ( stepsTaken > 2 * nrTicksToNextRetreatline ) [
+       set stepsTaken (stepsTaken + 1)
+    ]
+    
+  ]
+  
+  ;if the french brigade has less than 30% left, it retreats to the third zone
+  if(retreatState = 3)[
+    if ( stepsTaken = 2 * nrTicksToNextRetreatline + 1 ) [
+      rt 180
+    ]
+    
+    ifelse ( stepsTaken = 3 * nrTicksToNextRetreatline ) [
+      rt 180
+    ][
+      if ( stepsTaken <  3 * nrTicksToNextRetreatline ) [
+        forward speed
+      ]  
+    ]  
+    if not ( stepsTaken > 3 * nrTicksToNextRetreatline ) [
+       set stepsTaken (stepsTaken + 1)
+    ]
+    
+  ]    
+
+  
+  
   if(state = 3 and allegience = 2)[ ; if german and currently crossing the bridge
     set destinationNum -1
      if(targetBridge = 1)[
@@ -693,9 +763,27 @@ to move
       ] 
   ]
   
-end                                  
+end 
 
+to dealArtificialDmgToFrench
+  ;move to a relay point if unable to find a specific destination
+  if(allegience = 1)[
+    set effectiveness (effectiveness - 1)
+  ]
+end 
 
+to decideFrenchRetreat
+  if (effectiveness < 71) and (effectiveness > 50) [
+    set retreatState 1 
+  ]  
+  if (effectiveness < 51) and (effectiveness > 30) [
+    set retreatState 2 
+  ]  
+  if (effectiveness < 31) [
+    set retreatState 3 
+  ]      
+end 
+                                 
 ;removes negatives, used for finding distance to someone
 to-report absolute-value [number]
   ifelse number >= 0
