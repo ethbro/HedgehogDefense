@@ -121,17 +121,32 @@ to setup-units
     set destinationY -1
     set destinationNum -1
     set targetBridge 1   
-
+    set curSpeed 1
+    random-seed 500 + who
+    setxy 140 + random 40 510 + random 40
+    if(who < 2)[
+     setxy 110 + who * 2 530 + who * 8 
+    ]
+    if(who = 2 or who = 3)[
+     setxy 115 + who * 3 510 + ((who / 2) * 16)
+    ]
+    if(who = 4 or who = 5)[
+     setxy 122 + who * 3 490 + ((who / 2) * 16)
+    ]
     if(who > 30) [
+      setxy 185 + random 60 465 + random 60
       set targetBridge 2
     ]
     if(who > 80) [
+      setxy 347 + random 60 368 + random 60
       set targetBridge 3
     ]
     if(who > 140) [
+      setxy 468 + random 40 382 + random 40
       set targetBridge 4
     ]
     if(who > 160) [
+      setxy 552 + random 45 391 + random 45
       set targetBridge 5
     ]
   ]
@@ -149,6 +164,7 @@ to setup-units
     set destinationX -1
     set destinationY -1
     set destinationNum -1
+    set curSpeed 1
     set targetBridge 5
     set size 6
   ]  
@@ -203,11 +219,7 @@ to setup-units
   
   ask units [
     ifelse (allegiance = GERMAN) [
-      ifelse (who < 106) [
-        setxy (116 + round(2.4 * who)) (533 + round(-1.5 * who))
-      ] [
-        setxy (116 + round(2.4 * who)) (376 + round(0.4 * (who - 106)))         
-      ]
+
     ] [
       ifelse (who < 278) [
         setxy (110 + round(3.83 * (who - 212))) (481 + round(-2.56 * (who - 212))) + (remainder who 2) * 8
@@ -495,6 +507,7 @@ to move
       facexy 170 450
     ]
     [
+     ;; show "trying to move"
       ;if it hasn't reached its waiting point move toward it at its normal speed
       facexy destinationX destinationY
       forward curSpeed
@@ -655,8 +668,8 @@ GRAPHICS-WINDOW
 639
 0
 639
-1
-1
+0
+0
 1
 ticks
 30.0
