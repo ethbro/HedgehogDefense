@@ -108,7 +108,7 @@ to setup-globals
   
   ;; how the formation looks      10  8   6   4   2   0   1   3   5   7   9
   ;; how the positions are stored 0   1   2   3   4   5   6   7   8   9  10
-  set chStagingX array:from-list[138 136 140 134 142 132 144 130 146 128 148]
+  set chStagingX array:from-list[135 133 137 131 139 129 141 127 143 125 145]
   set chStagingY array:from-list[490 492 488 494 486 496 484 498 482 500 480]
   set abStagingX array:from-list[185 187 183 189 181 191 179 193 177 195 175]
   set abStagingY array:from-list[458 456 460 454 462 452 464 450 466 448 468]
@@ -186,7 +186,7 @@ to setupbrigades
       set destinationX -1
       set destinationY -1
       set destinationNum -1
-      set targetBridge 1
+      set targetBridge 1   
       if(who > 30)[
         set targetBridge 2
       ]
