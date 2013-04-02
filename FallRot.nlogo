@@ -524,7 +524,7 @@ to move
       rt 180
     ][
       if ( stepsTaken <  nrTicksToNextRetreatline ) [
-        forward curSpeed
+        forward curSpeed / 10
       ] 
     ]  
     if not ( stepsTaken > nrTicksToNextRetreatline ) [
@@ -542,7 +542,7 @@ to move
       rt 180
     ][
       if ( stepsTaken <  2 * nrTicksToNextRetreatline ) [
-        forward curSpeed
+        forward curSpeed / 10
       ]  
     ]  
     if not ( stepsTaken > 2 * nrTicksToNextRetreatline ) [
@@ -561,7 +561,7 @@ to move
       rt 180
     ][
       if ( stepsTaken <  3 * nrTicksToNextRetreatline ) [
-        forward curSpeed
+        forward curSpeed / 10
       ]  
     ]  
     if not ( stepsTaken > 3 * nrTicksToNextRetreatline ) [
