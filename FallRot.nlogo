@@ -120,31 +120,66 @@ to setup-units
     set targetBridge 1   
     set curSpeed 1
     random-seed 500 + who
-    setxy 140 + random 40 510 + random 40
+    
+
+    ;;1
     if(who < 2)[
+      set targetBridge 1
      setxy 110 + who * 2 530 + who * 8 
     ]
     if(who = 2 or who = 3)[
+      set targetBridge 1
      setxy 115 + who * 3 510 + ((who / 2) * 16)
     ]
+    ;;2
     if(who = 4 or who = 5)[
+      set targetBridge 2
      setxy 122 + who * 3 490 + ((who / 2) * 16)
     ]
-    if(who > 30) [
-      setxy 185 + random 60 465 + random 60
+    if(who = 6 or who = 7)[
       set targetBridge 2
+      setxy 175 + who   460 + who * 10
     ]
-    if(who > 80) [
-      setxy 347 + random 60 368 + random 60
+    ;;3
+    if(who > 7 and who < 12)[
       set targetBridge 3
+      setxy -140 + who * 50 547 - ((who / 2) * 20) - random 6
     ]
-    if(who > 140) [
-      setxy 468 + random 40 382 + random 40
+    if(who > 11 and who < 17)[
+      random-seed 590 + who
+      set targetBridge 3
+     setxy -125 + who * 30 478 - ( who * 2) - random 6 
+    ]
+    ;;4
+    if(who > 16 and who < 22)[
       set targetBridge 4
+      setxy 182 + 13 * who + random 3 500 + -4 * who - random 6
     ]
-    if(who > 160) [
-      setxy 552 + random 45 391 + random 45
+    ;;5
+    if(who > 21 and who < 28)[
       set targetBridge 5
+      setxy 407 + 5 * who + random 3 460 + -2 * who - random 6
+    ]
+    random-seed 500 + who
+    if(who > 27) [
+      set targetBridge 1
+          setxy 140 + random 40 510 + random 40
+    ]
+    if(who > 57)[
+      set targetBridge 2
+      setxy 185 + random 60 465 + random 60
+    ]
+    if(who > 107) [
+      set targetBridge 3
+      setxy 347 + random 60 368 + random 60
+    ]
+    if(who > 160)[
+      set targetBridge 4
+      setxy 468 + random 40 382 + random 40
+    ]
+    if(who > 180) [
+      set targetBridge 5
+      setxy 552 + random 45 391 + random 45
     ]
   ]
   
@@ -161,6 +196,7 @@ to setup-units
     set destinationY -1
     set destinationNum -1
     set curSpeed 1
+    setxy 552 + random 45 391 + random 45
     set targetBridge 5
   ]  
   
