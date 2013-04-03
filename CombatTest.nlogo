@@ -1,8 +1,8 @@
 __includes ["libCommon.nls" "libCombatModel.nls" "libBridgeModel.nls"]
 
 to setup
-  setup-Common
-  setup-CombatModel
+  setup-Common         ;library setup
+  setup-CombatModel    ;"
   
   setupUnits
 end
@@ -39,22 +39,22 @@ end
 
 to step
   ask units [
-    let opponent c_nearestUnengagedEnemy
-    if (opponent = nobody) [stop]
+    let opponent c_nearestUnengagedEnemy                   ;as the Lanchester equations are two-party, limit combat for now
+    if (opponent = nobody) [stop]                          ;consequence of above, may be no "nearest unengaged enemy"
     ifelse (state != 5) [
       ifelse (distance opponent <= [curRange] of self) [
-        cm_engage opponent
+        cm_engage opponent                                 ;hook into CombatModel engagement code
       ] [
-        face opponent
+        face opponent                                      ;otherwise, move closer
         forward curSpeed
       ]
     ] [
-      set heading (((towards opponent) + 180) mod 360)
+      set heading (((towards opponent) + 180) mod 360)     ;retreat behavior (state = 5)
       forward curSpeed
     ]
   ]
   
-  c_clearEngaged
+  c_clearEngaged                                           ;reset the engagement flags
   
   set CurrentTicks (CurrentTicks + 1) ; increment the tick counter
 end

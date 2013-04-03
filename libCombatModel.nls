@@ -10,7 +10,7 @@ to setup-CombatModel
   ;Turkes linear Lanchester numbers, derived from Battle of Kursk
   ;  Soviet (aka French) and German, respectively
   ;  set cm_coeffs [ .0000000268 .0000000668 ]
-  set cm_coeffs [ .000000268 .000000668 ]
+  set cm_coeffs [ .000000268 .000000668 ]     ; scaled up, to approx 30% attrition in 60 hours for an even brigade-on-brigade action
 end
 
 to cm_engage [ opponent ]
@@ -35,6 +35,7 @@ to cm_engage [ opponent ]
   let self2 (b * x0 * e ^ ((- self1) * TimeScale))
   set self2 (a * y0 - self2)
 
+  ;Update opponent
   ask opponent [
     set engaged 1
     cm_updateStrength self (x0 * opp1 / opp2)
@@ -43,6 +44,7 @@ to cm_engage [ opponent ]
     ]
   ]
   
+  ;Update self
   set engaged 1
   cm_updateStrength self (y0 * self1 / self2)
   if (curInf <= 0.7 * startInf) [
@@ -58,6 +60,7 @@ to-report cm_reportMaxStrength [ unit ]
   report ([startInf] of unit) + (10 * [startAT] of unit) + (20 * [startTanks] of unit) + (40 * [startArt] of unit)
 end
 
+;Allocates proportional attrition to the various combat systems (deterministic)
 to cm_updateStrength [ unit newStrength ]
   let attrition (newStrength / cm_reportCurStrength unit)
 
@@ -74,13 +77,3 @@ to cm_updateStrength [ unit newStrength ]
     set curArt myArt * attrition
   ]
 end
-
-;Notes
-;- look at Hughes salvo models for AT-tank and tank-tank combat (SimplerModels)
-;essentially
-; dA = bB / a1
-; dB = aA / b1
-; where dA & dB are attrition rates
-;   a & b are the number of aimed shots fired per unit per time step
-;   A & B are the number of units
-;   a1 & b1 are the number of shots required to put a unit out of commission

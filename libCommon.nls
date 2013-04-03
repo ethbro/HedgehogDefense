@@ -33,9 +33,9 @@ units-own [
   startAT
   startArt
   maxSpeed        ;in km per day
-  maxRange
+  maxRange        ;in km
 
-  ;Unit's current scurtatistics
+  ;Unit's current statistics
   curInf
   curTanks
   curAT
@@ -44,7 +44,7 @@ units-own [
   curRange
   
   ;Combat variables
-  engaged
+  engaged         ;a unit may be engaged only if engaged=0 (i.e. strictly two-party combat)
   effectiveness   ;unit's remaining strength, out of 100(%)
   
   ;Bridge variables
@@ -59,7 +59,7 @@ units-own [
   stepsTaken ; number of ticks a given french brigade has spent retreating
 ]
 
-;Main setup, should always be called once at the beginning
+;Main library setup, should always be called once at the beginning
 to setup-Common
   __clear-all-and-reset-ticks  ;clear the screen
   set TimeScale 1
