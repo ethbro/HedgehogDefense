@@ -40,7 +40,7 @@ to cm_engage [ opponent ]
     set engaged 1
     cm_updateStrength self (x0 * opp1 / opp2)
     if (curInf <= 0.7 * startInf) [
-      set state 5                     ;run away!
+      set state s_RETREAT                     ;run away!
     ]
   ]
   
@@ -48,7 +48,7 @@ to cm_engage [ opponent ]
   set engaged 1
   cm_updateStrength self (y0 * self1 / self2)
   if (curInf <= 0.7 * startInf) [
-    set state 5
+    set state s_RETREAT
   ]
 end
 

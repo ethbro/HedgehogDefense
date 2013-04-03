@@ -41,7 +41,7 @@ to step
   ask units [
     let opponent c_nearestUnengagedEnemy                   ;as the Lanchester equations are two-party, limit combat for now
     if (opponent = nobody) [stop]                          ;consequence of above, may be no "nearest unengaged enemy"
-    ifelse (state != 5) [
+    ifelse (state != s_RETREAT) [
       ifelse (distance opponent <= [curRange] of self) [
         cm_engage opponent                                 ;hook into CombatModel engagement code
       ] [
@@ -56,14 +56,14 @@ to step
   
   c_clearEngaged                                           ;reset the engagement flags
   
-  set CurrentTicks (CurrentTicks + 1) ; increment the tick counter
+  tick
 end
 
 ;run procedure
 to go
   step
   
-  if CurrentTicks >= 42800 [ ;after a set amount of time stop the simulation
+  if ticks >= 42800 [ ;after a set amount of time stop the simulation
     stop
   ]            
 end
@@ -135,7 +135,7 @@ MONITOR
 283
 56
 NIL
-CurrentTicks
+Ticks
 0
 1
 11

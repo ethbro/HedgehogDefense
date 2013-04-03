@@ -1,1 +1,38 @@
 ;libBridgeModel
+;  Variables and procedures specific to the bridge crossing model
+
+globals [
+  ;Macros
+  bm_CHANNEL
+  bm_ABBEVILLE
+  bm_AMIENS
+  bm_BRAY
+  bm_PERONNE
+  
+  ; Variables used in bridge crossing
+  bm_bridges
+  bm_stagingAreas
+]
+
+to setup-BridgeModel
+  ;Macros
+  set bm_CHANNEL 0
+  set bm_ABBEVILLE 1
+  set bm_AMIENS 2
+  set bm_BRAY 3
+  set bm_PERONNE 4
+  
+  ;XY bridge coordinates
+  ; Channel, Abbeville, Amiens, Bray, Peronne
+  set bm_bridges [[128 483]
+                  [173 450]
+                  [357 336]
+                  [528 342]
+                  [586 346]]
+  ;XY staging coordinates, same order
+  set bm_stagingAreas [[151 508]
+                       [200 427]
+                       [372 367]
+                       [511 379]
+                       [592 383]]
+end

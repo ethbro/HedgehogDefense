@@ -1,4 +1,4 @@
-__includes ["libCommon.nls" "libCombatModel.nls"]
+__includes ["libCommon.nls" "libCombatModel.nls" "libBridgeModel.nls"]
 
 extensions [array]
 globals[
@@ -50,8 +50,6 @@ globals[
 ]
 
 to setup
-  __clear-all-and-reset-ticks;clear the screen
-  
   setup-Common
   setup-CombatModel
   
@@ -112,9 +110,8 @@ to setup-units
     
     set name "German infantry"
     set allegiance GERMAN
-    set size 5
     set heading 225
-    set color red
+    set color 15
 
     set state 1
     set destinationX -1
@@ -156,9 +153,8 @@ to setup-units
     
     set name "German tank"
     set allegiance GERMAN
-    set size 5
     set heading 225  
-    set color red
+    set color 15
       
     set state 1
     set destinationX -1
@@ -166,7 +162,6 @@ to setup-units
     set destinationNum -1
     set curSpeed 1
     set targetBridge 5
-    set size 6
   ]  
   
   create-units (116)[
@@ -174,9 +169,8 @@ to setup-units
     
     set name "French infantry"
     set allegiance FRENCH
-    set size 10
     set heading 45
-    set color blue
+    set color 95
 
     set state 1
     set destinationX -1
@@ -190,9 +184,8 @@ to setup-units
     
     set name "French light"
     set allegiance FRENCH
-    set size 10
     set heading 45
-    set color blue
+    set color 95
 
     set state 1
     set destinationX -1
@@ -206,9 +199,8 @@ to setup-units
 
     set name "French armor"
     set allegiance FRENCH
-    set size 10
     set heading 45
-    set color blue
+    set color 95
 
     set state 1
     set destinationX -1
@@ -217,57 +209,41 @@ to setup-units
     set stepsTaken 0
   ]      
   
-  ask units [
-    ifelse (allegiance = GERMAN) [
-
+  ask units with [allegiance = FRENCH] [
+    ifelse (who < 278) [
+      setxy (110 + round(3.83 * (who - 212))) (481 + round(-2.56 * (who - 212))) + (remainder who 2) * 8
     ] [
-      ifelse (who < 278) [
-        setxy (110 + round(3.83 * (who - 212))) (481 + round(-2.56 * (who - 212))) + (remainder who 2) * 8
-      ] [
-        setxy (363 + round(4.06 * (who - 278))) (312 + round(.5 * (who - 278))) + (remainder who 2) * 8     
-      ]
+    setxy (363 + round(4.06 * (who - 278))) (312 + round(.5 * (who - 278))) + (remainder who 2) * 8     
     ]
   ]
 end
 
-to Step
-  ask units [
-    if(any? units with [color = red] and any? units with [color = blue])[
-        interact
-        dealArtificialDmgToFrench
-        decideFrenchRetreat
-        move
-    ]
-  ]
-  set CurrentTicks (CurrentTicks + 1)
-end
-
-to Steps
-  repeat 50 [
-    Step 
-  ]
-end
-
-;run procedure
 to go
-  Step
+  ask units [
+    interact
+;    decideFrenchRetreat
+    move
+    engage
+  ]
 
-  if (CurrentTicks >= 42800) [ ;after a set amount of time stop the simulation
+  if (ticks >= 42800) [        ;after a set amount of time stop the simulation
     stop
-  ]           
-end  
+  ]
+  c_clearEngaged
+  tick      
+end
 
 to interact
   let opponent c_nearestEnemy
+  if (state = 1 and allegiance = GERMAN) [    ; if brigade is german and ready for orders
+    let i 0                                   ; the counter that determines what spot we are currently looking to fill
+    let goal -1                               ; a marker for wether or not this brigade has chosen a spot to fill
+    let valid 1                               ;a check for if the spot we're looking at is valid for this brigade
 
-  if(state = 1 and allegiance = GERMAN)[ ; if brigade is german and ready for orders
-    let i 0;; the counter that determines what spot we are currently looking to fill
-    let goal -1;; a marker for wether or not this brigade has chosen a spot to fill
-    let valid 1;;a check for if the spot we're looking at is valid for this brigade
     ;find the nearest empty waiting spot to fill in at
     repeat 99[
-      set valid 1;;assume the spot we're looking at is valid until proven otherwise
-      if(goal = -1)[;;if this brigade hasn't chosen a spot yet have them look for one
+      set valid 1                             ;assume the spot we're looking at is valid until proven otherwise
+      if(goal = -1)[                          ;if this brigade hasn't chosen a spot yet have them look for one
         ;;what row of the formation are we looking at?
         let row 0
         if(i > 10 and i < 22)[
@@ -489,28 +465,28 @@ to interact
       set destinationX 601
       set destinationY 364
     ]
-  ]      
+  ]
 end   
        
 to move
   ;move to a relay point if unable to find a specific destination
-  if(state = 1 and allegiance = GERMAN and destinationNum = -1)[
+  if (state = 1 and allegiance = GERMAN and destinationNum = -1)[
     facexy destinationX destinationY
-    forward curSpeed
+    jump curSpeed
   ]
+  
   ;if the nazi brigade is stationary and ready for orders
-  if(state = 2 )[;if the unit is moving toward a waiting position go toward it until it's too close to move farther
+  if (state = 2 ) [;if the unit is moving toward a waiting position go toward it until it's too close to move farther
     ifelse(abs (destinationX - xcor) < curSpeed and abs (destinationY - ycor) < curSpeed)[
       ;if the unit reached its waiting position face the enemies and set its state to ready to move
       setxy destinationX destinationY
       set state 1
       facexy 170 450
-    ]
-    [
-     ;; show "trying to move"
+    ] [
+      ;; show "trying to move"
       ;if it hasn't reached its waiting point move toward it at its normal speed
       facexy destinationX destinationY
-      forward curSpeed
+      jump curSpeed
     ]
   ]
 
@@ -524,7 +500,7 @@ to move
       rt 180
     ][
       if ( stepsTaken <  nrTicksToNextRetreatline ) [
-        forward curSpeed / 10
+        jump curSpeed
       ] 
     ]  
     if not ( stepsTaken > nrTicksToNextRetreatline ) [
@@ -542,7 +518,7 @@ to move
       rt 180
     ][
       if ( stepsTaken <  2 * nrTicksToNextRetreatline ) [
-        forward curSpeed / 10
+        jump curSpeed
       ]  
     ]  
     if not ( stepsTaken > 2 * nrTicksToNextRetreatline ) [
@@ -561,7 +537,7 @@ to move
       rt 180
     ][
       if ( stepsTaken <  3 * nrTicksToNextRetreatline ) [
-        forward curSpeed / 10
+        jump curSpeed
       ]  
     ]  
     if not ( stepsTaken > 3 * nrTicksToNextRetreatline ) [
@@ -572,68 +548,60 @@ to move
 
   
   
-  if(state = 3 and allegiance = GERMAN)[ ; if german and currently crossing the bridge
+  if (state = 3 and allegiance = GERMAN) [ ; if german and currently crossing the bridge
     set destinationNum -1
-     if(targetBridge = 1)[
-        set chCrossed chCrossed + 60
-        setxy (array:item chStagingX 0) - ((array:item chStagingX 0 - chX) * (chCrossed /(curInf + curAT + curTanks + curArt))) array:item chStagingY 0 - ((array:item chStagingY 0 - chY) * (chCrossed /(curInf + curAT + curTanks + curArt)))
-        forward 1
-        if(xcor <= chX and ycor <= chY)[
-          set state 4
-          set chCrossed 0
-          set destinationNum -1
-        ]
-      ]
-      if(targetBridge = 2)[
-        set abCrossed abCrossed + 60
-        setxy (array:item abStagingX 0) - ((array:item abStagingX 0 - abX) * (abCrossed /(curInf + curAT + curTanks + curArt))) array:item abStagingY 0 - ((array:item abStagingY 0 - abY) * (abCrossed /(curInf + curAT + curTanks + curArt)))
-        forward 1
-        if(xcor <= abX and ycor <= abY)[
-          set state 4
-          set abCrossed 0
-          set destinationNum -1
-        ]
-      ] 
-      if(targetBridge = 3)[
-        set amCrossed amCrossed + 60
-        setxy (array:item amStagingX 0) - ((array:item amStagingX 0 - amX) * (amCrossed /(curInf + curAT + curTanks + curArt))) array:item amStagingY 0 - ((array:item amStagingY 0 - amY) * (amCrossed /(curInf + curAT + curTanks + curArt)))
-        forward 1
-        if(xcor <= amX and ycor <= amY)[
-          set state 4
-          set amCrossed 0
-          set destinationNum -1
-        ]
-      ]
-      if(targetBridge = 4)[
-        set brCrossed brCrossed + 60
-        setxy (array:item brStagingX 0) - ((array:item brStagingX 0 - brX) * (brCrossed /(curInf + curAT + curTanks + curArt))) array:item brStagingY 0 - ((array:item brStagingY 0 - brY) * (brCrossed /(curInf + curAT + curTanks + curArt)))
-        forward 1
-        if(xcor <= brX and ycor <= brY)[
-          set state 4
-          set brCrossed 0
-          set destinationNum -1
-        ]
-      ] 
-      if(targetBridge = 5)[
-        set peCrossed peCrossed + 60
-        setxy (array:item peStagingX 0) - ((array:item peStagingX 0 - peX) * (peCrossed /(curInf + curAT + curTanks + curArt))) array:item peStagingY 0 - ((array:item peStagingY 0 - peY) * (peCrossed /(curInf + curAT + curTanks + curArt)))
-        forward 1
-        if(xcor <= peX and ycor <= peY)[
-          set state 5
-          set peCrossed 0
-          set destinationNum -1
-        ]
-      ] 
+     if (targetBridge = 1) [
+       set chCrossed chCrossed + 60
+       setxy (array:item chStagingX 0) - ((array:item chStagingX 0 - chX) * (chCrossed /(curInf + curAT + curTanks + curArt))) array:item chStagingY 0 - ((array:item chStagingY 0 - chY) * (chCrossed /(curInf + curAT + curTanks + curArt)))
+       jump 1
+       if(xcor <= chX and ycor <= chY)[
+         set state 4
+         set chCrossed 0
+         set destinationNum -1
+       ]
+     ]
+     if (targetBridge = 2) [
+       set abCrossed abCrossed + 60
+       setxy (array:item abStagingX 0) - ((array:item abStagingX 0 - abX) * (abCrossed /(curInf + curAT + curTanks + curArt))) array:item abStagingY 0 - ((array:item abStagingY 0 - abY) * (abCrossed /(curInf + curAT + curTanks + curArt)))
+       jump 1
+       if(xcor <= abX and ycor <= abY)[
+         set state 4
+         set abCrossed 0
+         set destinationNum -1
+       ]
+     ] 
+     if (targetBridge = 3) [
+       set amCrossed amCrossed + 60
+       setxy (array:item amStagingX 0) - ((array:item amStagingX 0 - amX) * (amCrossed /(curInf + curAT + curTanks + curArt))) array:item amStagingY 0 - ((array:item amStagingY 0 - amY) * (amCrossed /(curInf + curAT + curTanks + curArt)))
+       jump 1
+       if(xcor <= amX and ycor <= amY)[
+         set state 4
+         set amCrossed 0
+         set destinationNum -1
+       ]
+     ]
+     if(targetBridge = 4)[
+       set brCrossed brCrossed + 60
+       setxy (array:item brStagingX 0) - ((array:item brStagingX 0 - brX) * (brCrossed /(curInf + curAT + curTanks + curArt))) array:item brStagingY 0 - ((array:item brStagingY 0 - brY) * (brCrossed /(curInf + curAT + curTanks + curArt)))
+       jump 1
+       if(xcor <= brX and ycor <= brY)[
+         set state 4
+         set brCrossed 0
+         set destinationNum -1
+       ]
+     ] 
+     if(targetBridge = 5)[
+       set peCrossed peCrossed + 60
+       setxy (array:item peStagingX 0) - ((array:item peStagingX 0 - peX) * (peCrossed /(curInf + curAT + curTanks + curArt))) array:item peStagingY 0 - ((array:item peStagingY 0 - peY) * (peCrossed /(curInf + curAT + curTanks + curArt)))
+       jump 1
+       if(xcor <= peX and ycor <= peY)[
+         set state 5
+         set peCrossed 0
+         set destinationNum -1
+       ]
+     ]
   ]
-  
-end 
-
-to dealArtificialDmgToFrench
-  ;move to a relay point if unable to find a specific destination
-  if(allegiance = FRENCH)[
-    set effectiveness (effectiveness - 1)
-  ]
-end 
+end
 
 to decideFrenchRetreat
   if (effectiveness < 71) and (effectiveness > 50) [
@@ -645,6 +613,46 @@ to decideFrenchRetreat
   if (effectiveness < 31) [
     set retreatState 3 
   ]      
+end
+
+to engage
+  ifelse (allegiance = GERMAN) [
+    if (state = 3) [
+      let opponent c_nearestUnengagedEnemy
+      if (opponent = nobody) [stop]
+      if (distance opponent <= [curRange] of self) [
+        cm_engage opponent
+      ]
+    ]
+    if (state = 4 or state = 5) [
+      let opponent c_nearestUnengagedEnemy                   ;as the Lanchester equations are two-party, limit combat for now
+      if (opponent = nobody) [stop]                          ;consequence of above, may be no "nearest unengaged enemy"
+      ifelse (state != s_RETREAT) [
+        ifelse (distance opponent <= [curRange] of self) [
+          face opponent
+          cm_engage opponent                                 ;hook into CombatModel engagement code
+        ] [
+          face opponent                                      ;otherwise, move closer
+          jump curSpeed
+        ]
+      ] [
+        set heading (((towards opponent) + 180) mod 360)     ;retreat behavior
+        jump curSpeed
+      ]
+    ]
+  ] [
+    let opponent c_nearestUnengagedEnemy
+    if (opponent = nobody) [stop]                          ;consequence of above, may be no "nearest unengaged enemy"
+    ifelse (state != s_RETREAT) [
+      if (distance opponent <= [curRange] of self) [
+        face opponent
+        cm_engage opponent                                 ;hook into CombatModel engagement code
+      ]
+    ] [
+      set heading (((towards opponent) + 180) mod 360)     ;retreat behavior (state = 5)
+      jump curSpeed
+    ]
+  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -692,10 +700,10 @@ NIL
 1
 
 BUTTON
-277
-62
-340
-95
+17
+66
+80
+99
 NIL
 go
 T
@@ -714,44 +722,10 @@ MONITOR
 432
 56
 NIL
-CurrentTicks
+Ticks
 0
 1
 11
-
-BUTTON
-80
-62
-143
-95
-Step
-step
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-157
-63
-251
-96
-Step (50)
-Steps
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
 
 @#$#@#$#@
 ## WHAT IS IT?
