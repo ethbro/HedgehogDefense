@@ -98,7 +98,7 @@ to selectBridge
     let curBridge targetBridge
     repeat count turtles with[targetBridge = curBridge][
       set valid 1                             ;assume the spot we're looking at is valid until proven otherwise
-      if(goal = -1)[                          ;if this brigade hasn't chosen a spot yet have them look for one
+      if(goal = -1 and (i < destinationNum and i > -1) or destinationNum = -1)[                          ;if this brigade hasn't chosen a spot yet have them look for one
                                                ;;what row of the formation are we looking at?
         let row 0
         ifelse(i > 10 and i < 22)[
@@ -129,8 +129,14 @@ to selectBridge
           set row 7
         ]
         [
-        if(i > 87 and i < 99)[
+        ifelse(i > 87 and i < 99)[
           set row 8
+        ]
+        [
+        if(i > 98)[
+            set row 9
+            show who
+        ]
         ]]]]]]]] 
         
         ;;this handles units looking to cross the abbevile bridge

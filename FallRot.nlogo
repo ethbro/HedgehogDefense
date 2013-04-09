@@ -3,6 +3,7 @@ __includes ["libCommon.nls" "libCombatModel.nls" "libBridgeModel.nls"]
 extensions [array]
 globals[ 
   nrTicksToNextRetreatline
+  crossingChannel
 ]
 
 to setup
@@ -16,6 +17,19 @@ end
 
 to setup-globals
   set nrTicksToNextRetreatline 15
+  set crossingChannel 212 - crossingAbbeville - crossingAmiens - crossingPeronne - crossingBray 
+  if(crossingChannel < 0)[
+    set crossingAbbeville crossingAbbeville + crossingChannel
+  ]
+  if(crossingAbbeville < 0)[
+   set crossingAmiens crossingAmiens + crossingAbbeville
+   set crossingAbbeville 0 
+  ]
+  if(crossingBray < 0)[
+   set crossingPeronne crossingPeronne + crossingBray 
+   set crossingBray 0
+  ]
+  set crossingChannel 212 - crossingAbbeville - crossingAmiens - crossingPeronne - crossingBray 
 end
 
 to setup-patches
@@ -27,7 +41,7 @@ to setup-units
     c_writeUnit DefaultUnit
     
     set name "German infantry"
-    set allegiance GERMAN
+    set allegiance GERMAN 
     set heading 225
     set color 15
     
@@ -35,63 +49,96 @@ to setup-units
     set destinationNum -1
     set curSpeed 1
     random-seed 500 + who
-
+    ;let crossingChannel 212 - crossingAbbeville - crossingAmiens - crossingPeronne - crossingBray 
     ;;1
     if(who < 2)[
-      set targetBridge 1
+     ifelse(crossingBray > who)[
+       set targetBridge 1
+     ]
+     [
+       set targetBridge 2 
+     ]
      setxy 110 + who * 2 530 + who * 8 
     ]
     if(who = 2 or who = 3)[
-      set targetBridge 1
+     ifelse(crossingBray > who)[
+       set targetBridge 1
+     ]
+     [
+       set targetBridge 2 
+     ]
      setxy 115 + who * 3 510 + ((who / 2) * 16)
     ]
     ;;2
     if(who = 4 or who = 5)[
+      ifelse(crossingAbbeville > 2)[
       set targetBridge 2
+      ][
+      set targetBridge 3
+      ]
      setxy 122 + who * 3 490 + ((who / 2) * 16)
     ]
     if(who = 6 or who = 7)[
-      set targetBridge 2
+      if(crossingAmiens > 2)[
+        set targetBridge 3
+      ]
       setxy 175 + who   460 + who * 10
     ]
     ;;3
     if(who > 7 and who < 12)[
-      set targetBridge 3
+      ifelse(crossingAmiens > 6)[
+        set targetBridge 3
+      ]
+      [
+        set targetBridge 4
+      ]
       setxy -140 + who * 50 547 - ((who / 2) * 20) - random 6
     ]
     if(who > 11 and who < 17)[
       random-seed 590 + who
-      set targetBridge 3
+      ifelse(crossingAmiens > 11)[
+        set targetBridge 3
+      ]
+      [
+        set targetBridge 4 
+      ]
      setxy -125 + who * 30 478 - ( who * 2) - random 6 
     ]
     ;;4
     if(who > 16 and who < 22)[
-      set targetBridge 4
+      if(crossingBray > 6)[
+        set targetBridge 4
+      ]
       setxy 182 + 13 * who + random 3 500 + -4 * who - random 6
     ]
     ;;5
     if(who > 21 and who < 28)[
-      set targetBridge 5
+      ifelse(crossingPeronne > 6)[
+        set targetBridge 5
+      ]
+      [
+        set targetBridge 4
+      ]
       setxy 407 + 5 * who + random 3 460 + -2 * who - random 6
     ]
     random-seed 500 + who
-    if(who > 27) [
+    if(who > 27 and who < 27 + crossingChannel) [
       set targetBridge 1
           setxy 140 + random 40 510 + random 40
     ]
-    if(who > 57)[
+    if(who > 26 + crossingChannel and who < 27 + crossingChannel + crossingAbbeville)[
       set targetBridge 2
       setxy 185 + random 60 465 + random 60
     ]
-    if(who > 107) [
+    if(who > 26 + crossingChannel + crossingAbbeville and who < 27 + crossingChannel + crossingAbbeville + crossingAmiens) [
       set targetBridge 3
       setxy 347 + random 60 368 + random 60
     ]
-    if(who > 160)[
+    if(who > 26 + crossingChannel + crossingAbbeville + crossingAmiens and who < 27 + crossingChannel + crossingAbbeville + crossingAmiens + crossingBray)[
       set targetBridge 4
       setxy 468 + random 40 382 + random 40
     ]
-    if(who > 180) [
+    if(who > 26 + crossingChannel + crossingAbbeville + crossingAmiens + crossingBray) [
       set targetBridge 5
       setxy 552 + random 45 391 + random 45
     ]
@@ -111,7 +158,11 @@ to setup-units
     set destinationNum -1
     set curSpeed 1
     setxy 552 + random 45 391 + random 45
-    set targetBridge 5
+    ifelse(who > 26 + crossingChannel + crossingAbbeville + crossingAmiens + crossingBray)[
+      set targetBridge 5
+    ][
+    set targetBridge 4
+    ]
   ]  
   
   create-units (116)[
@@ -369,6 +420,77 @@ Ticks
 0
 1
 11
+
+SLIDER
+15
+152
+187
+185
+crossingAbbeville
+crossingAbbeville
+10
+99
+55
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+15
+196
+187
+229
+crossingAmiens
+crossingAmiens
+10
+99
+54
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+16
+243
+188
+276
+crossingBray
+crossingBray
+10
+99
+22
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+18
+291
+190
+324
+crossingPeronne
+crossingPeronne
+10
+99
+58
+1
+1
+NIL
+HORIZONTAL
+
+MONITOR
+98
+95
+218
+148
+crossingChannel
+crossingChannel
+0
+1
+13
 
 @#$#@#$#@
 ## WHAT IS IT?
