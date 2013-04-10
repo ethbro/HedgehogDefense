@@ -170,7 +170,7 @@ to setup-units
     
     set name "French infantry"
     set allegiance FRENCH
-    set heading 45
+    set heading INITIAL_FRENCH_HEADING
     set color 95
 
     set state 1
@@ -185,7 +185,7 @@ to setup-units
     
     set name "French light"
     set allegiance FRENCH
-    set heading 45
+    set heading INITIAL_FRENCH_HEADING
     set color 95
 
     set state 1
@@ -200,7 +200,7 @@ to setup-units
 
     set name "French armor"
     set allegiance FRENCH
-    set heading 45
+    set heading INITIAL_FRENCH_HEADING
     set color 95
 
     set state 1

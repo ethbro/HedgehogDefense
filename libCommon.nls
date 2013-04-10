@@ -8,6 +8,7 @@ globals [
   FRENCH GERMAN
   s_RETREAT    
   i_INF i_TANK i_AT i_ART
+  INITIAL_FRENCH_HEADING
   
   ;Tables of historical values
   SystemRanges
@@ -68,6 +69,7 @@ to setup-Common
   set i_TANK 1
   set i_AT 2
   set i_ART 3
+  set INITIAL_FRENCH_HEADING 45
   
   ;Contains effective ranges (in meters) for the system types
   ;  Note: these are average effective ranges to hit - penetration et al. are included in Lanchester constants
