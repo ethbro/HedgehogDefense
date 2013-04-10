@@ -39,17 +39,38 @@ to cm_engage [ opponent ]
   ask opponent [
     set engaged 1
     cm_updateStrength self (x0 * opp1 / opp2)
-    if (curInf <= 0.7 * startInf) [
+    if (allegiance = FRENCH and curInf <= 0.7 * startInf ) [
       set state s_RETREAT                     ;run away!
+	  set retreatState 1
     ]
+  if (allegiance = FRENCH and curInf <= 0.5 * startInf) [
+    set state s_RETREAT
+	set retreatState 2
+	
+  ] 
+  if (allegiance = FRENCH and curInf <= 0.3 * startInf) [
+    set state s_RETREAT
+	set retreatState 3
+	;output-type "twiddle-dinkies"
+  ]      
+	
   ]
   
   ;Update self
   set engaged 1
   cm_updateStrength self (y0 * self1 / self2)
-  if (curInf <= 0.7 * startInf) [
+  if (allegiance = FRENCH and curInf <= 0.7 * startInf) [
     set state s_RETREAT
+	set retreatState 1
   ]
+  if (allegiance = FRENCH and curInf <= 0.5 * startInf) [
+    set state s_RETREAT
+	set retreatState 2
+  ]  
+  if (allegiance = FRENCH and curInf <= 0.3 * startInf) [
+    set state s_RETREAT
+	set retreatState 3
+  ]    
 end
 
 to-report cm_reportCurStrength [ unit ]

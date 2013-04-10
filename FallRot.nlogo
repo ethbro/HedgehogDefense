@@ -225,8 +225,6 @@ to go
      selectBridge
      crossBridge
     ]
-;    decideFrenchRetreat
-    move
     engage
   ]
 
@@ -237,77 +235,6 @@ to go
   tick      
 end
 
- 
-       
-to move
-  ;if the french brigade has less than 70% left, it retreats to the first zone
-  if(retreatState = 1)[
-    if ( stepsTaken = 0 ) [
-      rt 180
-    ]
-    
-    ifelse ( stepsTaken = nrTicksToNextRetreatline ) [
-      rt 180
-    ][
-      if ( stepsTaken <  nrTicksToNextRetreatline ) [
-        jump curSpeed
-      ] 
-    ]  
-    if not ( stepsTaken > nrTicksToNextRetreatline ) [
-       set stepsTaken (stepsTaken + 1)
-    ]
-  ]
-  
-  ;if the french brigade has less than 50% left, it retreats to the second zone
-  if(retreatState = 2)[
-    if ( stepsTaken = nrTicksToNextRetreatline + 1 ) [
-      rt 180
-    ]
-    
-    ifelse ( stepsTaken = 2 * nrTicksToNextRetreatline ) [
-      rt 180
-    ][
-      if ( stepsTaken <  2 * nrTicksToNextRetreatline ) [
-        jump curSpeed
-      ]  
-    ]  
-    if not ( stepsTaken > 2 * nrTicksToNextRetreatline ) [
-       set stepsTaken (stepsTaken + 1)
-    ]
-    
-  ]
-  
-  ;if the french brigade has less than 30% left, it retreats to the third zone
-  if(retreatState = 3)[
-    if ( stepsTaken = 2 * nrTicksToNextRetreatline + 1 ) [
-      rt 180
-    ]
-    
-    ifelse ( stepsTaken = 3 * nrTicksToNextRetreatline ) [
-      rt 180
-    ][
-      if ( stepsTaken <  3 * nrTicksToNextRetreatline ) [
-        jump curSpeed
-      ]  
-    ]  
-    if not ( stepsTaken > 3 * nrTicksToNextRetreatline ) [
-       set stepsTaken (stepsTaken + 1)
-    ]
-    
-  ]   
-end
-
-to decideFrenchRetreat
-  if (effectiveness < 71) and (effectiveness > 50) [
-    set retreatState 1 
-  ]  
-  if (effectiveness < 51) and (effectiveness > 30) [
-    set retreatState 2 
-  ]  
-  if (effectiveness < 31) [
-    set retreatState 3 
-  ]      
-end
 
 to engage
   ifelse (allegiance = GERMAN) [
@@ -327,12 +254,12 @@ to engage
           cm_engage opponent                                 ;hook into CombatModel engagement code
         ] [
           face opponent                                      ;otherwise, move closer
-          jump curSpeed
+      if(retreatState = 0)[jump curSpeed]
+          
         ]
-      ] [
-        set heading (((towards opponent) + 180) mod 360)     ;retreat behavior
-        jump curSpeed
-      ]
+      ] [ ;do nothing - Germans dont retreat
+        
+      ] 
     ]
   ] [
     let opponent c_nearestUnengagedEnemy
@@ -343,8 +270,73 @@ to engage
         cm_engage opponent                                 ;hook into CombatModel engagement code
       ]
     ] [
-      set heading (((towards opponent) + 180) mod 360)     ;retreat behavior (state = 5)
+;======================RETREAT LOGIC START=====================================
+    
+    
+    ;if the french brigade has less than 70% left, it retreats to the first zone
+      if(retreatState = 1 and numberOfLinesPassed = 0)[
+    if ( stepsTaken = 0 ) [
+      set heading ((INITIAL_FRENCH_HEADING + 180) mod 360) 
+    ]
+    
+    ifelse ( stepsTaken = nrTicksToNextRetreatline ) [
+      rt 180
+      set retreatState 0
+      set numberOfLinesPassed 1
+    ][
+      if ( stepsTaken <  nrTicksToNextRetreatline ) [
       jump curSpeed
+      ] 
+    ]  
+    if not ( stepsTaken > nrTicksToNextRetreatline ) [
+       set stepsTaken (stepsTaken + 1)
+    ]
+    ]
+    
+    ;if the french brigade has less than 50% left, it retreats to the second zone
+    if(retreatState = 2 and numberOfLinesPassed = 1)[
+    if ( stepsTaken = nrTicksToNextRetreatline + 1 ) [
+      set heading ((INITIAL_FRENCH_HEADING + 180) mod 360)
+    ]
+    
+    ifelse ( stepsTaken = 2 * nrTicksToNextRetreatline ) [
+      rt 180
+      set retreatState 0
+      set numberOfLinesPassed 2
+    ][
+      if ( stepsTaken <  2 * nrTicksToNextRetreatline ) [
+      jump curSpeed
+      ]  
+    ]  
+    if not ( stepsTaken > 2 * nrTicksToNextRetreatline ) [
+       set stepsTaken (stepsTaken + 1)
+    ]
+    ]
+    
+      ;if the french brigade has less than 30% left, it retreats to the third zone
+  if(retreatState = 3 and numberOfLinesPassed = 2)[
+    if ( stepsTaken = 2 * nrTicksToNextRetreatline + 1 ) [
+      set heading ((INITIAL_FRENCH_HEADING + 180) mod 360)
+    ]
+    
+    ifelse ( stepsTaken = 3 * nrTicksToNextRetreatline ) [
+      rt 180
+    set retreatState 0
+    set numberOfLinesPassed 3
+    ][
+      if ( stepsTaken <  3 * nrTicksToNextRetreatline ) [
+        jump curSpeed
+    
+      ]  
+    ]  
+    if not ( stepsTaken > 3 * nrTicksToNextRetreatline ) [
+       set stepsTaken (stepsTaken + 1)
+    ]
+    
+  ] 
+    ;======================RETREAT LOGIC END=====================================
+    
+        
     ]
   ]
 end

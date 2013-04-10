@@ -54,6 +54,7 @@ units-own [
   state           ;1 ready for orders, 2 moving to position(nazi)/retreat (french), 3 crossing bridge, 4 ready for orders after crosssed, 5 moving after crossed, 6 full retreat
   retreatState    ;1 for retreating to the line of 70% remaining effectiveness, 2 for 50%, 3 for 30%
   stepsTaken      ;number of ticks a given french brigade has spent retreating
+  numberOfLinesPassed ;if a bridgade has passed the 70%, 50%, or 30% line this variable assumes 1, 2, or 3, repesectively.
 ]
 
 ;Main library setup, should always be called once at the beginning
