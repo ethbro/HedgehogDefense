@@ -221,6 +221,7 @@ end
 
 to go
   ask units [
+    if(curInf < 3)[hide-turtle]
     if(allegiance = GERMAN and state < 4)[
      selectBridge
      crossBridge
@@ -275,6 +276,7 @@ to engage
     
     ;if the french brigade has less than 70% left, it retreats to the first zone
       if(retreatState = 1 and numberOfLinesPassed = 0)[
+         ;output-print (who + 100000)
     if ( stepsTaken = 0 ) [
       set heading ((INITIAL_FRENCH_HEADING + 180) mod 360) 
     ]
@@ -295,6 +297,7 @@ to engage
     
     ;if the french brigade has less than 50% left, it retreats to the second zone
     if(retreatState = 2 and numberOfLinesPassed = 1)[
+      ;output-print (who + 200000)
     if ( stepsTaken = nrTicksToNextRetreatline + 1 ) [
       set heading ((INITIAL_FRENCH_HEADING + 180) mod 360)
     ]
@@ -315,6 +318,7 @@ to engage
     
       ;if the french brigade has less than 30% left, it retreats to the third zone
   if(retreatState = 3 and numberOfLinesPassed = 2)[
+     ;output-print (who + 300000)
     if ( stepsTaken = 2 * nrTicksToNextRetreatline + 1 ) [
       set heading ((INITIAL_FRENCH_HEADING + 180) mod 360)
     ]
