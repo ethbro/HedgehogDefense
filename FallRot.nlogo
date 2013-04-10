@@ -3,7 +3,7 @@ __includes ["libCommon.nls" "libCombatModel.nls" "libBridgeModel.nls"]
 extensions [array]
 globals[ 
   nrTicksToNextRetreatline
-  crossingChannel
+  
 ]
 
 to setup
@@ -18,18 +18,53 @@ end
 to setup-globals
   set nrTicksToNextRetreatline 15
   set crossingChannel 212 - crossingAbbeville - crossingAmiens - crossingPeronne - crossingBray 
-  if(crossingChannel < 0)[
-    set crossingAbbeville crossingAbbeville + crossingChannel
+  if(crossingChannel < 10)[
+    ifelse(crossingChannel < 0)[
+      set crossingAbbeville crossingAbbeville + crossingChannel - 10
+      set crossingChannel 10
+    ]
+    [
+      if(crossingChannel > -1)[
+        
+        set crossingAbbeville crossingAbbeville -(9 - crossingChannel)
+        set crossingChannel 10
+      ]
+    ]
+;    set crossingAbbeville crossingAbbeville + crossingChannel
   ]
-  if(crossingAbbeville < 0)[
-   set crossingAmiens crossingAmiens + crossingAbbeville
-   set crossingAbbeville 0 
+  if(crossingAbbeville < 10)[
+    ifelse(crossingAbbeville < 0)[
+      set crossingAmiens crossingAmiens + crossingAbbeville - 10
+      set crossingAbbeville 10
+    ]
+    [
+      if(crossingAbbeville > -1)[
+        
+        set crossingAmiens crossingAmiens - (9 - crossingAbbeville)
+        set crossingAbbeville 10
+      ]
+    ]
+   ; set crossingAbbeville crossingAbbeville + crossingChannel
+   ;set crossingAmiens crossingAmiens + crossingAbbeville
+   ;set crossingAbbeville 0 
+  ]
+  if(crossingAmiens < 10)[
+    ifelse(crossingAmiens < 0)[
+      set crossingBray crossingBray + crossingAmiens - 10
+      set crossingAmiens 10
+    ]
+    [
+      if(crossingAmiens > -1)[
+        set crossingBray crossingBray - (9 - crossingAmiens)
+        set crossingAmiens 10
+      ]
+    ]
   ]
   if(crossingBray < 0)[
    set crossingPeronne crossingPeronne + crossingBray 
    set crossingBray 0
   ]
-  set crossingChannel 212 - crossingAbbeville - crossingAmiens - crossingPeronne - crossingBray 
+  ;set crossingChannel 212 - crossingAbbeville - crossingAmiens - crossingPeronne - crossingBray 
 end
 
 to setup-patches
@@ -426,7 +461,7 @@ crossingAbbeville
 crossingAbbeville
 10
 99
-55
+99
 1
 1
 NIL
@@ -441,7 +476,7 @@ crossingAmiens
 crossingAmiens
 10
 99
-54
+56
 1
 1
 NIL
@@ -456,7 +491,7 @@ crossingBray
 crossingBray
 10
 99
-22
+11
 1
 1
 NIL
@@ -471,22 +506,26 @@ crossingPeronne
 crossingPeronne
 10
 99
-58
+10
 1
 1
 NIL
 HORIZONTAL
 
-MONITOR
-98
-95
-218
-148
+SLIDER
+14
+109
+186
+142
 crossingChannel
 crossingChannel
-0
+10
+100
+36
 1
-13
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
