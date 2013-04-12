@@ -255,65 +255,62 @@ to setup-units
 end
 
 to go
-  ask units [
-    if(curInf < 3)[hide-turtle]
-    if(allegiance = GERMAN and state < 4)[
-     selectBridge
-     crossBridge
+  ;Movement
+  ask units with [effectiveness > 0] [
+    ;Since Lanchester has no limit, zero out small units
+    if (curInf < 25) [
+      set effectiveness 0
+      set color gray
+      set size 4
     ]
-    engage
+    if (allegiance = GERMAN and state < 4) [
+      selectBridge
+      crossBridge
+    ]
+    move
   ]
+  
+  ;Combat
+  ask units with [effectiveness > 0] [cm_declareTarget]
+  ask units with [effectiveness > 0] [cm_attritTargets]
+  ask units with [effectiveness > 0] [cm_realizeAttrition]
+  clear-links
 
   if (ticks >= 42800) [        ;after a set amount of time stop the simulation
     stop
   ]
-  c_clearEngaged
-  tick      
+  tick
 end
 
 
-to engage
+to move
+  let nearestEnemy c_nearestEnemy
+  let enemyDistance distance nearestEnemy
+  
   ifelse (allegiance = GERMAN) [
-    if (state = 3) [
-      let opponent c_nearestUnengagedEnemy
-      if (opponent = nobody) [stop]
-      if (distance opponent <= [curRange] of self) [
-        cm_engage opponent
-      ]
-    ]
+    ;If we just crossed the bridge...
     if (state = 4 or state = 5) [
-      let opponent c_nearestUnengagedEnemy                   ;as the Lanchester equations are two-party, limit combat for now
-      if (opponent = nobody) [stop]                          ;consequence of above, may be no "nearest unengaged enemy"
-      ifelse (state != s_RETREAT) [
-        ifelse (distance opponent <= [curRange] of self) [
-          face opponent
-          cm_engage opponent                                 ;hook into CombatModel engagement code
+      if (enemyDistance > curDRange) [
+        face nearestEnemy
+        ifelse (enemyDistance > curSpeed) [
+          jump curSpeed
         ] [
-          face opponent                                      ;otherwise, move closer
-      if(retreatState = 0)[jump curSpeed]
-          
+          jump (enemyDistance - 0.3)             ;FIXME picked a random value here so they don't sit on top of each other
         ]
-      ] [ ;do nothing - Germans dont retreat
-        
-      ] 
+      ]
     ]
   ] [
-    let opponent c_nearestUnengagedEnemy
-    if (opponent = nobody) [stop]                          ;consequence of above, may be no "nearest unengaged enemy"
     ifelse (state != s_RETREAT) [
-      if (distance opponent <= [curRange] of self) [
-        face opponent
-        cm_engage opponent                                 ;hook into CombatModel engagement code
-      ]
+      if (enemyDistance < 2 * curIRange) [face c_nearestEnemy]          ;FIXME just did this for aesthetics
     ] [
-;======================RETREAT LOGIC START=====================================
-    
+
+;======================RETREAT LOGIC START=====================================    
     
     ;if the french brigade has less than 70% left, it retreats to the first zone
       if(retreatState = 1 and numberOfLinesPassed = 0)[
          ;output-print (who + 100000)
     if ( stepsTaken = 0 ) [
-      set heading ((INITIAL_FRENCH_HEADING + 180) mod 360) 
+      set heading ((INITIAL_FRENCH_HEADING + 180) mod 360)
     ]
     
     ifelse ( stepsTaken = nrTicksToNextRetreatline ) [
@@ -321,10 +318,10 @@ to engage
       set retreatState 0
       set numberOfLinesPassed 1
     ][
-      if ( stepsTaken <  nrTicksToNextRetreatline ) [
+      if ( stepsTaken < nrTicksToNextRetreatline ) [
       jump curSpeed
-      ] 
-    ]  
+      ]
+    ]
     if not ( stepsTaken > nrTicksToNextRetreatline ) [
        set stepsTaken (stepsTaken + 1)
     ]
@@ -342,10 +339,10 @@ to engage
       set retreatState 0
       set numberOfLinesPassed 2
     ][
-      if ( stepsTaken <  2 * nrTicksToNextRetreatline ) [
+      if ( stepsTaken < 2 * nrTicksToNextRetreatline ) [
       jump curSpeed
-      ]  
-    ]  
+      ]
+    ]
     if not ( stepsTaken > 2 * nrTicksToNextRetreatline ) [
        set stepsTaken (stepsTaken + 1)
     ]
@@ -363,16 +360,16 @@ to engage
     set retreatState 0
     set numberOfLinesPassed 3
     ][
-      if ( stepsTaken <  3 * nrTicksToNextRetreatline ) [
+      if ( stepsTaken < 3 * nrTicksToNextRetreatline ) [
         jump curSpeed
     
-      ]  
-    ]  
+      ]
+    ]
     if not ( stepsTaken > 3 * nrTicksToNextRetreatline ) [
        set stepsTaken (stepsTaken + 1)
     ]
     
-  ] 
+  ]
     ;======================RETREAT LOGIC END=====================================
     
         
@@ -793,7 +790,7 @@ Polygon -6459832 true true 46 128 33 120 21 118 11 123 3 138 5 160 13 178 9 192 
 Polygon -6459832 true true 67 122 96 126 63 144
 
 @#$#@#$#@
-NetLogo 5.0.3
+NetLogo 5.0.4
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@

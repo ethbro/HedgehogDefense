@@ -135,7 +135,7 @@ to selectBridge
         [
         if(i > 98)[
             set row 9
-            show who
+;            show who
         ]
         ]]]]]]]] 
         

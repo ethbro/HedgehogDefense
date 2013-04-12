@@ -2,99 +2,129 @@
 ;  Variables and procedures specific to the combat model
 
 globals [
+  ;Tables of historical values
+  SystemRanges
+  
   ; Variables used in the calculation of the combat model
   cm_coeffs
 ]
 
+directed-link-breed [ directFiring directFire ]
+directed-link-breed [ indirectFiring indirectFire ]
+
 to setup-CombatModel
+  ;Contains effective ranges (in meters) for the system types
+  ;  Note: these are average effective ranges to hit - penetration et al. are included in Lanchester constants
+  ;  (Infantry, Tanks, AT, Artillery)
+  set SystemRanges [ [350 500 700 8500]
+                     [400 550 700 8500] ]
+  
   ;Turkes linear Lanchester numbers, derived from Battle of Kursk
   ;  Soviet (aka French) and German, respectively
   ;  set cm_coeffs [ .0000000268 .0000000668 ]
   set cm_coeffs [ .000000268 .000000668 ]     ; scaled up, to approx 30% attrition in 60 hours for an even brigade-on-brigade action
 end
 
-to cm_engage [ opponent ]
-  let mySide allegiance
-  let oppSide [allegiance] of opponent
-
-  let a (item mySide cm_coeffs)
-  let b (item oppSide cm_coeffs)  
-  
-  ;Simple infantry-only Lanchester combat model
-  ;  incorporates weights of various combat systems from Bracken
-  ;  with addition of AT=10 (Bracken used 5 to represent APCs)
-  let x0 cm_reportCurStrength opponent
-  let y0 cm_reportCurStrength self
-  
-  ;Using the solution from Combat Models, Session 4, Slide 18
-  let opp1 (b * x0 - a * y0)
-  let opp2 (a * y0 * e ^ ((- opp1) * TimeScale))
-  set opp2 (b * x0 - opp2)
-
-  let self1 (a * y0 - b * x0)
-  let self2 (b * x0 * e ^ ((- self1) * TimeScale))
-  set self2 (a * y0 - self2)
-
-  ;Update opponent
-  ask opponent [
-    set engaged 1
-    cm_updateStrength self (x0 * opp1 / opp2)
-    if (allegiance = FRENCH and curInf <= 0.7 * startInf ) [
-      set state s_RETREAT                     ;run away!
-	  set retreatState 1
-    ]
-  if (allegiance = FRENCH and curInf <= 0.5 * startInf) [
-    set state s_RETREAT
-	set retreatState 2
-	
-  ] 
-  if (allegiance = FRENCH and curInf <= 0.3 * startInf) [
-    set state s_RETREAT
-	set retreatState 3
-	;output-type "twiddle-dinkies"
-  ]      
-	
+;This turtle marks the nearest enemy as either the direct or indirect (out of direct range) target it wants to engage
+to cm_declareTarget
+  let opponent c_nearestEnemy
+  if (opponent = nobody) [stop]
+  ifelse (distance opponent <= curDRange) [
+    create-directFire-to opponent
+  ] [
+    if (distance opponent <= curIRange) [ create-indirectFire-to opponent ]
   ]
-  
-  ;Update self
-  set engaged 1
-  cm_updateStrength self (y0 * self1 / self2)
-  if (allegiance = FRENCH and curInf <= 0.7 * startInf) [
-    set state s_RETREAT
-	set retreatState 1
-  ]
-  if (allegiance = FRENCH and curInf <= 0.5 * startInf) [
-    set state s_RETREAT
-	set retreatState 2
-  ]  
-  if (allegiance = FRENCH and curInf <= 0.3 * startInf) [
-    set state s_RETREAT
-	set retreatState 3
-  ]    
 end
 
-to-report cm_reportCurStrength [ unit ]
+;This turtle attrits its target (if any), as well as any turtles directly attacking it
+;  NOTE: this should only be called after all turtles have declared their targets
+;  IMPLEMENTATION: this adds a portion of this turtle's strength to each opponent's enemyStrength variable
+to cm_attritTargets
+  let indirectOnly false
+  
+  ;Set opponents to be my direct target + anyone directly attacking me
+  let opponents (turtle-set in-directFire-neighbors out-directFire-neighbors)
+
+  ;If no direct targets and no one directly attacking me,
+  ;  then set indirectOnly flag and my opponent to be my indirect target
+  if (count opponents = 0) [
+    set indirectOnly true
+    set opponents out-indirectFire-neighbors
+  ]
+  
+  ;If no targets at all, no need to calculate attrition
+  if (count opponents = 0) [stop]
+  
+  ;
+  ifelse (not indirectOnly) [
+    ;Calculate my and the total enemy strengths
+    let attriterStrength cm_reportDirStrength self
+    let totalOppStrength reduce [(cm_reportDirStrength ?1) + (cm_reportDirStrength ?2)] (sort opponents) ;FIXME reduce isn't working right
+    
+    ;Apportion the attrition I can deal, across all opponents, proportionally to each according to their strength
+    ask opponents [
+      ;this opponent's strength as a proportion of the total
+      let toThisOpponent (cm_reportDirStrength self / totalOppStrength)           ;FIXME totalOppStrength is incorrectly of turtle type
+
+      set enemyStrength (enemyStrength + (attriterStrength * toThisOpponent))
+    ]    
+  ] [
+    type "Opponents in indirectOnly=true: " print opponents
+    type "-- Count opponents: " print (count opponents)
+    if (count opponents > 1) [error "libCombatModel: indirectOnly = true, but I have more than one opponent"]        ;DEBUG
+
+    ;Only use my artillery strength
+    let attriterStrength cm_reportIndStrength self    
+    ask opponents [set enemyStrength (enemyStrength + attriterStrength)]
+  ]
+end
+
+;This turtle applies attrition to itself
+;  IMPLEMENTATIONand updates its effectiveness, using its current enemyStrength value
+to cm_realizeAttrition
+  let oppCoeff 0
+  ifelse (allegiance = GERMAN) [
+    set oppCoeff (item FRENCH cm_coeffs)
+  ] [
+    set oppCoeff (item GERMAN cm_coeffs)
+  ]
+  let myStrength cm_reportDirStrength self
+  
+  ;Lanchester Linear model
+  let attrition (1 - oppCoeff * enemyStrength)
+  cm_allocateAttrition attrition
+  
+  ;Reset the strength directed towards me
+  set enemyStrength 0
+end
+
+;----------------------------------------------
+;==          UTILITY FUNCTIONS               ==
+;----------------------------------------------
+
+to-report cm_reportDirStrength [ unit ]
   report ([curInf] of unit) + (10 * [curAT] of unit) + (20 * [curTanks] of unit) + (40 * [curArt] of unit)
+end
+
+to-report cm_reportIndStrength [ unit ]
+  report (40 * [curArt] of unit)
 end
 
 to-report cm_reportMaxStrength [ unit ]
   report ([startInf] of unit) + (10 * [startAT] of unit) + (20 * [startTanks] of unit) + (40 * [startArt] of unit)
 end
 
-;Allocates proportional attrition to the various combat systems (deterministic)
-to cm_updateStrength [ unit newStrength ]
-  let attrition (newStrength / cm_reportCurStrength unit)
-
-  let myInf [curInf] of unit
-  let myAT [curAT] of unit
-  let myTanks [curTanks] of unit
-  let myArt [curArt] of unit
+;Proportionally allocates this turtle's attrition to the various combat systems (deterministic)
+;  NOTE: input is attrition as a percentage (that is, newStrength / oldStrength)
+;  IMPLEMENTATION: also updates the turtle's effectiveness value and sets s_RETREAT @ <= 70%
+to cm_allocateAttrition [ attrition ]
+  set curInf (curInf * attrition)
+  set curAT (curAT * attrition)
+  set curTanks (curTanks * attrition)
+  set curArt (curArt * attrition)
   
-  ask unit [
-    set effectiveness (newStrength / cm_reportMaxStrength self)
-    set curInf myInf * attrition
-    set curAT myAT * attrition
-    set curTanks myTanks * attrition
-    set curArt myArt * attrition
+  set effectiveness (cm_reportDirStrength self / cm_reportMaxStrength self)
+  if (effectiveness <= 0.7) [
+    set state s_RETREAT
   ]
 end

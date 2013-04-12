@@ -4,14 +4,13 @@
 globals [
   TimeScale       ;how many hours (or portions of one) in a tick
   
-  ;General Macros
-  FRENCH GERMAN
-  s_RETREAT    
+  ;General Index Macros
+  FRENCH GERMAN    
   i_INF i_TANK i_AT i_ART
-  INITIAL_FRENCH_HEADING
   
-  ;Tables of historical values
-  SystemRanges
+  ;State Macros
+  s_RETREAT
+  INITIAL_FRENCH_HEADING
   
   ;Utility variables
   DefaultUnit
@@ -30,7 +29,6 @@ units-own [
   startAT
   startArt
   maxSpeed        ;in km per hour
-  maxRange        ;in km
 
   ;Unit's current statistics
   curInf
@@ -38,11 +36,14 @@ units-own [
   curAT
   curArt
   curSpeed
-  curRange
+  curDRange       ;base range of direct fire weapons, in km
+  curIRange       ;base range of indirect fire weapons, in km
+  effectiveness   ;unit's remaining strength, as a percentage (1.0 -> 0.0)
   
   ;Combat variables
-  engaged         ;a unit may be engaged only if engaged=0 (i.e. strictly two-party combat)
-  effectiveness   ;unit's remaining strength, out of 100(%)
+  enemyStrength   ;total enemy strength directed at this unit at the end of the tick
+                  ;(e.g. if dX = -Byx, then this variable will be -(y1 + y2 + y3 + ... + yn)
+                  ;  and dX = -(enemyStrength)Bx
   
   ;Bridge variables
   targetBridge    ;0 none / already crossed, 1 abbeville bridge, 2 amiens bridge, 3 perrone bridge
@@ -72,15 +73,9 @@ to setup-Common
   set i_ART 3
   set INITIAL_FRENCH_HEADING 45
   
-  ;Contains effective ranges (in meters) for the system types
-  ;  Note: these are average effective ranges to hit - penetration et al. are included in Lanchester constants
-  ;  (Infantry, Tanks, AT, Artillery)
-  set SystemRanges [ [350 500 700 8500]
-                     [400 550 700 8500] ]
-  
   ;Default (scratch) unit statistics
-  ;  (name, superior, allegiance, startInf, startTanks, startAT, startArt, maxSpeed, maxRange)
-  set DefaultUnit [ "X Composite Brigade" "Y Composite Division" 99 3500 80 90 12 0.8125 25]
+  ;  (name, superior, allegiance, startInf, startTanks, startAT, startArt, maxSpeed, curDRange, curIRange)
+  set DefaultUnit [ "X Composite Brigade" "Y Composite Division" 99 3500 80 90 12 0.8125 0.7 8.5]
 end
 
 to c_writeUnit [ statsList ]
@@ -92,19 +87,18 @@ to c_writeUnit [ statsList ]
   set startAT (item 5 statsList)
   set startArt (item 6 statsList)
   set maxSpeed (item 7 statsList)
-  set maxRange (item 8 statsList)
   
   set curInf startInf
   set curTanks startTanks
   set curAT startAT
   set curArt startArt
   set curSpeed maxSpeed
-  set curRange maxRange
+  set curDRange (item 8 statsList)
+  set curIRange (item 9 statsList)
   
   set shape "Default"
   set size 7
-  set engaged 0
-  set effectiveness 100
+  set effectiveness 1
 end
 
 to-report c_nearestEnemy
@@ -114,21 +108,5 @@ to-report c_nearestEnemy
   ] [
     set otherSide GERMAN
   ]
-  report min-one-of units with [allegiance = otherSide] [distance myself]
-end
-
-to-report c_nearestUnengagedEnemy
-  let otherSide -1
-  ifelse (allegiance = GERMAN) [
-    set otherSide FRENCH
-  ] [
-    set otherSide GERMAN
-  ]
-  report min-one-of units with [allegiance = otherSide and engaged = 0] [distance myself]
-end
-
-to c_clearEngaged
-  ask units [
-    set engaged 0
-  ]
+  report min-one-of units with [allegiance = otherSide and effectiveness > 0] [distance myself]
 end
