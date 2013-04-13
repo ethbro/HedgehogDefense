@@ -59,18 +59,17 @@ to cm_attritTargets
   ifelse (not indirectOnly) [
     ;Calculate my and the total enemy strengths
     let attriterStrength cm_reportDirStrength self
-    let totalOppStrength reduce [(cm_reportDirStrength ?1) + (cm_reportDirStrength ?2)] (sort opponents) ;FIXME reduce isn't working right
+    let totalOppStrength 0
+    ask opponents [ set totalOppStrength (totalOppStrength + cm_reportDirStrength self) ]
     
     ;Apportion the attrition I can deal, across all opponents, proportionally to each according to their strength
     ask opponents [
       ;this opponent's strength as a proportion of the total
-      let toThisOpponent (cm_reportDirStrength self / totalOppStrength)           ;FIXME totalOppStrength is incorrectly of turtle type
+      let toThisOpponent (cm_reportDirStrength self / totalOppStrength)
 
       set enemyStrength (enemyStrength + (attriterStrength * toThisOpponent))
     ]    
   ] [
-    type "Opponents in indirectOnly=true: " print opponents
-    type "-- Count opponents: " print (count opponents)
     if (count opponents > 1) [error "libCombatModel: indirectOnly = true, but I have more than one opponent"]        ;DEBUG
 
     ;Only use my artillery strength
@@ -116,7 +115,7 @@ end
 
 ;Proportionally allocates this turtle's attrition to the various combat systems (deterministic)
 ;  NOTE: input is attrition as a percentage (that is, newStrength / oldStrength)
-;  IMPLEMENTATION: also updates the turtle's effectiveness value and sets s_RETREAT @ <= 70%
+;  IMPLEMENTATION: also updates the turtle's effectiveness value and sets triggers for Phil's code
 to cm_allocateAttrition [ attrition ]
   set curInf (curInf * attrition)
   set curAT (curAT * attrition)
@@ -124,7 +123,18 @@ to cm_allocateAttrition [ attrition ]
   set curArt (curArt * attrition)
   
   set effectiveness (cm_reportDirStrength self / cm_reportMaxStrength self)
-  if (effectiveness <= 0.7) [
-    set state s_RETREAT
+  
+  ;FIXME hack on retreat behavior
+  if (allegiance = FRENCH) [
+    if (effectiveness <= 0.7) [
+      set state s_RETREAT
+      set retreatState 1
+    ]
+    if (effectiveness <= 0.5) [
+      set retreatState 2
+    ]
+    if (effectiveness <= 0.3) [
+      set retreatState 3
+    ]
   ]
 end

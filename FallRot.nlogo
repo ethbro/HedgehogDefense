@@ -287,6 +287,7 @@ to move
   let nearestEnemy c_nearestEnemy
   let enemyDistance distance nearestEnemy
   
+  ;GERMAN BEHAVIOR
   ifelse (allegiance = GERMAN) [
     ;If we just crossed the bridge...
     if (state = 4 or state = 5) [
@@ -299,6 +300,7 @@ to move
         ]
       ]
     ]
+  ;FRENCH BEHAVIOR
   ] [
     ifelse (state != s_RETREAT) [
       if (enemyDistance < 2 * curIRange) [face c_nearestEnemy]          ;FIXME just did this for aesthetics
@@ -790,7 +792,7 @@ Polygon -6459832 true true 46 128 33 120 21 118 11 123 3 138 5 160 13 178 9 192 
 Polygon -6459832 true true 67 122 96 126 63 144
 
 @#$#@#$#@
-NetLogo 5.0.4
+NetLogo 5.0.3
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
