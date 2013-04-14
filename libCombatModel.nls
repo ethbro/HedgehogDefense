@@ -2,9 +2,6 @@
 ;  Variables and procedures specific to the combat model
 
 globals [
-  ;Tables of historical values
-  SystemRanges
-  
   ; Variables used in the calculation of the combat model
   cm_coeffs
 ]
@@ -13,12 +10,6 @@ directed-link-breed [ directFiring directFire ]
 directed-link-breed [ indirectFiring indirectFire ]
 
 to setup-CombatModel
-  ;Contains effective ranges (in meters) for the system types
-  ;  Note: these are average effective ranges to hit - penetration et al. are included in Lanchester constants
-  ;  (Infantry, Tanks, AT, Artillery)
-  set SystemRanges [ [350 500 700 8500]
-                     [400 550 700 8500] ]
-  
   ;Turkes linear Lanchester numbers, derived from Battle of Kursk
   ;  Soviet (aka French) and German, respectively
   ;  set cm_coeffs [ .0000000268 .0000000668 ]
@@ -29,10 +20,10 @@ end
 to cm_declareTarget
   let opponent c_nearestEnemy
   if (opponent = nobody) [stop]
-  ifelse (distance opponent <= curDRange) [
+  ifelse (c_distance opponent <= curDRange) [
     create-directFire-to opponent
   ] [
-    if (distance opponent <= curIRange) [ create-indirectFire-to opponent ]
+    if (c_distance opponent <= curIRange) [ create-indirectFire-to opponent ]
   ]
 end
 
@@ -100,7 +91,6 @@ end
 ;----------------------------------------------
 ;==          UTILITY FUNCTIONS               ==
 ;----------------------------------------------
-
 to-report cm_reportDirStrength [ unit ]
   report ([curInf] of unit) + (10 * [curAT] of unit) + (20 * [curTanks] of unit) + (40 * [curArt] of unit)
 end

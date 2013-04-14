@@ -73,12 +73,13 @@ end
 
 to setup-units
   create-units (188) [
-    c_writeUnit DefaultUnit
+    c_writeUnit DefaultGermanUnit
     
     set name "German infantry"
-    set allegiance GERMAN 
+    set allegiance GERMAN
     set heading 225
     set color 15
+;    set 
     
     set state 1
     set destinationNum -1
@@ -180,7 +181,7 @@ to setup-units
   ]
   
   create-units (24) [
-    c_writeUnit DefaultUnit
+    c_writeUnit DefaultGermanUnit
     
     set name "German tank"
     set allegiance GERMAN
@@ -201,7 +202,7 @@ to setup-units
   ]  
   
   create-units (116)[
-    c_writeUnit DefaultUnit
+    c_writeUnit DefaultFrenchUnit
     
     set name "French infantry"
     set allegiance FRENCH
@@ -216,7 +217,7 @@ to setup-units
   ]
   
   create-units (6) [
-    c_writeUnit DefaultUnit
+    c_writeUnit DefaultFrenchUnit
     
     set name "French light"
     set allegiance FRENCH
@@ -231,7 +232,7 @@ to setup-units
   ]
   
   create-units (10) [
-    c_writeUnit DefaultUnit
+    c_writeUnit DefaultFrenchUnit
 
     set name "French armor"
     set allegiance FRENCH
@@ -285,7 +286,7 @@ end
 
 to move
   let nearestEnemy c_nearestEnemy
-  let enemyDistance distance nearestEnemy
+  let enemyDistance c_distance nearestEnemy
   
   ;GERMAN BEHAVIOR
   ifelse (allegiance = GERMAN) [

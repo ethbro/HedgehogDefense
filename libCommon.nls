@@ -2,8 +2,6 @@
 ;  Common variables used by all simulations
 
 globals [
-  TimeScale       ;how many hours (or portions of one) in a tick
-  
   ;General Index Macros
   FRENCH GERMAN    
   i_INF i_TANK i_AT i_ART
@@ -11,9 +9,17 @@ globals [
   ;State Macros
   s_RETREAT
   INITIAL_FRENCH_HEADING
+
+  ;Simulation Variables
+  TimeScale       ;How many hours (or portions of one) in a tick
+  MapScaleFactor  ;The conversion factor between sim distance and map distance
   
+  ;Historical values
+  SystemRanges    ;Contains effective ranges (in km) for the system types
+    
   ;Utility variables
-  DefaultUnit
+  DefaultFrenchUnit
+  DefaultGermanUnit
 ]
 
 breed [units unit]
@@ -60,8 +66,7 @@ units-own [
 
 ;Main library setup, should always be called once at the beginning
 to setup-Common
-  __clear-all-and-reset-ticks  ;clear the screen
-  set TimeScale 1
+  __clear-all-and-reset-ticks
   
   ;General index macros for 2D lists
   set FRENCH 0
@@ -73,11 +78,28 @@ to setup-Common
   set i_ART 3
   set INITIAL_FRENCH_HEADING 45
   
+  ;Simulation variables
+  set TimeScale 1
+  set MapScaleFactor ( 125 / world-height)  ; For Google Maps "map.png", the map covers 125km vertically, and is square
+  
+  ;Historical values
+  ;Note: these are average effective ranges to hit - penetration et al. are included in Lanchester constants
+  ;  (FRENCH, GERMAN)
+  ;  (Infantry, Tanks, AT, Artillery)
+  set SystemRanges [ [0.35 0.5  0.7 7]
+                     [0.4  0.55 0.7 5] ]
+  
   ;Default (scratch) unit statistics
   ;  (name, superior, allegiance, startInf, startTanks, startAT, startArt, maxSpeed, curDRange, curIRange)
-  set DefaultUnit [ "X Composite Brigade" "Y Composite Division" 99 3500 80 90 12 0.8125 0.7 8.5]
+  let FrenchRanges (item FRENCH SystemRanges)
+  let GermanRanges item GERMAN SystemRanges
+  set DefaultFrenchUnit (list "A Composite Brigade" "B Composite Division" 99 3500 80 90 12 0.8125 (item i_INF FrenchRanges) (item i_ART FrenchRanges))
+  set DefaultGermanUnit (list "X Composite Brigade" "Y Composite Division" 99 3500 80 90 12 0.8125 (item i_INF GermanRanges) (item i_ART GermanRanges))
 end
 
+;----------------------------------------------
+;==          UTILITY FUNCTIONS               ==
+;----------------------------------------------
 to c_writeUnit [ statsList ]
   set name (item 0 statsList)
   set superior (item 1 statsList)
@@ -109,4 +131,13 @@ to-report c_nearestEnemy
     set otherSide GERMAN
   ]
   report min-one-of units with [allegiance = otherSide and effectiveness > 0] [distance myself]
+end
+
+;----------------------------------------------
+;==             MAP FUNCTIONS                ==
+;----------------------------------------------
+
+;Reports the physical distance between the calling unit and the specified unit, using the map scale
+to-report c_distance [ unit ]
+  report MapScaleFactor * distance unit
 end
