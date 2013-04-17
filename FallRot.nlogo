@@ -129,7 +129,12 @@ to go
   ask units with [effectiveness > 0] [cm_attritTargets]
   ask units with [effectiveness > 0] [cm_realizeAttrition]
   clear-links
-
+  if(ticks > 500)[
+    set numBridges 2
+  ]
+  if(ticks > 1500)[
+    set numBridges 3 
+  ]
   if (ticks >= 42800) [        ;after a set amount of time stop the simulation
     stop
   ]
@@ -409,6 +414,17 @@ plotForces
 0
 1
 -1000
+
+MONITOR
+227
+369
+394
+422
+Number of Bridgeheads
+numBridges
+0
+1
+13
 
 @#$#@#$#@
 ## WHAT IS IT?
