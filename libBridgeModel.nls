@@ -88,6 +88,149 @@ to setup-BridgeModel
   set peY 346
 end
 
+to setup-bridge-sliders
+set crossingChannel 212 - crossingAbbeville - crossingAmiens - crossingPeronne - crossingBray 
+  if(crossingChannel < 10)[
+    ifelse(crossingChannel < 0)[
+      set crossingAbbeville crossingAbbeville + crossingChannel - 10
+      set crossingChannel 10
+    ]
+    [
+      if(crossingChannel > -1)[
+        
+        set crossingAbbeville crossingAbbeville -(9 - crossingChannel)
+        set crossingChannel 10
+      ]
+    ]
+  ]
+  if(crossingAbbeville < 10)[
+    ifelse(crossingAbbeville < 0)[
+      set crossingAmiens crossingAmiens + crossingAbbeville - 10
+      set crossingAbbeville 10
+    ]
+    [
+      if(crossingAbbeville > -1)[
+        
+        set crossingAmiens crossingAmiens - (9 - crossingAbbeville)
+        set crossingAbbeville 10
+      ]
+    ]
+  ]
+  if(crossingAmiens < 10)[
+    ifelse(crossingAmiens < 0)[
+      set crossingBray crossingBray + crossingAmiens - 10
+      set crossingAmiens 10
+    ]
+    [
+      if(crossingAmiens > -1)[
+        set crossingBray crossingBray - (9 - crossingAmiens)
+        set crossingAmiens 10
+      ]
+    ]
+  ]
+  if(crossingBray < 0)[
+   set crossingPeronne crossingPeronne + crossingBray 
+   set crossingBray 0
+  ]  
+end
+
+to place-germans
+  random-seed 500 + who
+    ;;1
+    if(who < 2)[
+     ifelse(crossingBray > who)[
+       set targetBridge 1
+     ]
+     [
+       set targetBridge 2 
+     ]
+     setxy 140 + who * 2 560 + who * 8 
+    ]
+    if(who = 2 or who = 3)[
+     ifelse(crossingBray > who)[
+       set targetBridge 1
+     ]
+     [
+       set targetBridge 2 
+     ]
+     setxy 145 + who * 3 540 + ((who / 2) * 16)
+    ]
+    ;;2
+    if(who = 4 or who = 5)[
+      ifelse(crossingAbbeville > 2)[
+      set targetBridge 2
+      ][
+      set targetBridge 3
+      ]
+     setxy 152 + who * 3 520 + ((who / 2) * 16)
+    ]
+    if(who = 6 or who = 7)[
+      if(crossingAmiens > 2)[
+        set targetBridge 3
+      ]
+      setxy 205 + who   490 + who * 10
+    ]
+    ;;3
+    if(who > 7 and who < 12)[
+      ifelse(crossingAmiens > 6)[
+        set targetBridge 3
+      ]
+      [
+        set targetBridge 4
+      ]
+      setxy -110 + who * 50 577 - ((who / 2) * 20) - random 6
+    ]
+    if(who > 11 and who < 17)[
+      random-seed 590 + who
+      ifelse(crossingAmiens > 11)[
+        set targetBridge 3
+      ]
+      [
+        set targetBridge 4 
+      ]
+     setxy -95 + who * 30 508 - ( who * 2) - random 6 
+    ]
+    ;;4
+    if(who > 16 and who < 22)[
+      if(crossingBray > 6)[
+        set targetBridge 4
+      ]
+      setxy 212 + 13 * who + random 3 530 + -4 * who - random 6
+    ]
+    ;;5
+    if(who > 21 and who < 28)[
+      ifelse(crossingPeronne > 6)[
+        set targetBridge 5
+      ]
+      [
+        set targetBridge 4
+      ]
+      setxy 437 + 5 * who + random 3 490 + -2 * who - random 6
+    ]
+    random-seed 500 + who
+    if(who > 27 and who < 27 + crossingChannel) [
+      set targetBridge 1
+          setxy 170 + random 40 540 + random 40
+    ]
+    if(who > 26 + crossingChannel and who < 27 + crossingChannel + crossingAbbeville)[
+      set targetBridge 2
+      setxy 215 + random 60 495 + random 60
+    ]
+    if(who > 26 + crossingChannel + crossingAbbeville and who < 27 + crossingChannel + crossingAbbeville + crossingAmiens) [
+      set targetBridge 3
+      setxy 377 + random 60 398 + random 60
+    ]
+    if(who > 26 + crossingChannel + crossingAbbeville + crossingAmiens and who < 27 + crossingChannel + crossingAbbeville + crossingAmiens + crossingBray)[
+      set targetBridge 4
+      setxy 498 + random 40 412 + random 40
+    ]
+    if(who > 26 + crossingChannel + crossingAbbeville + crossingAmiens + crossingBray) [
+      set targetBridge 5
+      setxy 582 + random 45 421 + random 45
+    ]
+     
+end
+
 to selectBridge
   if (state = 1 and allegiance = GERMAN) [    ; if brigade is german and ready for orders
     let i 0                                   ; the counter that determines what spot we are currently looking to fill

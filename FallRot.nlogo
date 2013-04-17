@@ -17,54 +17,7 @@ end
 
 to setup-globals
   set nrTicksToNextRetreatline 15
-  set crossingChannel 212 - crossingAbbeville - crossingAmiens - crossingPeronne - crossingBray 
-  if(crossingChannel < 10)[
-    ifelse(crossingChannel < 0)[
-      set crossingAbbeville crossingAbbeville + crossingChannel - 10
-      set crossingChannel 10
-    ]
-    [
-      if(crossingChannel > -1)[
-        
-        set crossingAbbeville crossingAbbeville -(9 - crossingChannel)
-        set crossingChannel 10
-      ]
-    ]
-;    set crossingAbbeville crossingAbbeville + crossingChannel
-  ]
-  if(crossingAbbeville < 10)[
-    ifelse(crossingAbbeville < 0)[
-      set crossingAmiens crossingAmiens + crossingAbbeville - 10
-      set crossingAbbeville 10
-    ]
-    [
-      if(crossingAbbeville > -1)[
-        
-        set crossingAmiens crossingAmiens - (9 - crossingAbbeville)
-        set crossingAbbeville 10
-      ]
-    ]
-   ; set crossingAbbeville crossingAbbeville + crossingChannel
-   ;set crossingAmiens crossingAmiens + crossingAbbeville
-   ;set crossingAbbeville 0 
-  ]
-  if(crossingAmiens < 10)[
-    ifelse(crossingAmiens < 0)[
-      set crossingBray crossingBray + crossingAmiens - 10
-      set crossingAmiens 10
-    ]
-    [
-      if(crossingAmiens > -1)[
-        set crossingBray crossingBray - (9 - crossingAmiens)
-        set crossingAmiens 10
-      ]
-    ]
-  ]
-  if(crossingBray < 0)[
-   set crossingPeronne crossingPeronne + crossingBray 
-   set crossingBray 0
-  ]
-  ;set crossingChannel 212 - crossingAbbeville - crossingAmiens - crossingPeronne - crossingBray 
+  setup-bridge-sliders
 end
 
 to setup-patches
@@ -79,105 +32,10 @@ to setup-units
     set allegiance GERMAN
     set heading 225
     set color 15
-;    set 
-    
     set state 1
     set destinationNum -1
     set curSpeed 1
-    random-seed 500 + who
-    ;let crossingChannel 212 - crossingAbbeville - crossingAmiens - crossingPeronne - crossingBray 
-    ;;1
-    if(who < 2)[
-     ifelse(crossingBray > who)[
-       set targetBridge 1
-     ]
-     [
-       set targetBridge 2 
-     ]
-     setxy 110 + who * 2 530 + who * 8 
-    ]
-    if(who = 2 or who = 3)[
-     ifelse(crossingBray > who)[
-       set targetBridge 1
-     ]
-     [
-       set targetBridge 2 
-     ]
-     setxy 115 + who * 3 510 + ((who / 2) * 16)
-    ]
-    ;;2
-    if(who = 4 or who = 5)[
-      ifelse(crossingAbbeville > 2)[
-      set targetBridge 2
-      ][
-      set targetBridge 3
-      ]
-     setxy 122 + who * 3 490 + ((who / 2) * 16)
-    ]
-    if(who = 6 or who = 7)[
-      if(crossingAmiens > 2)[
-        set targetBridge 3
-      ]
-      setxy 175 + who   460 + who * 10
-    ]
-    ;;3
-    if(who > 7 and who < 12)[
-      ifelse(crossingAmiens > 6)[
-        set targetBridge 3
-      ]
-      [
-        set targetBridge 4
-      ]
-      setxy -140 + who * 50 547 - ((who / 2) * 20) - random 6
-    ]
-    if(who > 11 and who < 17)[
-      random-seed 590 + who
-      ifelse(crossingAmiens > 11)[
-        set targetBridge 3
-      ]
-      [
-        set targetBridge 4 
-      ]
-     setxy -125 + who * 30 478 - ( who * 2) - random 6 
-    ]
-    ;;4
-    if(who > 16 and who < 22)[
-      if(crossingBray > 6)[
-        set targetBridge 4
-      ]
-      setxy 182 + 13 * who + random 3 500 + -4 * who - random 6
-    ]
-    ;;5
-    if(who > 21 and who < 28)[
-      ifelse(crossingPeronne > 6)[
-        set targetBridge 5
-      ]
-      [
-        set targetBridge 4
-      ]
-      setxy 407 + 5 * who + random 3 460 + -2 * who - random 6
-    ]
-    random-seed 500 + who
-    if(who > 27 and who < 27 + crossingChannel) [
-      set targetBridge 1
-          setxy 140 + random 40 510 + random 40
-    ]
-    if(who > 26 + crossingChannel and who < 27 + crossingChannel + crossingAbbeville)[
-      set targetBridge 2
-      setxy 185 + random 60 465 + random 60
-    ]
-    if(who > 26 + crossingChannel + crossingAbbeville and who < 27 + crossingChannel + crossingAbbeville + crossingAmiens) [
-      set targetBridge 3
-      setxy 347 + random 60 368 + random 60
-    ]
-    if(who > 26 + crossingChannel + crossingAbbeville + crossingAmiens and who < 27 + crossingChannel + crossingAbbeville + crossingAmiens + crossingBray)[
-      set targetBridge 4
-      setxy 468 + random 40 382 + random 40
-    ]
-    if(who > 26 + crossingChannel + crossingAbbeville + crossingAmiens + crossingBray) [
-      set targetBridge 5
-      setxy 552 + random 45 391 + random 45
-    ]
+    place-germans    
   ]
   
   create-units (24) [
@@ -193,12 +51,7 @@ to setup-units
     set destinationY -1
     set destinationNum -1
     set curSpeed 1
-    setxy 552 + random 45 391 + random 45
-    ifelse(who > 26 + crossingChannel + crossingAbbeville + crossingAmiens + crossingBray)[
-      set targetBridge 5
-    ][
-    set targetBridge 4
-    ]
+    place-germans
   ]  
   
   create-units (116)[
@@ -506,7 +359,7 @@ crossingPeronne
 crossingPeronne
 10
 99
-52
+68
 1
 1
 NIL
@@ -521,7 +374,7 @@ crossingChannel
 crossingChannel
 10
 100
-37
+21
 1
 1
 NIL
@@ -541,7 +394,7 @@ Soldiers
 190000.0
 true
 true
-"" "if(plotForces = true)[\nlet numGerman 0\nlet numFrench 0\nask turtles with [effectiveness > 0] [\nif(allegiance = GERMAN)[\nset numGerman numGerman + curInf + curAT + curArt + curTanks\n]\nif(allegiance = FRENCH)[\nset numFrench numFrench + curInf + curAT + curArt + curTanks\n]\n]\nset-current-plot-pen \"French\"\nplot numFrench\nset-current-plot-pen \"German\"\nplot numGerman\n]"
+"" "if(plotForces = true)[\nlet numGerman 0\nlet numFrench 0\nask turtles[\nif(allegiance = GERMAN)[\nset numGerman numGerman + curInf + curAT + curArt + curTanks\n]\nif(allegiance = FRENCH)[\nset numFrench numFrench + curInf + curAT + curArt + curTanks\n]\n]\nset-current-plot-pen \"French\"\nplot numFrench\nset-current-plot-pen \"German\"\nplot numGerman\n]"
 PENS
 "German" 1.0 0 -2674135 true "" ""
 "French" 1.0 0 -13791810 true "" ""
@@ -550,7 +403,7 @@ SWITCH
 225
 332
 354
-366
+365
 plotForces
 plotForces
 0
