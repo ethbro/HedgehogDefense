@@ -461,7 +461,7 @@ crossingAbbeville
 crossingAbbeville
 10
 99
-99
+47
 1
 1
 NIL
@@ -476,7 +476,7 @@ crossingAmiens
 crossingAmiens
 10
 99
-56
+41
 1
 1
 NIL
@@ -491,7 +491,7 @@ crossingBray
 crossingBray
 10
 99
-11
+35
 1
 1
 NIL
@@ -506,7 +506,7 @@ crossingPeronne
 crossingPeronne
 10
 99
-10
+52
 1
 1
 NIL
@@ -521,11 +521,41 @@ crossingChannel
 crossingChannel
 10
 100
-36
+37
 1
 1
 NIL
 HORIZONTAL
+
+PLOT
+20
+330
+220
+480
+Forces
+Time
+Soldiers
+0.0
+100.0
+0.0
+190000.0
+true
+true
+"" "if(plotForces = true)[\nlet numGerman 0\nlet numFrench 0\nask turtles with [effectiveness > 0] [\nif(allegiance = GERMAN)[\nset numGerman numGerman + curInf + curAT + curArt + curTanks\n]\nif(allegiance = FRENCH)[\nset numFrench numFrench + curInf + curAT + curArt + curTanks\n]\n]\nset-current-plot-pen \"French\"\nplot numFrench\nset-current-plot-pen \"German\"\nplot numGerman\n]"
+PENS
+"German" 1.0 0 -2674135 true "" ""
+"French" 1.0 0 -13791810 true "" ""
+
+SWITCH
+225
+332
+354
+366
+plotForces
+plotForces
+0
+1
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
