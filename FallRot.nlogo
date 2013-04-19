@@ -440,39 +440,48 @@ fireAnimation
 @#$#@#$#@
 ## WHAT IS IT?
 
-This section could give a general understanding of what the model is trying to show or explain.
+This is an agent-based simulation that represents the first week of Fall Rot in the Battle of France of World War II. The Germans, deploying the Blitzkrieg tactic, attack fortified French positions ("hedgehogs") across the river. This scenario opens up interesting tactical questions of how the allocation and speed of the German bridge crossing impacts attrition. Each arrow represents a brigade.
 
 ## HOW IT WORKS
 
-This section could explain what rules the agents use to create the overall behavior of the model.
+German brigades will move towards French static positions and both sides engage each other with direct and indirect fire (based on the distance). The Lanchester model of attrition was used. Retreat will start once the number of soldiers in a brigade reaches a certain pre-defined level.
 
 ## HOW TO USE IT
 
-This section could explain how to use the model, including a description of each of the items in the interface tab.
+The 'Setup' button will place the brigades in their initial positions, where the French positions are in a checkerboard pattern. The Go button will make the simulation run (each tick represents one hour). The user may set the numbers of brigades that are crossing each bridge. Further, to analyze attrition, the user may plot the forces in the Interface tabs and inspect statistics of both sides. Lastly, the user may choose to animate fire.
 
 ## THINGS TO NOTICE
 
-This section could give some ideas of things for the user to notice while running the model.
+The 'Forces' plot will give insight to the attrition dynamics based on the parameters the user has chosen to set.
 
 ## THINGS TO TRY
 
-This section could give some ideas of things for the user to try to do (move sliders, switches, etc.) with the model.
+The analyst can choose to vary the bride-crossing mobility of the German forces and its impact on attrition by enabling the 'plotForces' switch.
 
 ## EXTENDING THE MODEL
 
-This section could give some ideas of things to add or change in the procedures tab to make the model more complicated, detailed, accurate, etc.
+Mobility could be made more accurate by taking into account human factor studies.
+The hedgehog defense could be analyzed in more depth and in isolation in a submodel at the scope of individual soldiers and obstacles (close quarters combat).
+Command and control features could be added to make brigades act with higher intelligence and communication. 
 
 ## NETLOGO FEATURES
 
-This section could point out any especially interesting or unusual features of NetLogo that the model makes use of, particularly in the Procedures tab.  It might also point out places where workarounds were needed because of missing features.
+This simulation makes use of includes.
 
 ## RELATED MODELS
 
-This section could give the names of models in the NetLogo Models Library or elsewhere which are of related interest.
+There don't appear to be any military models in the NetLogo library.
 
 ## CREDITS AND REFERENCES
 
-This section could contain a reference to the model's URL on the web if it has one, as well as any other necessary credits or references.
+INTA 6004 Project
+Team 4 - Operation Fall Rot
+Manuel Aguilar
+John Bieniek
+Ethan Brown
+Philip Pecher
+David Richards
+Lucas Smith
 @#$#@#$#@
 default
 true
