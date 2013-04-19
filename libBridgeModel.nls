@@ -73,7 +73,7 @@ to setup-bridge-sliders
     set crossingChannel 0
   ]
   if(crossingAbbeville < 0)[
-    ;if this caused Abbevile to go negative as well this process continues
+    ;if this caused Abbeville to go negative as well this process continues
     ;until we assure all of the sliders are placed in such a way that there can't be too many brigades
     set crossingAmiens crossingAmiens + crossingAbbeville
     set crossingAbbeville 0
@@ -120,7 +120,7 @@ to selectBridge
         ;;what row of the formation are we looking at?
         let row floor (i / 11)
         
-        ;;this handles units looking to cross the abbevile bridge
+        ;;this handles units looking to cross the Abbeville bridge
         if(targetBridge = 1)[
           ;this isn' a valid spot if someone else is going to use it
           if(any? units with[destinationNum = i and targetBridge = 1 and allegiance = GERMAN])[
@@ -146,7 +146,7 @@ to selectBridge
             ]
           ]
         ]
-        ;;this handles units looking to cross the abbevile bridge
+        ;;this handles units looking to cross the Abbeville bridge
         if(targetBridge = 2)[
           ;this isn' a valid spot if someone else is going to use it
           if(any? units with[destinationNum = i and targetBridge = 2 and allegiance = GERMAN])[
@@ -171,7 +171,7 @@ to selectBridge
              ]
           ]
         ]
-        ;;this handles units looking to cross the abbevile bridge
+        ;;this handles units looking to cross the Abbeville bridge
         if(targetBridge = 3)[
           ;this isn' a valid spot if someone else is going to use it
           if(any? units with[destinationNum = i and targetBridge = 3 and allegiance = GERMAN])[

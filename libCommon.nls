@@ -6,7 +6,8 @@ globals [
   FRENCH GERMAN    
   i_INF i_TANK i_AT i_ART
   
-  ;State Macros
+  ;FIXME cleaning up state
+  sn_P_DEFENSE sn_DEFENSE sn_ATTACK sn_B_ATTACK sn_RETREAT sn_ROUTE sn_RESERVE sn_Q_BRIDGE sn_ON_BRIDGE sn_OVR_BRIDGE
   s_RETREAT
   INITIAL_FRENCH_HEADING
 
@@ -46,6 +47,9 @@ units-own [
   curIRange       ;base range of indirect fire weapons, in km
   effectiveness   ;unit's remaining strength, as a percentage (1.0 -> 0.0)
   
+  ;Memory variables for unit behavior
+  beginEffectiveness  ;unit's effectiveness when starting current elected behavior
+  
   ;Combat variables
   enemyStrength   ;total enemy strength directed at this unit at the end of the tick
                   ;(e.g. if dX = -Byx, then this variable will be -(y1 + y2 + y3 + ... + yn)
@@ -57,6 +61,9 @@ units-own [
   destinationNum
   destinationX
   destinationY
+  
+  ;FIXME cleaning up state
+  newState        ;future combined state
   
   state           ;1 ready for orders, 2 moving to position(nazi)/retreat (french), 3 crossing bridge, 4 ready for orders after crosssed, 5 moving after crossed, 6 full retreat
   retreatState    ;1 for retreating to the line of 70% remaining effectiveness, 2 for 50%, 3 for 30%
@@ -71,11 +78,24 @@ to setup-Common
   ;General index macros for 2D lists
   set FRENCH 0
   set GERMAN 1
-  set s_RETREAT 6
   set i_INF 0
   set i_TANK 1
   set i_AT 2
   set i_ART 3
+
+  ;FIXME cleaning up state
+  set sn_P_DEFENSE 0
+  set sn_DEFENSE 1
+  set sn_ATTACK 2
+  set sn_B_ATTACK 3
+  set sn_RETREAT 4
+  set sn_ROUTE 5
+  set sn_RESERVE 6
+  set sn_Q_BRIDGE 7
+  set sn_ON_BRIDGE 8
+  set sn_OVR_BRIDGE 9
+
+  set s_RETREAT 6
   set INITIAL_FRENCH_HEADING 45
   
   ;Simulation variables
@@ -121,6 +141,7 @@ to c_writeUnit [ statsList ]
   set shape "Default"
   set size 7
   set effectiveness 1
+  set beginEffectiveness effectiveness
 end
 
 to-report c_nearestEnemy

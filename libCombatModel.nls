@@ -4,6 +4,7 @@
 globals [
   ; Variables used in the calculation of the combat model
   cm_coeffs
+  cm_attritionScalar
 ]
 
 directed-link-breed [ directFiring directFire ]
@@ -13,28 +14,21 @@ to setup-CombatModel
   ;Turkes linear Lanchester numbers, derived from Battle of Kursk
   ;  Soviet (aka French) and German, respectively
   ;  set cm_coeffs [ .0000000268 .0000000668 ]
-  set cm_coeffs [ .000000268 .000000668 ]     ; scaled up, to approx 30% attrition in 60 hours for an even brigade-on-brigade action
+  set cm_coeffs [ .00000268 .00000668 ]     ; scaled up, FIXME justify
+
+  ; uses new state system: s_P_DEFENSE, s_DEFENSE, s_ATTACK, s_B_ATTACK, s_RETREAT, s_ROUTE, s_RESERVE, s_Q_BRIDGE, s_ON_BRIDGE, s_OVR_BRIDGE
+  set cm_attritionScalar [ 0.5          0.8        1         1.2         1          1.5      1          0.8         1.5          1 ]
 end
 
 ;This turtle marks the nearest enemy as either the direct or indirect (out of direct range) target it wants to engage
 to cm_declareTarget
   let opponent c_nearestEnemy
   if (opponent = nobody) [stop]
+  
   ifelse (c_distance opponent <= curDRange) [
-    ifelse(fireAnimation = false)[
-      create-directFire-to opponent [hide-link]
-    ][
-     create-directFire-to opponent
-    ]  
-      
+    create-directFire-to opponent [set hidden? not fireAnimation]
   ] [
-    ifelse(fireAnimation = false)[
-      if (c_distance opponent <= curIRange) [ create-indirectFire-to opponent [hide-link] ]
-    ][
-      if (c_distance opponent <= curIRange) [ create-indirectFire-to opponent ]
-    ]
-    
-    
+    if (c_distance opponent <= curIRange) [ create-indirectFire-to opponent [set hidden? not fireAnimation] ]
   ]
 end
 
@@ -81,14 +75,15 @@ to cm_attritTargets
 end
 
 ;This turtle applies attrition to itself
-;  IMPLEMENTATIONand updates its effectiveness, using its current enemyStrength value
+;  IMPLEMENTATION: updates its effectiveness, using its current enemyStrength value
 to cm_realizeAttrition
   let oppCoeff 0
   ifelse (allegiance = GERMAN) [
-    set oppCoeff (item FRENCH cm_coeffs)
+    set oppCoeff (item FRENCH cm_coeffs) 
   ] [
     set oppCoeff (item GERMAN cm_coeffs)
   ]
+  set oppCoeff (oppCoeff * (item newState cm_attritionScalar))   ; scale the attrition being done to me by my current state
   let myStrength cm_reportDirStrength self
   
   ;Lanchester Linear model
@@ -127,15 +122,10 @@ to cm_allocateAttrition [ attrition ]
   
   ;FIXME hack on retreat behavior
   if (allegiance = FRENCH) [
-    if (effectiveness <= 0.7) [
+    if (effectiveness < beginEffectiveness - FrenchForceRetreat) [
       set state s_RETREAT
-      set retreatState 1
-    ]
-    if (effectiveness <= 0.5) [
-      set retreatState 2
-    ]
-    if (effectiveness <= 0.3) [
-      set retreatState 3
+      set newState sn_RETREAT
+      
     ]
   ]
 end

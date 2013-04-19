@@ -6,8 +6,8 @@ extensions [array]
 globals[ 
   ; Used for the duration of the retreat phase
   nrTicksToNextRetreatline
-  
 ]
+
 ; Executed when the user click on the 'Setup' button
 to setup
   setup-Common ;Procedure found in libCommon. Initializes various system constants.
@@ -37,6 +37,7 @@ to setup-units
     set heading 225
     set color 15
     set state 1
+    set newState sn_ATTACK
     set destinationNum -1
     set curSpeed 1
     place-germans ;Procedure found in libBridgeModel. Places German brigades in random clusters.
@@ -51,6 +52,7 @@ to setup-units
     set color 15
       
     set state 1
+    set newState sn_ATTACK
     set destinationX -1
     set destinationY -1
     set destinationNum -1
@@ -67,10 +69,12 @@ to setup-units
     set color 95
 
     set state 1
+    set newState sn_P_DEFENSE
     set destinationX -1
     set destinationY -1
     set destinationNum -1
     set stepsTaken 0
+    set numberOfLinesPassed 0
   ]
   ;Creates French light brigades, sets their color blue, makes them face towards the Germans.
   create-units (6) [
@@ -82,10 +86,12 @@ to setup-units
     set color 95
 
     set state 1
+    set newState sn_P_DEFENSE
     set destinationX -1
     set destinationY -1
     set destinationNum -1
     set stepsTaken 0
+    set numberOfLinesPassed 0
   ]
   ;Creates French armored brigades, sets their color blue, makes them face towards the Germans.
   create-units (10) [
@@ -97,10 +103,12 @@ to setup-units
     set color 95
 
     set state 1
+    set newState sn_P_DEFENSE
     set destinationX -1
     set destinationY -1
     set destinationNum -1
     set stepsTaken 0
+    set numberOfLinesPassed 0
   ]      
   ; Places the French in a checkerboard pattern.
   ask units with [allegiance = FRENCH] [
@@ -149,6 +157,7 @@ end
 
 to move
   let nearestEnemy c_nearestEnemy ;Procedure found in libCommon. Returns the nearest opponent.
+  if (nearestEnemy = nobody) [stop]
   let enemyDistance c_distance nearestEnemy ;Procedure found in libCommon. Returns the distance to the nearest opponent.
   
   ;GERMAN BEHAVIOR
@@ -165,79 +174,84 @@ to move
     ]
   ;FRENCH BEHAVIOR
   ] [
-    ifelse (state != s_RETREAT) [
+    ifelse (newState != sn_RETREAT) [
       if (enemyDistance < 2 * curIRange) [face c_nearestEnemy]  ;face the nearest enemy
     ] [
 
 ;======================RETREAT LOGIC START=====================================    
-    
-    ;if the french brigade has less than 70% left, it retreats to the first zone
-      if(retreatState = 1 and numberOfLinesPassed = 0)[
-         ;output-print (who + 100000)
-    if ( stepsTaken = 0 ) [ ;If the first retreat has just started, turn around.
-      set heading ((INITIAL_FRENCH_HEADING + 180) mod 360)
-    ]
-    
-    ifelse ( stepsTaken = nrTicksToNextRetreatline ) [ ;If the first retreat has just ended, turn around.
-      rt 180
-      set retreatState 0
-      set numberOfLinesPassed 1
-    ][
-      if ( stepsTaken < nrTicksToNextRetreatline ) [ ;If the first retreat is in progress, continue to move.
-      jump curSpeed
+;if the french brigade has less than 70% left, it retreats to the first zone
+    if (numberOfLinesPassed = 0)[
+      ;output-print (who + 100000)
+      if ( stepsTaken = 0 ) [ ;If the first retreat has just started, turn around.
+        set heading ((INITIAL_FRENCH_HEADING + 180) mod 360)
       ]
-    ]
-    if not ( stepsTaken > nrTicksToNextRetreatline ) [ ;Increment the steps taken.
-       set stepsTaken (stepsTaken + 1)
-    ]
+      
+      ifelse ( stepsTaken = nrTicksToNextRetreatline ) [ ;If the first retreat has just ended, turn around.
+        rt 180
+        set retreatState 0
+        set newState sn_DEFENSE
+        set beginEffectiveness effectiveness
+        set numberOfLinesPassed 1
+      ][
+        if ( stepsTaken < nrTicksToNextRetreatline ) [ ;If the first retreat is in progress, continue to move.
+          jump curSpeed
+        ]
+      ]
+      if not ( stepsTaken > nrTicksToNextRetreatline ) [ ;Increment the steps taken.
+        set stepsTaken (stepsTaken + 1)
+      ]
     ]
     
     ;if the french brigade has less than 50% left, it retreats to the second zone
-    if(retreatState = 2 and numberOfLinesPassed = 1)[
+    if (numberOfLinesPassed = 1) [
       ;output-print (who + 200000)
-    if ( stepsTaken = nrTicksToNextRetreatline + 1 ) [ ;If the second retreat has just started, turn around.
-      set heading ((INITIAL_FRENCH_HEADING + 180) mod 360)
-    ]
-    
-    ifelse ( stepsTaken = 2 * nrTicksToNextRetreatline ) [ ;If the second retreat has just ended, turn around.
-      rt 180
-      set retreatState 0
-      set numberOfLinesPassed 2
-    ][
+      if ( stepsTaken = nrTicksToNextRetreatline + 1 ) [ ;If the second retreat has just started, turn around.
+        set heading ((INITIAL_FRENCH_HEADING + 180) mod 360)
+      ]
+      
+      ifelse ( stepsTaken = 2 * nrTicksToNextRetreatline ) [ ;If the second retreat has just ended, turn around.
+        rt 180
+        set retreatState 0
+        set newState sn_DEFENSE
+        set beginEffectiveness effectiveness
+        set numberOfLinesPassed 2
+      ][
       if ( stepsTaken < 2 * nrTicksToNextRetreatline ) [ ;If the second retreat is in progress, continue to move.
-      jump curSpeed
+        jump curSpeed
+      ]
+      ]
+      if not ( stepsTaken > 2 * nrTicksToNextRetreatline ) [ ;Increment the steps taken.
+        set stepsTaken (stepsTaken + 1)
       ]
     ]
-    if not ( stepsTaken > 2 * nrTicksToNextRetreatline ) [ ;Increment the steps taken.
-       set stepsTaken (stepsTaken + 1)
-    ]
-    ]
     
-      ;if the french brigade has less than 30% left, it retreats to the third zone
-  if(retreatState = 3 and numberOfLinesPassed = 2)[
-     ;output-print (who + 300000)
-    if ( stepsTaken = 2 * nrTicksToNextRetreatline + 1 ) [ ;If the third retreat has just started, turn around.
-      set heading ((INITIAL_FRENCH_HEADING + 180) mod 360)
-    ]
-    
-    ifelse ( stepsTaken = 3 * nrTicksToNextRetreatline ) [ ;If the third retreat has just ended, turn around.
-      rt 180
-    set retreatState 0
-    set numberOfLinesPassed 3
-    ][
+    ;if the french brigade has less than 30% left, it retreats to the third zone
+    if (numberOfLinesPassed = 2) [
+      ;output-print (who + 300000)
+      if ( stepsTaken = 2 * nrTicksToNextRetreatline + 1 ) [ ;If the third retreat has just started, turn around.
+        set heading ((INITIAL_FRENCH_HEADING + 180) mod 360)
+      ]
+      
+      ifelse ( stepsTaken = 3 * nrTicksToNextRetreatline ) [ ;If the third retreat has just ended, turn around.
+        rt 180
+        set retreatState 0
+        set newState sn_DEFENSE
+        set beginEffectiveness effectiveness
+        set numberOfLinesPassed 3
+      ][
       if ( stepsTaken < 3 * nrTicksToNextRetreatline ) [;If the third retreat is in progress, continue to move.
         jump curSpeed
-    
+        
       ]
+      ]
+      if not ( stepsTaken > 3 * nrTicksToNextRetreatline ) [ ;Increment the steps taken.
+        set stepsTaken (stepsTaken + 1)
+      ]
+      
     ]
-    if not ( stepsTaken > 3 * nrTicksToNextRetreatline ) [ ;Increment the steps taken.
-       set stepsTaken (stepsTaken + 1)
-    ]
-    
-  ]
     ;======================RETREAT LOGIC END=====================================
     
-        
+    
     ]
   ]
 end
@@ -323,7 +337,7 @@ crossingAbbeville
 crossingAbbeville
 0
 212
-0
+53
 1
 1
 NIL
@@ -338,7 +352,7 @@ crossingAmiens
 crossingAmiens
 0
 212
-0
+41
 1
 1
 NIL
@@ -353,7 +367,7 @@ crossingBray
 crossingBray
 0
 212
-0
+30
 1
 1
 NIL
@@ -368,7 +382,7 @@ crossingPeronne
 crossingPeronne
 0
 212
-0
+34
 1
 1
 NIL
@@ -383,7 +397,7 @@ crossingChannel
 crossingChannel
 0
 212
-212
+54
 1
 1
 NIL
@@ -415,7 +429,7 @@ SWITCH
 365
 plotForces
 plotForces
-1
+0
 1
 -1000
 
@@ -437,9 +451,24 @@ SWITCH
 527
 fireAnimation
 fireAnimation
-1
+0
 1
 -1000
+
+SLIDER
+210
+110
+419
+143
+FrenchForceRetreat
+FrenchForceRetreat
+0
+1
+0.82
+0.01
+1
+attrition
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?
