@@ -448,7 +448,7 @@ German brigades will move towards French static positions and both sides engage 
 
 ## HOW TO USE IT
 
-The 'Setup' button will place the brigades in their initial positions, where the French positions are in a checkerboard pattern. The Go button will make the simulation run (each tick represents one hour). The user may set the numbers of brigades that are crossing each bridge. Further, to analyze attrition, the user may plot the forces in the Interface tabs and inspect statistics of both sides. Lastly, the user may choose to animate fire.
+The 'Setup' button will place the brigades in their initial positions, where the French positions are in a checkerboard pattern. The Go button will make the simulation run (each tick represents one hour). The user may set the numbers of brigades that are crossing each bridge. Further, to analyze attrition, the user may plot the forces in the Interface tab and inspect statistics of both sides. Lastly, the user may choose to animate fire.
 
 ## THINGS TO NOTICE
 
@@ -474,7 +474,7 @@ There don't appear to be any military models in the NetLogo library.
 
 ## CREDITS AND REFERENCES
 
-INTA 6004 Project
+INTA 6742 Project
 Team 4 - Operation Fall Rot
 Manuel Aguilar
 John Bieniek
