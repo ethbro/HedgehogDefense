@@ -317,9 +317,9 @@ SLIDER
 185
 crossingAbbeville
 crossingAbbeville
-10
-99
-47
+0
+212
+0
 1
 1
 NIL
@@ -332,9 +332,9 @@ SLIDER
 229
 crossingAmiens
 crossingAmiens
-10
-99
-41
+0
+212
+212
 1
 1
 NIL
@@ -347,9 +347,9 @@ SLIDER
 276
 crossingBray
 crossingBray
-10
-99
-35
+0
+212
+0
 1
 1
 NIL
@@ -362,9 +362,9 @@ SLIDER
 324
 crossingPeronne
 crossingPeronne
-10
-99
-68
+0
+212
+0
 1
 1
 NIL
@@ -377,9 +377,9 @@ SLIDER
 142
 crossingChannel
 crossingChannel
-10
-100
-21
+0
+212
+0
 1
 1
 NIL
@@ -411,7 +411,7 @@ SWITCH
 365
 plotForces
 plotForces
-0
+1
 1
 -1000
 

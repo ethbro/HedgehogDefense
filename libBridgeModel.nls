@@ -1,18 +1,11 @@
 ;libBridgeModel
 ;  Variables and procedures specific to the bridge crossing model
 
-globals [
-  ;Macros
-  bm_CHANNEL
-  bm_ABBEVILLE
-  bm_AMIENS
-  bm_BRAY
-  bm_PERONNE
-  numBridges
+globals [  
   ; Variables used in bridge crossing
-;  bm_bridges
-  bm_stagingAreas
-   ;;staging areas
+  numBridges;How many bridgeheads wide the crossing is
+
+  ;;staging areas
   chStagingX;;the channel bridge
   chStagingY
   chX
@@ -31,7 +24,7 @@ globals [
   amY
   amCrossed
   
-  brStagingX;;bracer
+  brStagingX
   brStagingY
   brX
   brY
@@ -45,27 +38,6 @@ globals [
 ]
 
 to setup-BridgeModel
-  ;Macros
-  ;set bm_CHANNEL 0
- ; set bm_ABBEVILLE 1
- ; set bm_AMIENS 2
-  ;set bm_BRAY 3
- ; set bm_PERONNE 4
-  
-  ;XY bridge coordinates
-  ; Channel, Abbeville, Amiens, Bray, Peronne
- ; set bm_bridges [[128 483]
- ;                 [173 450]
- ;                 [357 336]
- ;                 [528 342]
- ;                 [586 346]]
-  ;XY staging coordinates, same order
- ; set bm_stagingAreas [[151 508]
-  ;                     [200 427]
-  ;                     [372 367]
-  ;                     [511 379]
-  ;                     [592 383]]
-  
   set chStagingX array:from-list[135 133 137 131 139 129 141 127 143 125 145]
   set chStagingY array:from-list[490 492 488 494 486 496 484 498 482 500 480]
   set abStagingX array:from-list[185 187 183 189 181 191 179 193 177 195 175]
@@ -90,49 +62,26 @@ to setup-BridgeModel
 end
 
 to setup-bridge-sliders
-set crossingChannel 212 - crossingAbbeville - crossingAmiens - crossingPeronne - crossingBray 
-  if(crossingChannel < 10)[
-    ifelse(crossingChannel < 0)[
-      set crossingAbbeville crossingAbbeville + crossingChannel - 10
-      set crossingChannel 10
-    ]
-    [
-      if(crossingChannel > -1)[
-        
-        set crossingAbbeville crossingAbbeville -(9 - crossingChannel)
-        set crossingChannel 10
-      ]
-    ]
+  ;this ensures that the sliders total 212
+  ;setting the Channel bridge slider to max - the toal of the other ensures we always have at least 212,
+  set crossingChannel 212 - crossingAbbeville - crossingAmiens - crossingPeronne - crossingBray 
+  ;the rest ensures we don't have over
+  if(crossingChannel < 0)[
+    ;if there are too many troops which cause the set channel above to go negative 
+    ;we remove from this and the adjacent bridge to fix it
+    set crossingAbbeville crossingAbbeville + crossingChannel
+    set crossingChannel 0
   ]
-  if(crossingAbbeville < 10)[
-    ifelse(crossingAbbeville < 0)[
-      set crossingAmiens crossingAmiens + crossingAbbeville - 10
-      set crossingAbbeville 10
-    ]
-    [
-      if(crossingAbbeville > -1)[
-        
-        set crossingAmiens crossingAmiens - (9 - crossingAbbeville)
-        set crossingAbbeville 10
-      ]
-    ]
+  if(crossingAbbeville < 0)[
+    ;if this caused Abbevile to go negative as well this process continues
+    ;until we assure all of the sliders are placed in such a way that there can't be too many brigades
+    set crossingAmiens crossingAmiens + crossingAbbeville
+    set crossingAbbeville 0
   ]
-  if(crossingAmiens < 10)[
-    ifelse(crossingAmiens < 0)[
-      set crossingBray crossingBray + crossingAmiens - 10
-      set crossingAmiens 10
-    ]
-    [
-      if(crossingAmiens > -1)[
-        set crossingBray crossingBray - (9 - crossingAmiens)
-        set crossingAmiens 10
-      ]
-    ]
+  if(crossingAmiens < 0)[
+    set crossingBray crossingBray + crossingAmiens
+    set crossingAmiens 0
   ]
-  if(crossingBray < 0)[
-   set crossingPeronne crossingPeronne + crossingBray 
-   set crossingBray 0
-  ]  
 end
 
 to place-germans
@@ -235,53 +184,14 @@ end
 to selectBridge
   if (state = 1 and allegiance = GERMAN) [    ; if brigade is german and ready for orders
     let i 0                                   ; the counter that determines what spot we are currently looking to fill
-    let goal -1                               ; a marker for wether or not this brigade has chosen a spot to fill
     let valid 1                               ;a check for if the spot we're looking at is valid for this brigade
-
     ;find the nearest empty waiting spot to fill in at
     let curBridge targetBridge
     repeat count turtles with[targetBridge = curBridge][
       set valid 1                             ;assume the spot we're looking at is valid until proven otherwise
-      if(goal = -1 and (i < destinationNum and i > -1) or destinationNum = -1)[                          ;if this brigade hasn't chosen a spot yet have them look for one
-                                               ;;what row of the formation are we looking at?
-        let row 0
-        ifelse(i > 10 and i < 22)[
-          set row 1
-        ]
-        [
-        ifelse(i > 21 and i < 33)[
-          set row 2
-        ]
-        [
-        ifelse(i > 32 and i < 44)[
-          set row 3
-        ]
-        [
-        ifelse(i > 43 and i < 55)[
-          set row 4
-        ]
-        [
-        ifelse(i > 54 and i < 66)[
-          set row 5
-        ]
-        [
-        ifelse(i > 65 and i < 77)[
-          set row 6
-        ]
-        [
-        ifelse(i > 76 and i < 88)[
-          set row 7
-        ]
-        [
-        ifelse(i > 87 and i < 99)[
-          set row 8
-        ]
-        [
-        if(i > 98)[
-            set row 9
-;            show who
-        ]
-        ]]]]]]]] 
+      if((i < destinationNum and i > -1) or destinationNum = -1)[;if this brigade hasn't chosen a spot yet have them look for one
+        ;;what row of the formation are we looking at?
+        let row floor (i / 11)
         
         ;;this handles units looking to cross the abbevile bridge
         if(targetBridge = 1)[
@@ -300,12 +210,11 @@ to selectBridge
             let myDistance sqrt((abs(goalX - xcor) * abs(goalX - xcor)) + (abs(goalY - ycor) * abs(goalY - ycor)))
             ;we are setting this brigade to move to destination i, no others can move here now
             if not(any? units with[targetBridge = 1 and allegiance = GERMAN and (destinationNum > i + 1 or destinationNum = -1) and sqrt((abs(goalX - xcor) * abs(goalX - xcor)) + (abs(goalY - ycor) * abs(goalY - ycor))) < myDistance])[
-          
+              ;we are setting this brigade to move to destination i, no others can move here now
               set destinationNum i
               set destinationX goalX
               set destinationY goalY
               set state 2
-              set goal 1
               stop
             ]
           ]
@@ -331,7 +240,6 @@ to selectBridge
                set destinationX goalX
                set destinationY goalY
                set state 2
-               set goal 1
                stop
              ]
           ]
@@ -357,7 +265,6 @@ to selectBridge
               set destinationX goalX
               set destinationY goalY
               set state 2
-              set goal 1
               stop
             ]
           ]
@@ -382,7 +289,6 @@ to selectBridge
               set destinationX goalX
               set destinationY goalY
               set state 2
-              set goal 1
               stop
             ]
           ]
@@ -409,7 +315,6 @@ to selectBridge
               set destinationX goalX
               set destinationY goalY
               set state 2
-              set goal 1
               stop
             ]
           ]
