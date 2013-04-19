@@ -103,7 +103,7 @@ to setup-units
     ifelse (who < 278) [
       setxy (110 + round(3.83 * (who - 212))) (471 + round(-2.56 * (who - 212))) + (remainder who 2) * 8
     ] [
-    setxy (363 + round(4.06 * (who - 278))) (302 + round(.5 * (who - 278))) + (remainder who 2) * 8     
+    setxy (363 + round(3.46 * (who - 278))) (302 + round(.5 * (who - 278))) + (remainder who 2) * 8     
     ]
   ]
 end
