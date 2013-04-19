@@ -1,30 +1,34 @@
 __includes ["libCommon.nls" "libCombatModel.nls" "libBridgeModel.nls"]
 
+;We make use of arrays in the bridge model
 extensions [array]
+
 globals[ 
+  ; Used for the duration of the retreat phase
   nrTicksToNextRetreatline
   
 ]
-
+; Executed when the user click on the 'Setup' button
 to setup
-  setup-Common
-  setup-CombatModel
-  setup-BridgeModel
-  setup-globals;get all the fields set to their starting values 
-  setup-patches
-  setup-units
+  setup-Common ;Procedure found in libCommon. Initializes various system constants.
+  setup-CombatModel ;Procedure found in libCombatModel. Initializes attrition coefficients.
+  setup-BridgeModel ;Procedure found in libBridgeModel. Initializes staging coordinates.
+  setup-globals;Get all the fields set to their starting values.
+  setup-patches ;Display the background
+  setup-units ;Place brigades and set their attributes.
 end
 
 to setup-globals
-  set nrTicksToNextRetreatline 15
-  setup-bridge-sliders
+  set nrTicksToNextRetreatline 15 ; Defined for the duration of the retreat phase
+  setup-bridge-sliders ;Logic to handle various inputs for the bridge crossing sliders.
 end
 
 to setup-patches
- import-drawing "Map.png"
+ import-drawing "Map.png" ;Sets up the map background.
 end
 
 to setup-units
+  ;Creates German infantry brigades, sets their color red, makes them face towards the French, and places them on the map.
   create-units (188) [
     c_writeUnit DefaultGermanUnit
     
@@ -35,9 +39,9 @@ to setup-units
     set state 1
     set destinationNum -1
     set curSpeed 1
-    place-germans    
+    place-germans ;Procedure found in libBridgeModel. Places German brigades in random clusters.
   ]
-  
+  ;Creates German tank brigades, sets their color red, makes them face towards the French, and places them on the map.
   create-units (24) [
     c_writeUnit DefaultGermanUnit
     
@@ -51,9 +55,9 @@ to setup-units
     set destinationY -1
     set destinationNum -1
     set curSpeed 1
-    place-germans
+    place-germans  ;Procedure found in libBridgeModel. Places German brigades in random clusters.
   ]  
-  
+  ;Creates French infantry brigades, sets their color blue, makes them face towards the Germans.
   create-units (116)[
     c_writeUnit DefaultFrenchUnit
     
@@ -68,7 +72,7 @@ to setup-units
     set destinationNum -1
     set stepsTaken 0
   ]
-  
+  ;Creates French light brigades, sets their color blue, makes them face towards the Germans.
   create-units (6) [
     c_writeUnit DefaultFrenchUnit
     
@@ -83,7 +87,7 @@ to setup-units
     set destinationNum -1
     set stepsTaken 0
   ]
-  
+  ;Creates French armored brigades, sets their color blue, makes them face towards the Germans.
   create-units (10) [
     c_writeUnit DefaultFrenchUnit
 
@@ -98,7 +102,7 @@ to setup-units
     set destinationNum -1
     set stepsTaken 0
   ]      
-  
+  ; Places the French in a checkerboard pattern.
   ask units with [allegiance = FRENCH] [
     ifelse (who < 278) [
       setxy (110 + round(3.83 * (who - 212))) (471 + round(-2.56 * (who - 212))) + (remainder who 2) * 8
@@ -108,32 +112,33 @@ to setup-units
   ]
 end
 
+;This procedure is called when the user presses the 'Go' button.
 to go
   ;Movement
   ask units with [effectiveness > 0] [
-    ;Since Lanchester has no limit, zero out small units
+    ;Since Lanchester only goes to 0 only in the asymptotic case, zero out small units
     if (curInf < 25) [
       set effectiveness 0
       set color gray
       set size 4
     ]
     if (allegiance = GERMAN and state < 4) [
-      selectBridge
-      crossBridge
+      selectBridge ;Procedure found in libBridgeModel. Initializes destinations of the German brigades before the bridge crossing takes place.
+      crossBridge ;Procedure found in libBridgeModel. Logic for the German brigades crossing the bridge.
     ]
     move
   ]
   
   ;Combat
-  ask units with [effectiveness > 0] [cm_declareTarget]
-  ask units with [effectiveness > 0] [cm_attritTargets]
-  ask units with [effectiveness > 0] [cm_realizeAttrition]
+  ask units with [effectiveness > 0] [cm_declareTarget] ;Procedure found in libCombatModel.
+  ask units with [effectiveness > 0] [cm_attritTargets] ;Procedure found in libCombatModel.
+  ask units with [effectiveness > 0] [cm_realizeAttrition] ;Procedure found in libCombatModel.
   clear-links
-  if(ticks > 500)[
-    set numBridges 2
+  if(ticks > 500)[ ;After 500 hours...
+    set numBridges 2 ;Two bridgeheads wide for the crossing
   ]
-  if(ticks > 1500)[
-    set numBridges 3 
+  if(ticks > 1500)[;After 1500 hours...
+    set numBridges 3 ;Three bridgeheads wide for the crossing
   ]
   if (ticks >= 42800) [        ;after a set amount of time stop the simulation
     stop
@@ -143,26 +148,25 @@ end
 
 
 to move
-  let nearestEnemy c_nearestEnemy
-  let enemyDistance c_distance nearestEnemy
+  let nearestEnemy c_nearestEnemy ;Procedure found in libCommon. Returns the nearest opponent.
+  let enemyDistance c_distance nearestEnemy ;Procedure found in libCommon. Returns the distance to the nearest opponent.
   
   ;GERMAN BEHAVIOR
-  ifelse (allegiance = GERMAN) [
-    ;If we just crossed the bridge...
-    if (state = 4 or state = 5) [
-      if (enemyDistance > curDRange) [
-        face nearestEnemy
-        ifelse (enemyDistance > curSpeed) [
-          jump curSpeed
+  ifelse (allegiance = GERMAN) [ ;If the unit is German...
+    if (state = 4 or state = 5) [  ;If it just crossed the bridge...
+      if (enemyDistance > curDRange) [ ;If the enemy is out of range...
+        face nearestEnemy ; Face the nearest enemy
+        ifelse (enemyDistance > curSpeed) [ ;If the enemy can't be reached in an hour
+          jump curSpeed ;Approach the enemy
         ] [
-          jump (enemyDistance - 0.3)             ;FIXME picked a random value here so they don't sit on top of each other
+          jump (enemyDistance - 0.3)             ;else, approach the enemy at a reduced distance
         ]
       ]
     ]
   ;FRENCH BEHAVIOR
   ] [
     ifelse (state != s_RETREAT) [
-      if (enemyDistance < 2 * curIRange) [face c_nearestEnemy]          ;FIXME just did this for aesthetics
+      if (enemyDistance < 2 * curIRange) [face c_nearestEnemy]  ;face the nearest enemy
     ] [
 
 ;======================RETREAT LOGIC START=====================================    
@@ -170,20 +174,20 @@ to move
     ;if the french brigade has less than 70% left, it retreats to the first zone
       if(retreatState = 1 and numberOfLinesPassed = 0)[
          ;output-print (who + 100000)
-    if ( stepsTaken = 0 ) [
+    if ( stepsTaken = 0 ) [ ;If the first retreat has just started, turn around.
       set heading ((INITIAL_FRENCH_HEADING + 180) mod 360)
     ]
     
-    ifelse ( stepsTaken = nrTicksToNextRetreatline ) [
+    ifelse ( stepsTaken = nrTicksToNextRetreatline ) [ ;If the first retreat has just ended, turn around.
       rt 180
       set retreatState 0
       set numberOfLinesPassed 1
     ][
-      if ( stepsTaken < nrTicksToNextRetreatline ) [
+      if ( stepsTaken < nrTicksToNextRetreatline ) [ ;If the first retreat is in progress, continue to move.
       jump curSpeed
       ]
     ]
-    if not ( stepsTaken > nrTicksToNextRetreatline ) [
+    if not ( stepsTaken > nrTicksToNextRetreatline ) [ ;Increment the steps taken.
        set stepsTaken (stepsTaken + 1)
     ]
     ]
@@ -191,20 +195,20 @@ to move
     ;if the french brigade has less than 50% left, it retreats to the second zone
     if(retreatState = 2 and numberOfLinesPassed = 1)[
       ;output-print (who + 200000)
-    if ( stepsTaken = nrTicksToNextRetreatline + 1 ) [
+    if ( stepsTaken = nrTicksToNextRetreatline + 1 ) [ ;If the second retreat has just started, turn around.
       set heading ((INITIAL_FRENCH_HEADING + 180) mod 360)
     ]
     
-    ifelse ( stepsTaken = 2 * nrTicksToNextRetreatline ) [
+    ifelse ( stepsTaken = 2 * nrTicksToNextRetreatline ) [ ;If the second retreat has just ended, turn around.
       rt 180
       set retreatState 0
       set numberOfLinesPassed 2
     ][
-      if ( stepsTaken < 2 * nrTicksToNextRetreatline ) [
+      if ( stepsTaken < 2 * nrTicksToNextRetreatline ) [ ;If the second retreat is in progress, continue to move.
       jump curSpeed
       ]
     ]
-    if not ( stepsTaken > 2 * nrTicksToNextRetreatline ) [
+    if not ( stepsTaken > 2 * nrTicksToNextRetreatline ) [ ;Increment the steps taken.
        set stepsTaken (stepsTaken + 1)
     ]
     ]
@@ -212,21 +216,21 @@ to move
       ;if the french brigade has less than 30% left, it retreats to the third zone
   if(retreatState = 3 and numberOfLinesPassed = 2)[
      ;output-print (who + 300000)
-    if ( stepsTaken = 2 * nrTicksToNextRetreatline + 1 ) [
+    if ( stepsTaken = 2 * nrTicksToNextRetreatline + 1 ) [ ;If the third retreat has just started, turn around.
       set heading ((INITIAL_FRENCH_HEADING + 180) mod 360)
     ]
     
-    ifelse ( stepsTaken = 3 * nrTicksToNextRetreatline ) [
+    ifelse ( stepsTaken = 3 * nrTicksToNextRetreatline ) [ ;If the third retreat has just ended, turn around.
       rt 180
     set retreatState 0
     set numberOfLinesPassed 3
     ][
-      if ( stepsTaken < 3 * nrTicksToNextRetreatline ) [
+      if ( stepsTaken < 3 * nrTicksToNextRetreatline ) [;If the third retreat is in progress, continue to move.
         jump curSpeed
     
       ]
     ]
-    if not ( stepsTaken > 3 * nrTicksToNextRetreatline ) [
+    if not ( stepsTaken > 3 * nrTicksToNextRetreatline ) [ ;Increment the steps taken.
        set stepsTaken (stepsTaken + 1)
     ]
     
@@ -440,7 +444,7 @@ fireAnimation
 @#$#@#$#@
 ## WHAT IS IT?
 
-This is an agent-based simulation that represents the first week of Fall Rot in the Battle of France of World War II. The Germans, deploying the Blitzkrieg tactic, attack fortified French positions ("hedgehogs") across the river. This scenario opens up interesting tactical questions of how the allocation and speed of the German bridge crossing impacts attrition. Each arrow represents a brigade.
+This is an agent-based simulation that represents the first week of Fall Rot in the Battle of France of World War II. The Germans (in red), deploying the Blitzkrieg tactic, attack fortified French positions, "hedgehogs," (in blue) across the river. This scenario opens up interesting tactical questions of how the allocation and speed of the German bridge crossing impacts attrition. Each arrow represents a brigade.
 
 ## HOW IT WORKS
 
@@ -461,7 +465,7 @@ The analyst can choose to vary the bride-crossing mobility of the German forces 
 ## EXTENDING THE MODEL
 
 Mobility could be made more accurate by taking into account human factor studies.
-The hedgehog defense could be analyzed in more depth and in isolation in a submodel at the scope of individual soldiers and obstacles (close quarters combat).
+The hedgehog defense could be analyzed in more depth and in isolation in a submodel at the scope of individual soldiers and obstacles (urban warfare).
 Command and control features could be added to make brigades act with higher intelligence and communication. 
 
 ## NETLOGO FEATURES
