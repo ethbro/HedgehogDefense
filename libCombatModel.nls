@@ -21,9 +21,20 @@ to cm_declareTarget
   let opponent c_nearestEnemy
   if (opponent = nobody) [stop]
   ifelse (c_distance opponent <= curDRange) [
-    create-directFire-to opponent
+    ifelse(fireAnimation = false)[
+      create-directFire-to opponent [hide-link]
+    ][
+     create-directFire-to opponent
+    ]  
+      
   ] [
-    if (c_distance opponent <= curIRange) [ create-indirectFire-to opponent ]
+    ifelse(fireAnimation = false)[
+      if (c_distance opponent <= curIRange) [ create-indirectFire-to opponent [hide-link] ]
+    ][
+      if (c_distance opponent <= curIRange) [ create-indirectFire-to opponent ]
+    ]
+    
+    
   ]
 end
 

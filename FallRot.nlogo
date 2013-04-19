@@ -426,6 +426,17 @@ numBridges
 1
 13
 
+SWITCH
+35
+494
+163
+527
+fireAnimation
+fireAnimation
+1
+1
+-1000
+
 @#$#@#$#@
 ## WHAT IS IT?
 
