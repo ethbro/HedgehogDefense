@@ -142,11 +142,11 @@ to go
   ask units with [effectiveness > 0] [cm_attritTargets] ;Procedure found in libCombatModel.
   ask units with [effectiveness > 0] [cm_realizeAttrition] ;Procedure found in libCombatModel.
   clear-links
-  if(ticks > 500)[ ;After 500 hours...
-    set numBridges 2 ;Two bridgeheads wide for the crossing
+  if(numBridges > MaxBridgeheads)[
+   set numBridges MaxBridgeheads 
   ]
-  if(ticks > 1500)[;After 1500 hours...
-    set numBridges 3 ;Three bridgeheads wide for the crossing
+  if(numBridges < MaxBridgeheads and ticks > (hoursBetweenBridgeheads * numBridges))[ ;After 500 hours...
+    set numBridges numBridges + 1 ;Two bridgeheads wide for the crossing
   ]
   if (ticks >= 42800) [        ;after a set amount of time stop the simulation
     stop
@@ -404,10 +404,10 @@ NIL
 HORIZONTAL
 
 PLOT
-20
-330
-220
-480
+18
+337
+218
+487
 Forces
 Time
 Soldiers
@@ -424,9 +424,9 @@ PENS
 
 SWITCH
 225
-332
+338
 354
-365
+371
 plotForces
 plotForces
 0
@@ -434,10 +434,10 @@ plotForces
 -1000
 
 MONITOR
-227
-369
-394
-422
+198
+278
+365
+331
 Number of Bridgeheads
 numBridges
 0
@@ -445,10 +445,10 @@ numBridges
 13
 
 SWITCH
-35
-494
-163
-527
+225
+374
+353
+407
 fireAnimation
 fireAnimation
 0
@@ -456,10 +456,10 @@ fireAnimation
 -1000
 
 SLIDER
-210
-110
-419
-143
+195
+109
+404
+142
 FrenchForceRetreat
 FrenchForceRetreat
 0
@@ -468,6 +468,36 @@ FrenchForceRetreat
 0.01
 1
 attrition
+HORIZONTAL
+
+SLIDER
+196
+196
+431
+229
+hoursBetweenBridgeheads
+hoursBetweenBridgeheads
+1
+1000
+100
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+198
+242
+370
+275
+MaxBridgeheads
+MaxBridgeheads
+0
+10
+10
+1
+1
+NIL
 HORIZONTAL
 
 @#$#@#$#@
