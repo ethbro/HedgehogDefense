@@ -341,7 +341,7 @@ crossingAbbeville
 crossingAbbeville
 0
 212
-53
+38
 1
 1
 NIL
@@ -356,7 +356,7 @@ crossingAmiens
 crossingAmiens
 0
 212
-41
+59
 1
 1
 NIL
@@ -371,7 +371,7 @@ crossingBray
 crossingBray
 0
 212
-30
+39
 1
 1
 NIL
@@ -386,7 +386,7 @@ crossingPeronne
 crossingPeronne
 0
 212
-34
+46
 1
 1
 NIL
@@ -401,7 +401,7 @@ crossingChannel
 crossingChannel
 0
 212
-54
+30
 1
 1
 NIL
@@ -515,6 +515,21 @@ crossingRate
 500
 60
 5
+1
+NIL
+HORIZONTAL
+
+SLIDER
+226
+410
+398
+443
+germanY
+germanY
+-20
+20
+0
+1
 1
 NIL
 HORIZONTAL

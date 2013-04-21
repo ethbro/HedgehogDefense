@@ -89,22 +89,82 @@ to place-germans
   random-seed 500 + who
   ifelse(who < crossingChannel)[
     set targetBridge 1
-      setxy 140 + random 40 510 + random 40
+    ifelse(who < 3)[
+      ifelse(who < 1)[
+       setxy 186 + random 4 + who * 15 535 + random 4 - who * 2  - GermanY
+      ][
+      setxy 165  + random 4 + who * 15 520 + random 4 - who * 2  - GermanY
+      ]
+    ][
+      setxy 140 + random 40 510 + random 40 - GermanY
+    ]
   ][
   ifelse(who < crossingChannel + crossingAbbeville)[
     set targetBridge 2
-      setxy 195 + random 60 475 + random 60
+    ifelse(who < crossingChannel +  10)[
+      ifelse(who < crossingChannel + 2)[
+       setxy 196 + random 4 + (who - crossingChannel) * -5 535 + random 4 - (who - crossingChannel) * 12  - GermanY
+      ][
+      ifelse(who < crossingChannel + 6)[
+         setxy 234  + random 9 + (who - crossingChannel)* 15 516 + random 9 - (who - crossingChannel) * 9  - GermanY
+      ][
+         setxy 169  + random 9 + (who - crossingChannel)* 15 495 + random 9 - (who - crossingChannel - 4) * 9  - GermanY
+      ]]
+    ][
+      setxy 195 + random 60 465 + random 60 - GermanY
+    ]
   ][
   ifelse(who < crossingChannel + crossingAbbeville + crossingAmiens)[
     set targetBridge 3
-    setxy 347 + random 60 368 + random 60
+    ifelse(who < crossingChannel + crossingAbbeville +  12)[
+      ifelse(who < crossingChannel + crossingAbbeville + 6)[
+       ifelse(who < crossingChannel + crossingAbbeville + 3)[
+        setxy  327 + random 8 + (who - crossingChannel - crossingAbbeville) * 15 464 + random 6 - GermanY - (who - crossingChannel - crossingAbbeville) * 12
+       ][
+       setxy  265 + random 9 + (who - crossingChannel - crossingAbbeville) * 15 467 + random 6 - GermanY - (who - crossingChannel - crossingAbbeville) * 9
+       ] 
+      ][
+      ifelse(who < crossingChannel + crossingAbbeville + 9)[
+        setxy  357 + random 8 + (who - crossingChannel - crossingAbbeville) * 10 354 + random 6 - GermanY + (who - crossingChannel - crossingAbbeville) * 6
+       ][
+       setxy  319 + random 9 + (who - crossingChannel - crossingAbbeville) * 10 327 + random 6 - GermanY + (who - crossingChannel - crossingAbbeville) * 5
+       ] 
+      ]
+    ][
+    
+    setxy 347 + random 60 368 + random 60 - GermanY
+    ]
   ][
   ifelse(who < crossingChannel + crossingAbbeville + crossingAmiens + crossingBray)[
    set targetBridge 4
-     setxy 468 + random 40 382 + random 40
+   ifelse(who < crossingChannel + crossingAbbeville + crossingAmiens + 9)[
+     ifelse(who < crossingChannel + crossingAbbeville + crossingAmiens + 5)[
+      ifelse(who < crossingChannel + crossingAbbeville + crossingAmiens + 3)[
+        setxy 443 + random 8 + (who - crossingChannel - crossingAbbeville - crossingAmiens) * 10 383 + random 8 - GermanY 
+      ][
+      setxy 418 + random 8 + (who - crossingChannel - crossingAbbeville - crossingAmiens) * 10 400 + random 8 - GermanY
+      ]
+     ][
+     ifelse(who < crossingChannel + crossingAbbeville + crossingAmiens + 7)[
+       setxy 448 + random 8 + (who - crossingChannel - crossingAbbeville - crossingAmiens) * 12 418 + random 8 - GermanY
+     ][
+     setxy 428 + random 8 + (who - crossingChannel - crossingAbbeville - crossingAmiens) * 12 402 + random 8 - GermanY
+     ]
+     ]
+   ][
+     setxy 468 + random 40 382 + random 40 - GermanY
+   ]
   ][
   set targetBridge 5
-  setxy 552 + random 45 391 + random 45
+  ifelse(who < crossingChannel + crossingAbbeville + crossingAmiens + crossingBray +  5)[
+    ifelse(who < crossingChannel + crossingAbbeville + crossingAmiens + crossingBray +  3)[
+    setxy 532 + random 5 + (who - crossingChannel - crossingAbbeville - crossingAmiens - crossingBray) * 6 420 + random 5 - (who - crossingChannel - crossingAbbeville - crossingAmiens - crossingBray) * 1 - GermanY
+    ][
+    setxy 519 + random 5 + (who - crossingChannel - crossingAbbeville - crossingAmiens - crossingBray) * 6 410 + random 5 - (who - crossingChannel - crossingAbbeville - crossingAmiens - crossingBray) * 1 - GermanY    
+    ]
+  ][
+  setxy 552 + random 45 391 + random 45 - GermanY
+  ]
   ]
   ]]]
 end
