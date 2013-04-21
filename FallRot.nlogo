@@ -504,6 +504,21 @@ MaxBridgeheads
 NIL
 HORIZONTAL
 
+SLIDER
+196
+153
+368
+186
+crossingRate
+crossingRate
+0
+500
+60
+5
+1
+NIL
+HORIZONTAL
+
 @#$#@#$#@
 ## WHAT IS IT?
 
