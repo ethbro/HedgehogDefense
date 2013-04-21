@@ -136,7 +136,11 @@ to go
     ]
     move
   ]
-  
+  ask units with [effectiveness <= 0][
+   set effectiveness 0
+   set color gray
+   set size 4 
+  ]
   ;Combat
   ask units with [effectiveness > 0] [cm_declareTarget] ;Procedure found in libCombatModel.
   ask units with [effectiveness > 0] [cm_attritTargets] ;Procedure found in libCombatModel.
@@ -412,10 +416,10 @@ Forces
 Time
 Soldiers
 0.0
-100.0
+2000.0
 0.0
-190000.0
-true
+860000.0
+false
 true
 "" "if(plotForces = true)[\nlet numGerman 0\nlet numFrench 0\nask turtles[\nif(allegiance = GERMAN)[\nset numGerman numGerman + curInf + curAT + curArt + curTanks\n]\nif(allegiance = FRENCH)[\nset numFrench numFrench + curInf + curAT + curArt + curTanks\n]\n]\nset-current-plot-pen \"French\"\nplot numFrench\nset-current-plot-pen \"German\"\nplot numGerman\n]"
 PENS

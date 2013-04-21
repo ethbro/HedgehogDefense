@@ -39,24 +39,25 @@ globals [
 
 to setup-BridgeModel
   set chStagingX array:from-list[135 133 137 131 139 129 141 127 143 125 145]
-  set chStagingY array:from-list[490 492 488 494 486 496 484 498 482 500 480]
-  set abStagingX array:from-list[185 187 183 189 181 191 179 193 177 195 175]
-  set abStagingY array:from-list[458 456 460 454 462 452 464 450 466 448 468]
-  set amStagingX array:from-list[366 368 364 370 362 372 360 374 358 376 356]
-  set amStagingY array:from-list[342 340 344 338 346 336 348 334 350 332 352]
+  set chStagingY array:from-list[484 485 483 486 482 487 481 488 480 489 479]
+  set abStagingX array:from-list[189 191 187 193 185 195 183 197 181 199 179]
+  set abStagingY array:from-list[447 445.5 448.5 444 450 442.5 451.5 441 453 439.5 454.5]
+  set amStagingX array:from-list[364 366 362 368 360 370 358 372 356 374 354]
+  ;set amStagingY array:from-list[342 342 342 342 342 342 342 342 342 342 342]
+  set amStagingY array:from-list[336 335 337 334 338 333 339 332 340 331 341]
   set brStagingX array:from-list[526 528 524 530 522 532 520 534 518 536 516]
-  set brStagingY array:from-list[364 366 362 368 360 370 358 372 356 374 354]
-  set peStagingX array:from-list[596 598 594 600 592 602 590 604 588 606 586]
-  set peStagingY array:from-list[352 350 354 348 356 346 358 344 360 342 362]
-  set chX 128
-  set chY 483
-  set abX 173;the position accross the abevile bridge units will move to
-  set abY 450
-  set amX 357
-  set amY 336
-  set brX 528
-  set brY 342
-  set peX 586
+  set brStagingY array:from-list[364 365 363 366 362 367 361 368 360 369 359]
+  set peStagingX array:from-list[589 591 587 593 585 595 583 597 581 599 579]
+  set peStagingY array:from-list[349 346 352 343 355 340 358 337 361 334 364]
+  set chX 132
+  set chY 479
+  set abX 185;the position accross the abevile bridge units will move to
+  set abY 443
+  set amX 362
+  set amY 332
+  set brX 531
+  set brY 355
+  set peX 583
   set peY 346
   set numBridges 1
 end
@@ -252,28 +253,28 @@ to selectBridge
   ]
   if(state = 1 and allegiance = GERMAN and destinationNum = -1)[
     ifelse(targetBridge = 1)[
-      set destinationX 146
-      set destinationY 501
+      set destinationX ((array:item chStagingX (25 - (11 * 2))) + (2 * 2))
+      set destinationY ((array:item chStagingY (25 - (11 * 2))) + (2 * 2))
     ]
     [
     ifelse(targetBridge = 2)[
-      set destinationX 194
-      set destinationY 470
+      set destinationX ((array:item abStagingX (25 - (11 * 2))) + (2 * 2))
+      set destinationY ((array:item abStagingY (25 - (11 * 2))) + (2 * 2))
     ]
     [
     ifelse(targetBridge = 3)[
-      set destinationX 364
-      set destinationY 352
+      set destinationX ((array:item amStagingX (25 - (11 * 2))) + (2 * 2))
+      set destinationY ((array:item amStagingY (25 - (11 * 2))) + (2 * 2))
     ]
     [
     ifelse(targetBridge = 4)[
-      set destinationX 515
-      set destinationY 371
+      set destinationX ((array:item brStagingX (25 - (11 * 2))) + (2 * 2))
+      set destinationY ((array:item brStagingY (25 - (11 * 2))) + (2 * 2))
     ]
     [
     if(targetBridge = 5)[
-      set destinationX 601
-      set destinationY 364
+      set destinationX ((array:item peStagingX (25 - (11 * 2))) + (2 * 2))
+      set destinationY ((array:item peStagingY (25 - (11 * 2))) + (2 * 2))
     ]]]]]
   ]
   
