@@ -3,11 +3,6 @@ __includes ["libCommon.nls" "libCombatModel.nls" "libBridgeModel.nls"]
 ;We make use of arrays in the bridge model
 extensions [array]
 
-globals[ 
-  ; Used for the duration of the retreat phase
-  nrTicksToNextRetreatline
-]
-
 ; Executed when the user click on the 'Setup' button
 to setup
   setup-Common ;Procedure found in libCommon. Initializes various system constants.
@@ -19,7 +14,6 @@ to setup
 end
 
 to setup-globals
-  set nrTicksToNextRetreatline 15 ; Defined for the duration of the retreat phase
   setup-bridge-sliders ;Logic to handle various inputs for the bridge crossing sliders.
 end
 
@@ -65,7 +59,6 @@ to setup-units
     
     set name "French infantry"
     set allegiance FRENCH
-    set heading INITIAL_FRENCH_HEADING
     set color 95
 
     set state 1
@@ -82,7 +75,6 @@ to setup-units
     
     set name "French light"
     set allegiance FRENCH
-    set heading INITIAL_FRENCH_HEADING
     set color 95
 
     set state 1
@@ -99,7 +91,6 @@ to setup-units
 
     set name "French armor"
     set allegiance FRENCH
-    set heading INITIAL_FRENCH_HEADING
     set color 95
 
     set state 1
@@ -112,40 +103,39 @@ to setup-units
   ]      
   ; Places the French in a checkerboard pattern.
   ask units with [allegiance = FRENCH] [
+    let westHeading 43
+    let eastHeading 0
     ifelse (who < 278) [
       setxy (110 + round(3.83 * (who - 212))) (471 + round(-2.56 * (who - 212))) + (remainder who 2) * 8
+      set beginHeading westHeading
     ] [
-    setxy (363 + round(3.46 * (who - 278))) (302 + round(.5 * (who - 278))) + (remainder who 2) * 8     
+      setxy (363 + round(3.46 * (who - 278))) (302 + round(.5 * (who - 278))) + (remainder who 2) * 8     
+      set beginHeading eastHeading
     ]
+    set heading beginHeading
   ]
 end
 
 ;This procedure is called when the user presses the 'Go' button.
 to go
+  let validUnits units with [effectiveness > 0]
+  
   ;Movement
-  ask units with [effectiveness > 0] [
-    ;Since Lanchester only goes to 0 only in the asymptotic case, zero out small units
-    if (curInf < 25) [
-      set effectiveness 0
-      set color gray
-      set size 4
-    ]
+  ask validUnits [
     if (allegiance = GERMAN and state < 4) [
       selectBridge ;Procedure found in libBridgeModel. Initializes destinations of the German brigades before the bridge crossing takes place.
       crossBridge ;Procedure found in libBridgeModel. Logic for the German brigades crossing the bridge.
     ]
     move
   ]
-  ask units with [effectiveness <= 0][
-   set effectiveness 0
-   set color gray
-   set size 4 
-  ]
+
   ;Combat
-  ask units with [effectiveness > 0] [cm_declareTarget] ;Procedure found in libCombatModel.
-  ask units with [effectiveness > 0] [cm_attritTargets] ;Procedure found in libCombatModel.
-  ask units with [effectiveness > 0] [cm_realizeAttrition] ;Procedure found in libCombatModel.
+  ask validUnits [cm_declareTarget] ;Procedure found in libCombatModel.
+  ask validUnits [cm_attritTargets] ;Procedure found in libCombatModel.
+  ask validUnits [cm_realizeAttrition] ;Procedure found in libCombatModel.
+
   clear-links
+
   if(numBridges > MaxBridgeheads)[
    set numBridges MaxBridgeheads 
   ]
@@ -160,9 +150,9 @@ end
 
 
 to move
-  let nearestEnemy c_nearestEnemy ;Procedure found in libCommon. Returns the nearest opponent.
+  let nearestEnemy c_nearestEnemy  ;Procedure found in libCommon. Returns the nearest opponent.
   if (nearestEnemy = nobody) [stop]
-  let enemyDistance c_distance nearestEnemy ;Procedure found in libCommon. Returns the distance to the nearest opponent.
+  let enemyDistance c_distance nearestEnemy ;Procedure found in libCommon. Returns the map distance to the nearest opponent.
   
   ;GERMAN BEHAVIOR
   ifelse (allegiance = GERMAN) [ ;If the unit is German...
@@ -176,87 +166,33 @@ to move
         ]
       ]
     ]
-  ;FRENCH BEHAVIOR
   ] [
+  ;FRENCH BEHAVIOR
     ifelse (newState != sn_RETREAT) [
-      if (enemyDistance < 2 * curIRange) [face c_nearestEnemy]  ;face the nearest enemy
+      if (enemyDistance < 2 * curIRange) [face nearestEnemy]  ;face the nearest enemy
     ] [
-
-;======================RETREAT LOGIC START=====================================    
-;if the french brigade has less than 70% left, it retreats to the first zone
-    if (numberOfLinesPassed = 0)[
-      ;output-print (who + 100000)
-      if ( stepsTaken = 0 ) [ ;If the first retreat has just started, turn around.
-        set heading ((INITIAL_FRENCH_HEADING + 180) mod 360)
-      ]
-      
-      ifelse ( stepsTaken = nrTicksToNextRetreatline ) [ ;If the first retreat has just ended, turn around.
-        rt 180
-        set retreatState 0
-        set newState sn_DEFENSE
-        set beginEffectiveness effectiveness
-        set numberOfLinesPassed 1
-      ][
-        if ( stepsTaken < nrTicksToNextRetreatline ) [ ;If the first retreat is in progress, continue to move.
-          jump curSpeed
+    if (newState = sn_RETREAT) [
+      ifelse isNewState? [
+        set isNewState? false
+        let currentPatch patch-here
+        set targetPatch patch-at-heading-and-distance ((beginHeading + 180) mod 360) (5 / MapScaleFactor)
+        face targetPatch
+      ] [
+        ifelse (patch-here = targetPatch) [   ;arrived, reset back to a fighting state
+          set targetPatch nobody                  ;clear my move target
+          set newState beginState                 ;restore my state
+          set beginState nobody
+          set beginEffectiveness effectiveness    ;remember at what effectiveness I started here
+        ] [
+          ifelse (distance targetPatch > curSpeed) [
+            jump curSpeed
+          ] [
+            move-to targetPatch
+            set heading beginHeading
+          ]
         ]
       ]
-      if not ( stepsTaken > nrTicksToNextRetreatline ) [ ;Increment the steps taken.
-        set stepsTaken (stepsTaken + 1)
-      ]
-    ]
-    
-    ;if the french brigade has less than 50% left, it retreats to the second zone
-    if (numberOfLinesPassed = 1) [
-      ;output-print (who + 200000)
-      if ( stepsTaken = nrTicksToNextRetreatline + 1 ) [ ;If the second retreat has just started, turn around.
-        set heading ((INITIAL_FRENCH_HEADING + 180) mod 360)
-      ]
-      
-      ifelse ( stepsTaken = 2 * nrTicksToNextRetreatline ) [ ;If the second retreat has just ended, turn around.
-        rt 180
-        set retreatState 0
-        set newState sn_DEFENSE
-        set beginEffectiveness effectiveness
-        set numberOfLinesPassed 2
-      ][
-      if ( stepsTaken < 2 * nrTicksToNextRetreatline ) [ ;If the second retreat is in progress, continue to move.
-        jump curSpeed
-      ]
-      ]
-      if not ( stepsTaken > 2 * nrTicksToNextRetreatline ) [ ;Increment the steps taken.
-        set stepsTaken (stepsTaken + 1)
-      ]
-    ]
-    
-    ;if the french brigade has less than 30% left, it retreats to the third zone
-    if (numberOfLinesPassed = 2) [
-      ;output-print (who + 300000)
-      if ( stepsTaken = 2 * nrTicksToNextRetreatline + 1 ) [ ;If the third retreat has just started, turn around.
-        set heading ((INITIAL_FRENCH_HEADING + 180) mod 360)
-      ]
-      
-      ifelse ( stepsTaken = 3 * nrTicksToNextRetreatline ) [ ;If the third retreat has just ended, turn around.
-        rt 180
-        set retreatState 0
-        set newState sn_DEFENSE
-        set beginEffectiveness effectiveness
-        set numberOfLinesPassed 3
-      ][
-      if ( stepsTaken < 3 * nrTicksToNextRetreatline ) [;If the third retreat is in progress, continue to move.
-        jump curSpeed
-        
-      ]
-      ]
-      if not ( stepsTaken > 3 * nrTicksToNextRetreatline ) [ ;Increment the steps taken.
-        set stepsTaken (stepsTaken + 1)
-      ]
-      
-    ]
-    ;======================RETREAT LOGIC END=====================================
-    
-    
-    ]
+    ]]
   ]
 end
 @#$#@#$#@
@@ -468,7 +404,7 @@ FrenchForceRetreat
 FrenchForceRetreat
 0
 1
-0.82
+0.1
 0.01
 1
 attrition
@@ -532,6 +468,21 @@ germanY
 1
 1
 NIL
+HORIZONTAL
+
+SLIDER
+195
+151
+408
+184
+GermanForceRetreat
+GermanForceRetreat
+0.0
+1
+0.3
+0.01
+1
+attrition
 HORIZONTAL
 
 @#$#@#$#@
@@ -809,7 +760,7 @@ Polygon -6459832 true true 46 128 33 120 21 118 11 123 3 138 5 160 13 178 9 192 
 Polygon -6459832 true true 67 122 96 126 63 144
 
 @#$#@#$#@
-NetLogo 5.0.3
+NetLogo 5.0.4
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@

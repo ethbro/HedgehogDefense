@@ -47,8 +47,12 @@ units-own [
   curIRange       ;base range of indirect fire weapons, in km
   effectiveness   ;unit's remaining strength, as a percentage (1.0 -> 0.0)
   
-  ;Memory variables for unit behavior
+  ;Variables for unit behavior
   beginEffectiveness  ;unit's effectiveness when starting current elected behavior
+  beginState          ;unit's state before being switched
+  beginHeading        ;unit's declared heading when starting current elected behavior
+  targetPatch
+  isNewState?         ;whether or not the current state is newly set
   
   ;Combat variables
   enemyStrength   ;total enemy strength directed at this unit at the end of the tick
@@ -142,15 +146,13 @@ to c_writeUnit [ statsList ]
   set size 7
   set effectiveness 1
   set beginEffectiveness effectiveness
+  set isNewState? false
 end
 
 to-report c_nearestEnemy
   let otherSide -1
-  ifelse (allegiance = GERMAN) [
-    set otherSide FRENCH
-  ] [
-    set otherSide GERMAN
-  ]
+  ifelse (allegiance = GERMAN) [ set otherSide FRENCH ]
+  [ set otherSide GERMAN ]
   report min-one-of units with [allegiance = otherSide and effectiveness > 0] [distance myself]
 end
 

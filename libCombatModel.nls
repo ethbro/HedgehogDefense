@@ -90,6 +90,28 @@ to cm_realizeAttrition
   let attrition (1 - oppCoeff * enemyStrength)
   cm_allocateAttrition attrition
   
+  ;Update effectiveness & force retreat state if appropriate
+  set effectiveness (cm_reportDirStrength self / cm_reportMaxStrength self)
+  if (effectiveness < 0.05) [            ;Lanchester needs to be zeroed out for arbitrarily small units
+    set effectiveness 0
+    set color gray
+    set size 4
+  ]
+  if (newState != sn_RETREAT) [
+    let forceRetreat nobody
+    ifelse (allegiance = FRENCH) [
+      if (effectiveness < beginEffectiveness - FrenchForceRetreat) [ set forceRetreat FrenchForceRetreat ]
+    ] [
+    if (effectiveness < beginEffectiveness - GermanForceRetreat) [ set forceRetreat GermanForceRetreat ]
+    ]
+    if ( forceRetreat != nobody ) [
+      set beginState newState
+      if ( beginState = sn_P_DEFENSE ) [ set beginState sn_DEFENSE ]    ; as unit can't prepare a defensive position quickly enough
+      set newState sn_RETREAT
+      set isNewState? true
+    ]
+  ]
+  
   ;Reset the strength directed towards me
   set enemyStrength 0
 end
@@ -117,15 +139,4 @@ to cm_allocateAttrition [ attrition ]
   set curAT (curAT * attrition)
   set curTanks (curTanks * attrition)
   set curArt (curArt * attrition)
-  
-  set effectiveness (cm_reportDirStrength self / cm_reportMaxStrength self)
-  
-  ;FIXME hack on retreat behavior
-  if (allegiance = FRENCH) [
-    if (effectiveness < beginEffectiveness - FrenchForceRetreat) [
-      set state s_RETREAT
-      set newState sn_RETREAT
-      
-    ]
-  ]
 end
