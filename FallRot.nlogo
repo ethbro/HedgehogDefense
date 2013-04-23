@@ -19,10 +19,7 @@ end
 to setup-units
   ;Creates German brigades, sets their color red, makes them face towards the French, and places them on the map.
   create-units (188) [
-    c_writeUnit DefaultGermanUnit
-    
-    set name "German infantry"
-    set allegiance GERMAN
+    c_writeUnit GermanInfBrigade
     set heading 225
     set color 15
     set state s_RESERVE
@@ -31,10 +28,7 @@ to setup-units
   ]
   ;Creates German tank brigades, sets their color red, makes them face towards the French, and places them on the map.
   create-units (24) [
-    c_writeUnit DefaultGermanUnit
-    
-    set name "German tank"
-    set allegiance GERMAN
+    c_writeUnit GermanPzrBrigade
     set heading 225  
     set color 15
     set state s_RESERVE
@@ -45,41 +39,73 @@ to setup-units
   ]
   
   ;Creates French brigades, sets their color blue, makes them face towards the Germans.
-  create-units (116)[
-    c_writeUnit DefaultFrenchUnit
-    set name "French infantry"
-    set allegiance FRENCH
+  create-units (76)[
+    c_writeUnit FrenchInfBrigade
     set color 95
     set state s_P_DEFENSE
   ]
   ;Creates French light brigades, sets their color blue, makes them face towards the Germans.
-  create-units (6) [
-    c_writeUnit DefaultFrenchUnit
-    set name "French light"
-    set allegiance FRENCH
+  create-units (12) [
+    c_writeUnit FrenchCavBrigade
+    set color 95
+    set state s_P_DEFENSE
+  ]
+  ;Creates French light brigades, sets their color blue, makes them face towards the Germans.
+  create-units (12) [
+    c_writeUnit FrenchDLMBrigade
     set color 95
     set state s_P_DEFENSE
   ]
   ;Creates French armored brigades, sets their color blue, makes them face towards the Germans.
-  create-units (10) [
-    c_writeUnit DefaultFrenchUnit
-    set name "French armor"
-    set allegiance FRENCH
+  create-units (12) [
+    c_writeUnit FrenchDCrBrigade
     set color 95
     set state s_P_DEFENSE
-  ]      
+  ]
+  
   ; Places the French in a checkerboard pattern.
+  let leftPatch patch 110 472                 ; our vertices
+  let v1Patch patch 377 298
+  let v2Patch patch 581 335
+  let rightPatch patch 575 300
+ 
+  let lToV1 0                                 ; calculate the angles and spacing
+  let lToV1_distance 0
+  ask leftPatch [
+    set lToV1 towards v1Patch
+    set lToV1_distance distance v1Patch
+  ]
+  let v1ToV2 0
+  let v1ToV2_distance 0
+  ask v1Patch [
+    set v1ToV2 towards v2Patch
+    set v1ToV2_distance distance v2Patch
+  ]
+  
+  let totalUnits count units with [allegiance = FRENCH]
+  let distancePerUnit ((lToV1_distance + v1ToV2_distance) / totalUnits)
+  
+  let i 0                                     ; deploy along those vertices, staggering odd units back a row
+  let leg 0
+  let anchorPatch leftPatch
+  let anchorAngle lToV1
+  let startPatch 0
   ask units with [allegiance = FRENCH] [
-    let westHeading 43
-    let eastHeading 0
-    ifelse (who < 278) [
-      setxy (110 + round(3.83 * (who - 212))) (471 + round(-2.56 * (who - 212))) + (remainder who 2) * 8
-      set beginHeading westHeading
-    ] [
-      setxy (363 + round(3.46 * (who - 278))) (302 + round(.5 * (who - 278))) + (remainder who 2) * 8     
-      set beginHeading eastHeading
+    ask anchorPatch [ set startPatch patch-at-heading-and-distance anchorAngle (distancePerUnit * i) ]
+    if (i mod 2 != 0) [
+      ask startPatch [ set startPatch patch-at-heading-and-distance (anchorAngle + 90) (5 / MapScale) ]
     ]
-    set heading beginHeading
+    ifelse (leg = 0 and [pxcor] of startPatch > [pxcor] of v1Patch) [
+      set i 0
+      set anchorPatch v1Patch
+      set anchorAngle v1ToV2
+      set leg 1
+    ] [
+      move-to startPatch
+      set i (i + 1)
+    ]
+;      set beginHeading eastHeading
+;    set heading beginHeading
   ]
 end
 
@@ -106,7 +132,7 @@ to go
   clear-links                                 ;Clear all direct & indirect fire links
 
   ;Bridge building
-  if (numBridges < MaxBridgeheads and ticks > (hoursBetweenBridgeheads * numBridges)) [
+  if (numBridges < MaxBridges and ticks > (HoursBetweenBridges / TimeScale * numBridges)) [
     set numBridges numBridges + 1             ;Add another bridge at each crossing after hoursBetweenBridgeheads has passed
   ]
 
@@ -124,14 +150,14 @@ to move
   ifelse (allegiance = GERMAN) [                   ;GERMAN BEHAVIOR
     ifelse (state = s_OVR_BRIDGE) [                ;  If just crossed the bridge...
       set state s_ATTACK
-    ] [
+    ][
     if (state = s_ATTACK or state = s_B_ATTACK) [  ;  If attacking...
       if (enemyDistance > curDRange) [             ;close to direct-fire weapons range if not there
         face nearestEnemy
         ifelse (enemyDistance - 0.2 > curSpeed) [  ;if won't arrive at enemy this tick
-          jump curSpeed
+          c_move curSpeed
         ] [
-          jump (enemyDistance - 0.2)               ;else, approach just shy of the enemy (for visual distinction)
+          c_move (enemyDistance - 0.2)             ;else, approach just shy of the enemy (for visual distinction)
         ]
       ]
     ]]
@@ -147,7 +173,7 @@ to move
         face targetPatch
       ] [
         ifelse (distance targetPatch > curSpeed) [
-          jump curSpeed                              ;if we won't arrive at target this tick...
+          c_move curSpeed                            ;if we won't arrive at target this tick...
         ] [
           move-to targetPatch                        ;if we will arrive at target this tick...
           set heading beginHeading
@@ -182,8 +208,8 @@ GRAPHICS-WINDOW
 639
 0
 639
-0
-0
+1
+1
 1
 ticks
 30.0
@@ -207,9 +233,9 @@ NIL
 
 BUTTON
 17
-66
+60
 80
-99
+93
 NIL
 go
 T
@@ -223,10 +249,10 @@ NIL
 1
 
 MONITOR
-350
-11
-432
-56
+195
+12
+277
+57
 NIL
 Ticks
 0
@@ -236,10 +262,10 @@ Ticks
 SLIDER
 15
 152
-187
+186
 185
-crossingAbbeville
-crossingAbbeville
+CrossingAbbeville
+CrossingAbbeville
 0
 212
 44
@@ -251,10 +277,10 @@ HORIZONTAL
 SLIDER
 15
 196
-187
+186
 229
-crossingAmiens
-crossingAmiens
+CrossingAmiens
+CrossingAmiens
 0
 212
 59
@@ -265,11 +291,11 @@ HORIZONTAL
 
 SLIDER
 16
-243
-188
-276
-crossingBray
-crossingBray
+240
+186
+273
+CrossingBray
+CrossingBray
 0
 212
 39
@@ -279,12 +305,12 @@ NIL
 HORIZONTAL
 
 SLIDER
-18
-291
-190
-324
-crossingPeronne
-crossingPeronne
+17
+285
+186
+318
+CrossingPeronne
+CrossingPeronne
 0
 212
 46
@@ -298,8 +324,8 @@ SLIDER
 109
 186
 142
-crossingChannel
-crossingChannel
+CrossingChannel
+CrossingChannel
 0
 212
 24
@@ -309,10 +335,10 @@ NIL
 HORIZONTAL
 
 PLOT
-18
-337
-218
-487
+16
+352
+395
+518
 Forces
 Time
 Soldiers
@@ -328,21 +354,21 @@ PENS
 "French" 1.0 0 -13791810 true "" ""
 
 SWITCH
-225
-338
-354
-371
-plotForces
-plotForces
+16
+527
+145
+560
+PlotForces
+PlotForces
 0
 1
 -1000
 
 MONITOR
-198
-278
-365
-331
+195
+286
+362
+339
 Number of Bridgeheads
 numBridges
 0
@@ -350,12 +376,12 @@ numBridges
 13
 
 SWITCH
-225
-374
-353
-407
-fireAnimation
-fireAnimation
+266
+527
+397
+560
+FireAnimation
+FireAnimation
 0
 1
 -1000
@@ -363,7 +389,7 @@ fireAnimation
 SLIDER
 195
 109
-404
+395
 142
 FrenchForceRetreat
 FrenchForceRetreat
@@ -378,28 +404,28 @@ HORIZONTAL
 SLIDER
 196
 196
-431
+363
 229
-hoursBetweenBridgeheads
-hoursBetweenBridgeheads
+HoursBetweenBridges
+HoursBetweenBridges
 1
-1000
-100
+72
+12
 1
 1
 NIL
 HORIZONTAL
 
 SLIDER
-198
-242
-370
-275
-MaxBridgeheads
-MaxBridgeheads
+195
+240
+362
+273
+MaxBridges
+MaxBridges
 0
 10
-10
+6
 1
 1
 NIL
@@ -407,33 +433,44 @@ HORIZONTAL
 
 SLIDER
 196
-153
-368
-186
-crossingRate
-crossingRate
+152
+363
+185
+CrossingRate
+CrossingRate
 0
 500
-60
+300
 5
 1
 NIL
 HORIZONTAL
 
 SLIDER
-226
-410
-398
-443
-germanY
-germanY
--20
-20
+194
+66
+396
+99
+TimeScale
+TimeScale
+0.05
+1
+0.25
+0.05
+1
+hours per tick
+HORIZONTAL
+
+SWITCH
+265
+571
+394
+604
+MoveAnimation
+MoveAnimation
 0
 1
-1
-NIL
-HORIZONTAL
+-1000
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -710,7 +747,7 @@ Polygon -6459832 true true 46 128 33 120 21 118 11 123 3 138 5 160 13 178 9 192 
 Polygon -6459832 true true 67 122 96 126 63 144
 
 @#$#@#$#@
-NetLogo 5.0.4
+NetLogo 5.0.3
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@

@@ -35,6 +35,8 @@ globals [
   peX
   peY
   peCrossed
+  
+  GermanY
 ]
 
 to setup-BridgeModel
@@ -51,7 +53,7 @@ to setup-BridgeModel
   set peStagingY array:from-list[349 346 352 343 355 340 358 337 361 334 364]
   set chX 132
   set chY 479
-  set abX 185;the position accross the abevile bridge units will move to
+  set abX 185;the position accross the Abbeville bridge units will move to
   set abY 443
   set amX 362
   set amY 332
@@ -62,7 +64,7 @@ to setup-BridgeModel
   set numBridges 1
   
   ;this ensures that the sliders total 212
-  ;setting the Channel bridge slider to max - the toal of the other ensures we always have at least 212,
+  ;setting the Channel bridge slider to max - the total of the other ensures we always have at least 212,
   set crossingChannel 212 - crossingAbbeville - crossingAmiens - crossingPeronne - crossingBray 
   ;the rest ensures we don't have over
   if(crossingChannel < 0)[
@@ -81,10 +83,13 @@ to setup-BridgeModel
     set crossingBray crossingBray + crossingAmiens
     set crossingAmiens 0
   ]
+  
+  set GermanY 0
 end
 
 to place-germans
   random-seed 500 + who
+  
   ifelse(who < crossingChannel)[
     set targetBridge 1
     ifelse(who < 3)[
@@ -156,7 +161,7 @@ to place-germans
   set targetBridge 5
   ifelse(who < crossingChannel + crossingAbbeville + crossingAmiens + crossingBray +  5)[
     ifelse(who < crossingChannel + crossingAbbeville + crossingAmiens + crossingBray +  3)[
-    setxy 532 + random 5 + (who - crossingChannel - crossingAbbeville - crossingAmiens - crossingBray) * 6 420 + random 5 - (who - crossingChannel - crossingAbbeville - crossingAmiens - crossingBray) * 1 - GermanY
+      setxy 532 + random 5 + (who - crossingChannel - crossingAbbeville - crossingAmiens - crossingBray) * 6 420 + random 5 - (who - crossingChannel - crossingAbbeville - crossingAmiens - crossingBray) * 1 - GermanY
     ][
     setxy 519 + random 5 + (who - crossingChannel - crossingAbbeville - crossingAmiens - crossingBray) * 6 410 + random 5 - (who - crossingChannel - crossingAbbeville - crossingAmiens - crossingBray) * 1 - GermanY    
     ]
@@ -173,7 +178,7 @@ to selectBridge
     let valid 1                               ;a check for if the spot we're looking at is valid for this brigade
     ;find the nearest empty waiting spot to fill in at
     let curBridge targetBridge
-    repeat count turtles with[targetBridge = curBridge][
+    repeat count turtles with [targetBridge = curBridge][
       set valid 1                             ;assume the spot we're looking at is valid until proven otherwise
       if((i < destinationNum and i > -1) or destinationNum = -1)[;if this brigade hasn't chosen a spot yet have them look for one
         ;;what row of the formation are we looking at?
@@ -205,6 +210,7 @@ to selectBridge
             ]
           ]
         ]
+        
         ;;this handles units looking to cross the Abbeville bridge
         if(targetBridge = 2)[
           ;this isn' a valid spot if someone else is going to use it
@@ -230,6 +236,7 @@ to selectBridge
              ]
           ]
         ]
+        
         ;;this handles units looking to cross the Abbeville bridge
         if(targetBridge = 3)[
           ;this isn' a valid spot if someone else is going to use it
@@ -255,6 +262,8 @@ to selectBridge
             ]
           ]
         ]
+        
+        ;;Bray bridge
         if(targetBridge = 4)[       
           ;this isn' a valid spot if someone else is going to use it
           if(any? units with[destinationNum = i and targetBridge = 4 and allegiance = GERMAN])[
@@ -279,8 +288,9 @@ to selectBridge
             ]
           ]
         ]
+        
+        ;;Peronne bridge
         if(targetBridge = 5)[
-          
           ;this isn' a valid spot if someone else is going to use it
           if(any? units with[destinationNum = i and targetBridge = 5 and allegiance = GERMAN])[
             set valid 0
@@ -306,30 +316,27 @@ to selectBridge
           ]
         ]
       ]
-      set i (i + 1);;after we've looked at a spot incriment so we can look at the next one on the next pass
+      set i (i + 1);;after we've looked at a spot increment so we can look at the next one on the next pass
     ]
   ]
+  
   if(state = s_RESERVE and allegiance = GERMAN and destinationNum = -1)[
     ifelse(targetBridge = 1)[
       set destinationX ((array:item chStagingX (25 - (11 * 2))) + (2 * 2))
       set destinationY ((array:item chStagingY (25 - (11 * 2))) + (2 * 2))
-    ]
-    [
+    ][
     ifelse(targetBridge = 2)[
       set destinationX ((array:item abStagingX (25 - (11 * 2))) + (2 * 2))
       set destinationY ((array:item abStagingY (25 - (11 * 2))) + (2 * 2))
-    ]
-    [
+    ][
     ifelse(targetBridge = 3)[
       set destinationX ((array:item amStagingX (25 - (11 * 2))) + (2 * 2))
       set destinationY ((array:item amStagingY (25 - (11 * 2))) + (2 * 2))
-    ]
-    [
+    ][
     ifelse(targetBridge = 4)[
       set destinationX ((array:item brStagingX (25 - (11 * 2))) + (2 * 2))
       set destinationY ((array:item brStagingY (25 - (11 * 2))) + (2 * 2))
-    ]
-    [
+    ][
     if(targetBridge = 5)[
       set destinationX ((array:item peStagingX (25 - (11 * 2))) + (2 * 2))
       set destinationY ((array:item peStagingY (25 - (11 * 2))) + (2 * 2))
@@ -342,35 +349,40 @@ to crossBridge
   ;move to a relay point if unable to find a specific destination
   if (state = s_RESERVE and allegiance = GERMAN and destinationX > -1)[
     if(destinationNum = -1)[
-      facexy destinationX destinationY
-      jump curSpeed
+      ifelse (distancexy destinationX destinationY < curSpeed) [
+        setxy destinationX destinationY
+      ] [
+        facexy destinationX destinationY
+        c_move curSpeed
+      ]
     ]
     if(destinationNum = 0 )[
       let curTarget targetBridge
-      if not(any? turtles with[allegiance = GERMAN and targetBridge = curTarget and state = s_ON_BRIDGE])[
-       set state s_ON_BRIDGE
+      if not(any? turtles with [allegiance = GERMAN and targetBridge = curTarget and state = s_ON_BRIDGE])[
+        set state s_ON_BRIDGE
       ] 
     ]
   ]
   
   ;if the nazi brigade is stationary and ready for orders
-  if (state = s_Q_BRIDGE ) [;if the unit is moving toward a waiting position go toward it until it's too close to move farther
-    ifelse(abs (destinationX - xcor) < curSpeed and abs (destinationY - ycor) < curSpeed)[
+  if (state = s_Q_BRIDGE ) [    ;if the unit is moving toward a waiting position go toward it until it's too close to move farther
+    ifelse(distancexy destinationX destinationY < curSpeed)[
       ;if the unit reached its waiting position face the enemies and set its state to ready to move
       setxy destinationX destinationY
       set state s_RESERVE
-      facexy 170 450
+      facexy 200 0
     ] [
       ;; show "trying to move"
       ;if it hasn't reached its waiting point move toward it at its normal speed
       facexy destinationX destinationY
-      jump curSpeed
+      c_move curSpeed
     ]
   ]
+  
   if (state = s_ON_BRIDGE and allegiance = GERMAN) [ ; if german and currently crossing the bridge
     set destinationNum -1
      if (targetBridge = 1) [
-       set chCrossed chCrossed + (crossingRate * numBridges)
+       set chCrossed chCrossed + (crossingRate * TimeScale * numBridges)
        setxy (array:item chStagingX 0) - ((array:item chStagingX 0 - chX) * (chCrossed /(curInf + curAT + curTanks + curArt))) array:item chStagingY 0 - ((array:item chStagingY 0 - chY) * (chCrossed /(curInf + curAT + curTanks + curArt)))
     ;   jump 1
        if(xcor <= chX and ycor <= chY)[
@@ -380,7 +392,7 @@ to crossBridge
        ]
      ]
      if (targetBridge = 2) [
-       set abCrossed abCrossed + (crossingRate * numBridges)
+       set abCrossed abCrossed + (crossingRate * TimeScale * numBridges)
        setxy (array:item abStagingX 0) - ((array:item abStagingX 0 - abX) * (abCrossed /(curInf + curAT + curTanks + curArt))) array:item abStagingY 0 - ((array:item abStagingY 0 - abY) * (abCrossed /(curInf + curAT + curTanks + curArt)))
    ;    jump 1
        if(xcor <= abX and ycor <= abY)[
@@ -390,7 +402,7 @@ to crossBridge
        ]
      ] 
      if (targetBridge = 3) [
-       set amCrossed amCrossed + (crossingRate * numBridges)
+       set amCrossed amCrossed + (crossingRate * TimeScale * numBridges)
        setxy (array:item amStagingX 0) - ((array:item amStagingX 0 - amX) * (amCrossed /(curInf + curAT + curTanks + curArt))) array:item amStagingY 0 - ((array:item amStagingY 0 - amY) * (amCrossed /(curInf + curAT + curTanks + curArt)))
   ;     jump 1
        if(xcor <= amX and ycor <= amY)[
@@ -400,7 +412,7 @@ to crossBridge
        ]
      ]
      if(targetBridge = 4)[
-       set brCrossed brCrossed + (crossingRate * numBridges)
+       set brCrossed brCrossed + (crossingRate * TimeScale * numBridges)
      ;  setxy (array:item amStagingX 0) - ((array:item amStagingX 0 - amX) * (amCrossed /(curInf + curAT + curTanks + curArt))) array:item amStagingY 0 - ((array:item amStagingY 0 - amY) * (amCrossed /(curInf + curAT + curTanks + curArt)))
        setxy (array:item brStagingX 0) - ((array:item brStagingX 0 - brX) * (brCrossed /(curInf + curAT + curTanks + curArt))) (array:item brStagingY 0) - ((array:item brStagingY 0 - brY) * (brCrossed /(curInf + curAT + curTanks + curArt)))
       
@@ -412,7 +424,7 @@ to crossBridge
        ]
      ] 
      if(targetBridge = 5)[
-       set peCrossed peCrossed + (crossingRate * numBridges)
+       set peCrossed peCrossed + (crossingRate * TimeScale * numBridges)
        setxy (array:item peStagingX 0) - ((array:item peStagingX 0 - peX) * (peCrossed /(curInf + curAT + curTanks + curArt))) array:item peStagingY 0 - ((array:item peStagingY 0 - peY) * (peCrossed /(curInf + curAT + curTanks + curArt)))
 ;       jump 1
        if(xcor <= peX and ycor <= peY)[

@@ -14,7 +14,7 @@ directed-link-breed [ indirectFiring indirectFire ]
 to setup-CombatModel
   ;Turkes linear Lanchester numbers, derived from Battle of Kursk
   ;  Soviet (aka French) and German, respectively
-  ;  set cm_coeffs [ .0000000268 .0000000668 ]
+  ;  set cm_coeffs [    .0000000268               .0000000668 ]
   set cm_coeffs (list (0.000000268 * TimeScale) (0.000000668 * TimeScale) )
 
   ; uses new state system: s_P_DEFENSE, s_DEFENSE, s_ATTACK, s_B_ATTACK, s_RETREAT, s_ROUTE, s_RESERVE, s_Q_BRIDGE, s_ON_BRIDGE, s_OVR_BRIDGE
