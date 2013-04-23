@@ -164,3 +164,10 @@ to-report c_nearestEnemy
   [ set otherSide GERMAN ]
   report min-one-of units with [allegiance = otherSide and effectiveness > 0] [distance myself]
 end
+
+to-report c_nearestAvailEnemy
+  let otherSide -1
+  ifelse (allegiance = GERMAN) [ set otherSide FRENCH ]
+  [ set otherSide GERMAN ]
+  report min-one-of units with [allegiance = otherSide and effectiveness > 0 and count in-directFire-neighbors < 4] [distance myself]  
+end

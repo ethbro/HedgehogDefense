@@ -89,6 +89,7 @@ to setup-units
   let leg 0
   let anchorPatch leftPatch
   let anchorAngle lToV1
+  let anchorHeading 43
   let startPatch 0
   ask units with [allegiance = FRENCH] [
     ask anchorPatch [ set startPatch patch-at-heading-and-distance anchorAngle (distancePerUnit * i) ]
@@ -99,9 +100,12 @@ to setup-units
       set i 0
       set anchorPatch v1Patch
       set anchorAngle v1ToV2
+      set anchorHeading 0
       set leg 1
     ] [
       move-to startPatch
+      set heading anchorHeading
+      set beginHeading heading
       set i (i + 1)
     ]
 ;      set beginHeading eastHeading
@@ -114,6 +118,9 @@ to go
   let validUnits units with [effectiveness > 0]
   let germanUnits validUnits with [allegiance = GERMAN]
   let frenchUnits validUnits with [allegiance = FRENCH]
+
+  ask DirectFiring [ set hidden? true ]       ;Still want to store links, but don't want to confuse by displaying as units move
+  ask IndirectFiring [ set hidden? true ]
   
   ;Movement
   ask germanUnits [
@@ -124,12 +131,12 @@ to go
   ]
   ask validUnits [ move ]
 
+  clear-links                                 ;Clear all direct & indirect fire links for the new tick
+
   ;Combat
   ask validUnits [ cm_declareTarget ]         ;Everyone marks targets they'd like to fire at
   ask validUnits [ cm_attritTargets ]         ;Each unit attrits all the targets that marked it + its target(s)
   ask validUnits [ cm_realizeAttrition ]      ;Everyone updates themselves with the attrition dealt to them
-
-  clear-links                                 ;Clear all direct & indirect fire links
 
   ;Bridge building
   if (numBridges < MaxBridges and ticks > (HoursBetweenBridges / TimeScale * numBridges)) [
@@ -143,8 +150,8 @@ end
 
 
 to move
-  let nearestEnemy c_nearestEnemy           ;Procedure found in libCommon. Returns the nearest opponent.
-  if (nearestEnemy = nobody) [stop]
+  let nearestEnemy c_nearestEnemy             ;Procedure found in libCommon. Returns the nearest opponent.
+  if (nearestEnemy = nobody) [stop]                ;FIXME should use something like c_nearestAvilEnemy, but oscillates currently
   let enemyDistance distance nearestEnemy
 
   ifelse (allegiance = GERMAN) [                   ;GERMAN BEHAVIOR
@@ -208,8 +215,8 @@ GRAPHICS-WINDOW
 639
 0
 639
-1
-1
+0
+0
 1
 ticks
 30.0
