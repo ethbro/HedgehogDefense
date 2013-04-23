@@ -3,11 +3,18 @@ __includes ["libCommon.nls" "libCombatModel.nls" "libBridgeModel.nls"]
 ;We make use of arrays in the bridge model
 extensions [array]
 
+globals [
+  HedgehogDepth
+]
+
 ; Executed when the user click on the 'Setup' button
 to setup
   setup-Common      ;Procedure found in libCommon. Initializes various system constants.
   setup-CombatModel ;Procedure found in libCombatModel. Initializes attrition coefficients.
   setup-BridgeModel ;Procedure found in libBridgeModel. Initializes staging coordinates.
+  
+  set HedgehogDepth (5 / MapScale)
+  
   setup-patches     ;Display the background
   setup-units       ;Place brigades and set their attributes.
 end
@@ -85,7 +92,8 @@ to setup-units
   let totalUnits count units with [allegiance = FRENCH]
   let distancePerUnit ((lToV1_distance + v1ToV2_distance) / totalUnits)
   
-  let i 0                                     ; deploy along those vertices, staggering odd units back a row
+  let i 0                                   ;deploy along those vertices, staggering odd units back a row
+  let depth 5                               ;in km
   let leg 0
   let anchorPatch leftPatch
   let anchorAngle lToV1
@@ -93,8 +101,10 @@ to setup-units
   let startPatch 0
   ask units with [allegiance = FRENCH] [
     ask anchorPatch [ set startPatch patch-at-heading-and-distance anchorAngle (distancePerUnit * i) ]
+    set beginRow 0
     if (i mod 2 != 0) [
-      ask startPatch [ set startPatch patch-at-heading-and-distance (anchorAngle + 90) (5 / MapScale) ]
+      ask startPatch [ set startPatch patch-at-heading-and-distance (anchorAngle + 90) HedgehogDepth ]
+      set beginRow nobody
     ]
     ifelse (leg = 0 and [pxcor] of startPatch > [pxcor] of v1Patch) [
       set i 0
@@ -108,8 +118,6 @@ to setup-units
       set beginHeading heading
       set i (i + 1)
     ]
-;      set beginHeading eastHeading
-;    set heading beginHeading
   ]
 end
 
@@ -150,15 +158,24 @@ end
 
 
 to move
-  let nearestEnemy c_nearestEnemy             ;Procedure found in libCommon. Returns the nearest opponent.
-  if (nearestEnemy = nobody) [stop]                ;FIXME should use something like c_nearestAvilEnemy, but oscillates currently
-  let enemyDistance distance nearestEnemy
-
-  ifelse (allegiance = GERMAN) [                   ;GERMAN BEHAVIOR
+  ;GERMAN BEHAVIOR
+  ifelse (allegiance = GERMAN) [
     ifelse (state = s_OVR_BRIDGE) [                ;  If just crossed the bridge...
       set state s_ATTACK
+      set curSpeed maxSpeed * 0.8                  ;controlled attack, so slow down slightly
     ][
     if (state = s_ATTACK or state = s_B_ATTACK) [  ;  If attacking...
+      let nearestEnemy nobody
+      let dTargets count out-directFire-neighbors
+      ifelse (dTargets > 0) [                      ;    and we currently have a target, stick with it
+        if (dTargets != 1) [error "In move, this unit reported having more than one direct target."] ;DEBUG
+        set nearestEnemy one-of out-directFire-neighbors
+      ] [
+        set nearestEnemy c_nearestAvailEnemy
+        if (nearestEnemy = nobody) [stop]
+      ]
+      let enemyDistance distance nearestEnemy
+      
       if (enemyDistance > curDRange) [             ;close to direct-fire weapons range if not there
         face nearestEnemy
         ifelse (enemyDistance - 0.2 > curSpeed) [  ;if won't arrive at enemy this tick
@@ -168,15 +185,25 @@ to move
         ]
       ]
     ]]
-  ] [                                                ;FRENCH BEHAVIOR
+  ] [
+    let nearestEnemy c_nearestEnemy             ;Procedure found in libCommon. Returns the nearest opponent.
+    if (nearestEnemy = nobody) [stop]           ;FIXME should use something like c_nearestAvilEnemy, but oscillates currently
+    let enemyDistance distance nearestEnemy
+    
+  ;FRENCH BEHAVIOR
     ifelse (state != s_RETREAT) [                    ;  If not retreating...
       if (enemyDistance < 2 * curIRange) [face nearestEnemy]
-    ] [
+    ][
     if (state = s_RETREAT) [                         ;  If retreating...
       ifelse isNewState? [                           ;initialization for state behavior
         set isNewState? false
         let currentPatch patch-here
-        set targetPatch patch-at-heading-and-distance ((beginHeading + 180) mod 360) (8 / MapScale)
+        ifelse (beginRow != nobody) [
+          set targetPatch patch-at-heading-and-distance ((beginHeading + 180) mod 360) HedgehogDepth
+          set beginRow nobody
+        ] [
+          set targetPatch patch-at-heading-and-distance ((beginHeading + 180) mod 360) (8 / MapScale)
+        ]
         ;fixme FIX ME
         face targetPatch
         ; FIXME fix me error at the end of the code
@@ -464,7 +491,7 @@ TimeScale
 TimeScale
 0.05
 1
-1
+0.2
 0.05
 1
 hours per tick
@@ -477,7 +504,7 @@ SWITCH
 604
 MoveAnimation
 MoveAnimation
-0
+1
 1
 -1000
 
@@ -756,7 +783,7 @@ Polygon -6459832 true true 46 128 33 120 21 118 11 123 3 138 5 160 13 178 9 192 
 Polygon -6459832 true true 67 122 96 126 63 144
 
 @#$#@#$#@
-NetLogo 5.0.3
+NetLogo 5.0.4
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@

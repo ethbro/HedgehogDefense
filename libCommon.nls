@@ -51,6 +51,7 @@ units-own [
   beginEffectiveness  ;unit's effectiveness when starting current elected behavior
   beginState          ;unit's state before being switched
   beginHeading        ;unit's declared heading when starting current elected behavior
+  beginRow            ;unit's starting row
   targetPatch
   isNewState?         ;whether or not the current state is newly set
   
