@@ -134,7 +134,7 @@ to c_writeUnit [ statsList ]
   set startAT (item 5 statsList)
   set startArt (item 6 statsList)
   set maxSpeed (item 7 statsList) / MapScale * TimeScale       ;converted to simulation distance per tick
-  
+  ;fixme FIX ME
   set curInf startInf
   set curTanks startTanks
   set curAT startAT

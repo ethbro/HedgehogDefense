@@ -18,7 +18,7 @@ to setup-CombatModel
   set cm_coeffs (list (0.000000268 * TimeScale) (0.000000668 * TimeScale) )
 
   ; uses new state system: s_P_DEFENSE, s_DEFENSE, s_ATTACK, s_B_ATTACK, s_RETREAT, s_ROUTE, s_RESERVE, s_Q_BRIDGE, s_ON_BRIDGE, s_OVR_BRIDGE
-  set cm_attritionScalar [ 0.5          0.8        1         1.2         1          1.5      1          0.8         1.5          1 ]
+  set cm_attritionScalar [ 0.5          0.8        1         1.2         1          1.5      1          0.8         2          1 ]
   
   set GermanForceRetreat 0.2
 end

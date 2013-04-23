@@ -384,7 +384,6 @@ to crossBridge
      if (targetBridge = 1) [
        set chCrossed chCrossed + (crossingRate * TimeScale * numBridges)
        setxy (array:item chStagingX 0) - ((array:item chStagingX 0 - chX) * (chCrossed /(curInf + curAT + curTanks + curArt))) array:item chStagingY 0 - ((array:item chStagingY 0 - chY) * (chCrossed /(curInf + curAT + curTanks + curArt)))
-    ;   jump 1
        if(xcor <= chX and ycor <= chY)[
          set state s_OVR_BRIDGE
          set chCrossed 0
@@ -394,7 +393,6 @@ to crossBridge
      if (targetBridge = 2) [
        set abCrossed abCrossed + (crossingRate * TimeScale * numBridges)
        setxy (array:item abStagingX 0) - ((array:item abStagingX 0 - abX) * (abCrossed /(curInf + curAT + curTanks + curArt))) array:item abStagingY 0 - ((array:item abStagingY 0 - abY) * (abCrossed /(curInf + curAT + curTanks + curArt)))
-   ;    jump 1
        if(xcor <= abX and ycor <= abY)[
          set state s_OVR_BRIDGE
          set abCrossed 0
@@ -404,7 +402,6 @@ to crossBridge
      if (targetBridge = 3) [
        set amCrossed amCrossed + (crossingRate * TimeScale * numBridges)
        setxy (array:item amStagingX 0) - ((array:item amStagingX 0 - amX) * (amCrossed /(curInf + curAT + curTanks + curArt))) array:item amStagingY 0 - ((array:item amStagingY 0 - amY) * (amCrossed /(curInf + curAT + curTanks + curArt)))
-  ;     jump 1
        if(xcor <= amX and ycor <= amY)[
          set state s_OVR_BRIDGE
          set amCrossed 0
@@ -413,10 +410,8 @@ to crossBridge
      ]
      if(targetBridge = 4)[
        set brCrossed brCrossed + (crossingRate * TimeScale * numBridges)
-     ;  setxy (array:item amStagingX 0) - ((array:item amStagingX 0 - amX) * (amCrossed /(curInf + curAT + curTanks + curArt))) array:item amStagingY 0 - ((array:item amStagingY 0 - amY) * (amCrossed /(curInf + curAT + curTanks + curArt)))
        setxy (array:item brStagingX 0) - ((array:item brStagingX 0 - brX) * (brCrossed /(curInf + curAT + curTanks + curArt))) (array:item brStagingY 0) - ((array:item brStagingY 0 - brY) * (brCrossed /(curInf + curAT + curTanks + curArt)))
       
- ;      jump 1
        if(ycor <= brY)[
          set state s_OVR_BRIDGE
          set brCrossed 0
@@ -426,7 +421,6 @@ to crossBridge
      if(targetBridge = 5)[
        set peCrossed peCrossed + (crossingRate * TimeScale * numBridges)
        setxy (array:item peStagingX 0) - ((array:item peStagingX 0 - peX) * (peCrossed /(curInf + curAT + curTanks + curArt))) array:item peStagingY 0 - ((array:item peStagingY 0 - peY) * (peCrossed /(curInf + curAT + curTanks + curArt)))
-;       jump 1
        if(xcor <= peX and ycor <= peY)[
          set state s_OVR_BRIDGE
          set peCrossed 0

@@ -177,7 +177,9 @@ to move
         set isNewState? false
         let currentPatch patch-here
         set targetPatch patch-at-heading-and-distance ((beginHeading + 180) mod 360) (8 / MapScale)
+        ;fixme FIX ME
         face targetPatch
+        ; FIXME fix me error at the end of the code
       ] [
         ifelse (distance targetPatch > curSpeed) [
           c_move curSpeed                            ;if we won't arrive at target this tick...
@@ -417,7 +419,7 @@ HoursBetweenBridges
 HoursBetweenBridges
 1
 72
-12
+6
 1
 1
 NIL
@@ -432,7 +434,7 @@ MaxBridges
 MaxBridges
 0
 10
-6
+10
 1
 1
 NIL
@@ -446,9 +448,9 @@ SLIDER
 CrossingRate
 CrossingRate
 0
-500
-300
-5
+4000
+3000
+100
 1
 NIL
 HORIZONTAL
@@ -462,7 +464,7 @@ TimeScale
 TimeScale
 0.05
 1
-0.25
+1
 0.05
 1
 hours per tick
