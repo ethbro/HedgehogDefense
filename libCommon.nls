@@ -6,14 +6,12 @@ globals [
   FRENCH GERMAN    
   i_INF i_TANK i_AT i_ART
   
-  ;FIXME cleaning up state
-  sn_P_DEFENSE sn_DEFENSE sn_ATTACK sn_B_ATTACK sn_RETREAT sn_ROUTE sn_RESERVE sn_Q_BRIDGE sn_ON_BRIDGE sn_OVR_BRIDGE
-  s_RETREAT
-  INITIAL_FRENCH_HEADING
+  ;State Macros
+  s_P_DEFENSE s_DEFENSE s_ATTACK s_B_ATTACK s_RETREAT s_ROUTE s_RESERVE s_Q_BRIDGE s_ON_BRIDGE s_OVR_BRIDGE
 
   ;Simulation Variables
   TimeScale       ;How many hours (or portions of one) in a tick
-  MapScaleFactor  ;The conversion factor between sim distance and map distance
+  MapScale        ;The conversion factor between sim distance -> map distance (aka sim_distance * MapScale = map_distance)
   
   ;Historical values
   SystemRanges    ;Contains effective ranges (in km) for the system types
@@ -21,6 +19,7 @@ globals [
   ;Utility variables
   DefaultFrenchUnit
   DefaultGermanUnit
+  DefaultGermanMotorizedUnit
 ]
 
 breed [units unit]
@@ -48,6 +47,8 @@ units-own [
   effectiveness   ;unit's remaining strength, as a percentage (1.0 -> 0.0)
   
   ;Variables for unit behavior
+  state               ;unit's current behavior
+                      ;  s_P_DEFENSE, s_DEFENSE, s_ATTACK, s_B_ATTACK, s_RETREAT, s_ROUTE, s_RESERVE, s_Q_BRIDGE, s_ON_BRIDGE, s_OVR_BRIDGE
   beginEffectiveness  ;unit's effectiveness when starting current elected behavior
   beginState          ;unit's state before being switched
   beginHeading        ;unit's declared heading when starting current elected behavior
@@ -66,13 +67,7 @@ units-own [
   destinationX
   destinationY
   
-  ;FIXME cleaning up state
-  newState        ;future combined state
-  
-  state           ;1 ready for orders, 2 moving to position(nazi)/retreat (french), 3 crossing bridge, 4 ready for orders after crosssed, 5 moving after crossed, 6 full retreat
-  retreatState    ;1 for retreating to the line of 70% remaining effectiveness, 2 for 50%, 3 for 30%
-  stepsTaken      ;number of ticks a given french brigade has spent retreating
-  numberOfLinesPassed ;if a bridgade has passed the 70%, 50%, or 30% line this variable assumes 1, 2, or 3, repesectively.
+;  state           ;1 ready for orders, 2 moving to position(nazi)/retreat (french), 3 crossing bridge, 4 ready for orders after crosssed, 5 moving after crossed, 6 full retreat
 ]
 
 ;Main library setup, should always be called once at the beginning
@@ -87,38 +82,36 @@ to setup-Common
   set i_AT 2
   set i_ART 3
 
-  ;FIXME cleaning up state
-  set sn_P_DEFENSE 0
-  set sn_DEFENSE 1
-  set sn_ATTACK 2
-  set sn_B_ATTACK 3
-  set sn_RETREAT 4
-  set sn_ROUTE 5
-  set sn_RESERVE 6
-  set sn_Q_BRIDGE 7
-  set sn_ON_BRIDGE 8
-  set sn_OVR_BRIDGE 9
-
-  set s_RETREAT 6
-  set INITIAL_FRENCH_HEADING 45
+  ;State macros
+  set s_P_DEFENSE 0
+  set s_DEFENSE 1
+  set s_ATTACK 2
+  set s_B_ATTACK 3
+  set s_RETREAT 4
+  set s_ROUTE 5
+  set s_RESERVE 6
+  set s_Q_BRIDGE 7
+  set s_ON_BRIDGE 8
+  set s_OVR_BRIDGE 9
   
   ;Simulation variables
-  set TimeScale 1
-  set MapScaleFactor ( 125 / world-height)  ; For Google Maps "map.png", the map covers 125km vertically, and is square
+  set TimeScale 0.5
+  set MapScale ( 125 / world-height)  ; For Google Maps "map.png", the map covers 125km vertically, and is square
   
   ;Historical values
   ;Note: these are average effective ranges to hit - penetration et al. are included in Lanchester constants
   ;  (FRENCH, GERMAN)
   ;  (Infantry, Tanks, AT, Artillery)
-  set SystemRanges [ [0.35 0.5  0.7 7]
-                     [0.4  0.55 0.7 5] ]
+  set SystemRanges [ [0.35 0.5  0.7 10]
+                     [0.4  0.55 0.7 10] ]
   
   ;Default (scratch) unit statistics
   ;  (name, superior, allegiance, startInf, startTanks, startAT, startArt, maxSpeed, curDRange, curIRange)
   let FrenchRanges (item FRENCH SystemRanges)
   let GermanRanges item GERMAN SystemRanges
-  set DefaultFrenchUnit (list "A Composite Brigade" "B Composite Division" 99 3500 80 90 12 0.8125 (item i_INF FrenchRanges) (item i_ART FrenchRanges))
-  set DefaultGermanUnit (list "X Composite Brigade" "Y Composite Division" 99 3500 80 90 12 0.8125 (item i_INF GermanRanges) (item i_ART GermanRanges))
+  set DefaultFrenchUnit (list "A Composite Brigade" "B Composite Division" 99 3500 80 90 12 5 (item i_INF FrenchRanges) (item i_ART FrenchRanges))
+  set DefaultGermanUnit (list "X Composite Brigade" "Y Composite Division" 99 3500 80 90 12 5 (item i_INF GermanRanges) (item i_ART GermanRanges))
+  set DefaultGermanMotorizedUnit (list "X Motorized Brigade" "Y Composite Division" 99 3500 80 90 12 30 (item i_INF GermanRanges) (item i_ART GermanRanges))
 end
 
 ;----------------------------------------------
@@ -132,15 +125,15 @@ to c_writeUnit [ statsList ]
   set startTanks (item 4 statsList)
   set startAT (item 5 statsList)
   set startArt (item 6 statsList)
-  set maxSpeed (item 7 statsList)
+  set maxSpeed (item 7 statsList) / MapScale * TimeScale       ;converted to simulation distance per tick
   
   set curInf startInf
   set curTanks startTanks
   set curAT startAT
   set curArt startArt
   set curSpeed maxSpeed
-  set curDRange (item 8 statsList)
-  set curIRange (item 9 statsList)
+  set curDRange (item 8 statsList) / MapScale                  ;converted to simulation distance
+  set curIRange (item 9 statsList) / MapScale                  ;converted to simulation distance
   
   set shape "Default"
   set size 7
@@ -161,6 +154,6 @@ end
 ;----------------------------------------------
 
 ;Reports the physical distance between the calling unit and the specified unit, using the map scale
-to-report c_distance [ unit ]
-  report MapScaleFactor * distance unit
-end
+;to-report c_distance [ unit ]
+;  report MapScale * distance unit
+;end

@@ -5,6 +5,7 @@ globals [
   ; Variables used in the calculation of the combat model
   cm_coeffs
   cm_attritionScalar
+  GermanForceRetreat
 ]
 
 directed-link-breed [ directFiring directFire ]
@@ -14,10 +15,12 @@ to setup-CombatModel
   ;Turkes linear Lanchester numbers, derived from Battle of Kursk
   ;  Soviet (aka French) and German, respectively
   ;  set cm_coeffs [ .0000000268 .0000000668 ]
-  set cm_coeffs [ .00000268 .00000668 ]     ; scaled up, FIXME justify
+  set cm_coeffs (list (0.000000268 * TimeScale) (0.000000668 * TimeScale) )
 
   ; uses new state system: s_P_DEFENSE, s_DEFENSE, s_ATTACK, s_B_ATTACK, s_RETREAT, s_ROUTE, s_RESERVE, s_Q_BRIDGE, s_ON_BRIDGE, s_OVR_BRIDGE
   set cm_attritionScalar [ 0.5          0.8        1         1.2         1          1.5      1          0.8         1.5          1 ]
+  
+  set GermanForceRetreat 0.2
 end
 
 ;This turtle marks the nearest enemy as either the direct or indirect (out of direct range) target it wants to engage
@@ -25,10 +28,10 @@ to cm_declareTarget
   let opponent c_nearestEnemy
   if (opponent = nobody) [stop]
   
-  ifelse (c_distance opponent <= curDRange) [
+  ifelse (distance opponent <= curDRange) [
     create-directFire-to opponent [set hidden? not fireAnimation]
   ] [
-    if (c_distance opponent <= curIRange) [ create-indirectFire-to opponent [set hidden? not fireAnimation] ]
+    if (distance opponent <= curIRange) [ create-indirectFire-to opponent [set hidden? not fireAnimation] ]
   ]
 end
 
@@ -83,7 +86,7 @@ to cm_realizeAttrition
   ] [
     set oppCoeff (item GERMAN cm_coeffs)
   ]
-  set oppCoeff (oppCoeff * (item newState cm_attritionScalar))   ; scale the attrition being done to me by my current state
+  set oppCoeff (oppCoeff * (item state cm_attritionScalar))   ; scale the attrition being done to me by my current state
   let myStrength cm_reportDirStrength self
   
   ;Lanchester Linear model
@@ -97,7 +100,7 @@ to cm_realizeAttrition
     set color gray
     set size 4
   ]
-  if (newState != sn_RETREAT) [
+  if (state != s_RETREAT) [
     let forceRetreat nobody
     ifelse (allegiance = FRENCH) [
       if (effectiveness < beginEffectiveness - FrenchForceRetreat) [ set forceRetreat FrenchForceRetreat ]
@@ -105,9 +108,9 @@ to cm_realizeAttrition
     if (effectiveness < beginEffectiveness - GermanForceRetreat) [ set forceRetreat GermanForceRetreat ]
     ]
     if ( forceRetreat != nobody ) [
-      set beginState newState
-      if ( beginState = sn_P_DEFENSE ) [ set beginState sn_DEFENSE ]    ; as unit can't prepare a defensive position quickly enough
-      set newState sn_RETREAT
+      set beginState state
+      if ( beginState = s_P_DEFENSE ) [ set beginState s_DEFENSE ]    ; as unit can't prepare a new defensive position quickly enough
+      set state s_RETREAT
       set isNewState? true
     ]
   ]

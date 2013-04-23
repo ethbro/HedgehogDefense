@@ -5,16 +5,11 @@ extensions [array]
 
 ; Executed when the user click on the 'Setup' button
 to setup
-  setup-Common ;Procedure found in libCommon. Initializes various system constants.
+  setup-Common      ;Procedure found in libCommon. Initializes various system constants.
   setup-CombatModel ;Procedure found in libCombatModel. Initializes attrition coefficients.
   setup-BridgeModel ;Procedure found in libBridgeModel. Initializes staging coordinates.
-  setup-globals;Get all the fields set to their starting values.
-  setup-patches ;Display the background
-  setup-units ;Place brigades and set their attributes.
-end
-
-to setup-globals
-  setup-bridge-sliders ;Logic to handle various inputs for the bridge crossing sliders.
+  setup-patches     ;Display the background
+  setup-units       ;Place brigades and set their attributes.
 end
 
 to setup-patches
@@ -22,7 +17,7 @@ to setup-patches
 end
 
 to setup-units
-  ;Creates German infantry brigades, sets their color red, makes them face towards the French, and places them on the map.
+  ;Creates German brigades, sets their color red, makes them face towards the French, and places them on the map.
   create-units (188) [
     c_writeUnit DefaultGermanUnit
     
@@ -30,11 +25,9 @@ to setup-units
     set allegiance GERMAN
     set heading 225
     set color 15
-    set state 1
-    set newState sn_ATTACK
+    set state s_RESERVE
     set destinationNum -1
-    set curSpeed 1
-    place-germans ;Procedure found in libBridgeModel. Places German brigades in random clusters.
+    place-germans                ;Procedure found in libBridgeModel. Places German brigades in random clusters.
   ]
   ;Creates German tank brigades, sets their color red, makes them face towards the French, and places them on the map.
   create-units (24) [
@@ -44,62 +37,36 @@ to setup-units
     set allegiance GERMAN
     set heading 225  
     set color 15
-      
-    set state 1
-    set newState sn_ATTACK
+    set state s_RESERVE
     set destinationX -1
     set destinationY -1
     set destinationNum -1
-    set curSpeed 1
-    place-germans  ;Procedure found in libBridgeModel. Places German brigades in random clusters.
-  ]  
-  ;Creates French infantry brigades, sets their color blue, makes them face towards the Germans.
+    place-germans                ;Procedure found in libBridgeModel. Places German brigades in random clusters.
+  ]
+  
+  ;Creates French brigades, sets their color blue, makes them face towards the Germans.
   create-units (116)[
     c_writeUnit DefaultFrenchUnit
-    
     set name "French infantry"
     set allegiance FRENCH
     set color 95
-
-    set state 1
-    set newState sn_P_DEFENSE
-    set destinationX -1
-    set destinationY -1
-    set destinationNum -1
-    set stepsTaken 0
-    set numberOfLinesPassed 0
+    set state s_P_DEFENSE
   ]
   ;Creates French light brigades, sets their color blue, makes them face towards the Germans.
   create-units (6) [
     c_writeUnit DefaultFrenchUnit
-    
     set name "French light"
     set allegiance FRENCH
     set color 95
-
-    set state 1
-    set newState sn_P_DEFENSE
-    set destinationX -1
-    set destinationY -1
-    set destinationNum -1
-    set stepsTaken 0
-    set numberOfLinesPassed 0
+    set state s_P_DEFENSE
   ]
   ;Creates French armored brigades, sets their color blue, makes them face towards the Germans.
   create-units (10) [
     c_writeUnit DefaultFrenchUnit
-
     set name "French armor"
     set allegiance FRENCH
     set color 95
-
-    set state 1
-    set newState sn_P_DEFENSE
-    set destinationX -1
-    set destinationY -1
-    set destinationNum -1
-    set stepsTaken 0
-    set numberOfLinesPassed 0
+    set state s_P_DEFENSE
   ]      
   ; Places the French in a checkerboard pattern.
   ask units with [allegiance = FRENCH] [
@@ -119,77 +86,75 @@ end
 ;This procedure is called when the user presses the 'Go' button.
 to go
   let validUnits units with [effectiveness > 0]
+  let germanUnits validUnits with [allegiance = GERMAN]
+  let frenchUnits validUnits with [allegiance = FRENCH]
   
   ;Movement
-  ask validUnits [
-    if (allegiance = GERMAN and state < 4) [
+  ask germanUnits [
+    if (state = s_RESERVE or state = s_Q_BRIDGE or state = s_ON_BRIDGE) [
       selectBridge ;Procedure found in libBridgeModel. Initializes destinations of the German brigades before the bridge crossing takes place.
       crossBridge ;Procedure found in libBridgeModel. Logic for the German brigades crossing the bridge.
     ]
-    move
   ]
+  ask validUnits [ move ]
 
   ;Combat
-  ask validUnits [cm_declareTarget] ;Procedure found in libCombatModel.
-  ask validUnits [cm_attritTargets] ;Procedure found in libCombatModel.
-  ask validUnits [cm_realizeAttrition] ;Procedure found in libCombatModel.
+  ask validUnits [ cm_declareTarget ]         ;Everyone marks targets they'd like to fire at
+  ask validUnits [ cm_attritTargets ]         ;Each unit attrits all the targets that marked it + its target(s)
+  ask validUnits [ cm_realizeAttrition ]      ;Everyone updates themselves with the attrition dealt to them
 
-  clear-links
+  clear-links                                 ;Clear all direct & indirect fire links
 
-  if(numBridges > MaxBridgeheads)[
-   set numBridges MaxBridgeheads 
+  ;Bridge building
+  if (numBridges < MaxBridgeheads and ticks > (hoursBetweenBridgeheads * numBridges)) [
+    set numBridges numBridges + 1             ;Add another bridge at each crossing after hoursBetweenBridgeheads has passed
   ]
-  if(numBridges < MaxBridgeheads and ticks > (hoursBetweenBridgeheads * numBridges))[ ;After 500 hours...
-    set numBridges numBridges + 1 ;Two bridgeheads wide for the crossing
-  ]
-  if (ticks >= 42800) [        ;after a set amount of time stop the simulation
-    stop
-  ]
+
+  ;If someone left the simulation on, stop it eventually...
+  if (ticks >= 42800) [ stop ]
   tick
 end
 
 
 to move
-  let nearestEnemy c_nearestEnemy  ;Procedure found in libCommon. Returns the nearest opponent.
+  let nearestEnemy c_nearestEnemy           ;Procedure found in libCommon. Returns the nearest opponent.
   if (nearestEnemy = nobody) [stop]
-  let enemyDistance c_distance nearestEnemy ;Procedure found in libCommon. Returns the map distance to the nearest opponent.
-  
-  ;GERMAN BEHAVIOR
-  ifelse (allegiance = GERMAN) [ ;If the unit is German...
-    if (state = 4 or state = 5) [  ;If it just crossed the bridge...
-      if (enemyDistance > curDRange) [ ;If the enemy is out of range...
-        face nearestEnemy ; Face the nearest enemy
-        ifelse (enemyDistance > curSpeed) [ ;If the enemy can't be reached in an hour
-          jump curSpeed ;Approach the enemy
+  let enemyDistance distance nearestEnemy
+
+  ifelse (allegiance = GERMAN) [                   ;GERMAN BEHAVIOR
+    ifelse (state = s_OVR_BRIDGE) [                ;  If just crossed the bridge...
+      set state s_ATTACK
+    ] [
+    if (state = s_ATTACK or state = s_B_ATTACK) [  ;  If attacking...
+      if (enemyDistance > curDRange) [             ;close to direct-fire weapons range if not there
+        face nearestEnemy
+        ifelse (enemyDistance - 0.2 > curSpeed) [  ;if won't arrive at enemy this tick
+          jump curSpeed
         ] [
-          jump (enemyDistance - 0.3)             ;else, approach the enemy at a reduced distance
+          jump (enemyDistance - 0.2)               ;else, approach just shy of the enemy (for visual distinction)
         ]
       ]
-    ]
-  ] [
-  ;FRENCH BEHAVIOR
-    ifelse (newState != sn_RETREAT) [
-      if (enemyDistance < 2 * curIRange) [face nearestEnemy]  ;face the nearest enemy
+    ]]
+  ] [                                                ;FRENCH BEHAVIOR
+    ifelse (state != s_RETREAT) [                    ;  If not retreating...
+      if (enemyDistance < 2 * curIRange) [face nearestEnemy]
     ] [
-    if (newState = sn_RETREAT) [
-      ifelse isNewState? [
+    if (state = s_RETREAT) [                         ;  If retreating...
+      ifelse isNewState? [                           ;initialization for state behavior
         set isNewState? false
         let currentPatch patch-here
-        set targetPatch patch-at-heading-and-distance ((beginHeading + 180) mod 360) (5 / MapScaleFactor)
+        set targetPatch patch-at-heading-and-distance ((beginHeading + 180) mod 360) (8 / MapScale)
         face targetPatch
       ] [
-        ifelse (patch-here = targetPatch) [   ;arrived, reset back to a fighting state
-          set targetPatch nobody                  ;clear my move target
-          set newState beginState                 ;restore my state
-          set beginState nobody
-          set beginEffectiveness effectiveness    ;remember at what effectiveness I started here
+        ifelse (distance targetPatch > curSpeed) [
+          jump curSpeed                              ;if we won't arrive at target this tick...
         ] [
-          ifelse (distance targetPatch > curSpeed) [
-            jump curSpeed
-          ] [
-            move-to targetPatch
-            set heading beginHeading
-          ]
+          move-to targetPatch                        ;if we will arrive at target this tick...
+          set heading beginHeading
+          set targetPatch nobody                     ;  clear my move target
+          set state beginState                       ;  restore my state
+          set beginState nobody
+          set beginEffectiveness effectiveness       ;  store at what effectiveness I started here
         ]
       ]
     ]]
@@ -277,7 +242,7 @@ crossingAbbeville
 crossingAbbeville
 0
 212
-38
+44
 1
 1
 NIL
@@ -337,7 +302,7 @@ crossingChannel
 crossingChannel
 0
 212
-30
+24
 1
 1
 NIL
@@ -404,7 +369,7 @@ FrenchForceRetreat
 FrenchForceRetreat
 0
 1
-0.1
+0.3
 0.01
 1
 attrition
@@ -468,21 +433,6 @@ germanY
 1
 1
 NIL
-HORIZONTAL
-
-SLIDER
-195
-151
-408
-184
-GermanForceRetreat
-GermanForceRetreat
-0.0
-1
-0.3
-0.01
-1
-attrition
 HORIZONTAL
 
 @#$#@#$#@
