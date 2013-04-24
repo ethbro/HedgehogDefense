@@ -14,11 +14,11 @@ directed-link-breed [ indirectFiring indirectFire ]
 to setup-CombatModel
   ;Turkes linear Lanchester numbers, derived from Battle of Kursk
   ;  Soviet (aka French) and German, respectively
-  ;  set cm_coeffs [    .0000000268               .0000000668 ]
-  set cm_coeffs (list (0.000000268 * TimeScale) (0.000000668 * TimeScale) )
+  ;  set cm_coeffs [    .0000000268           .0000000668 ]
+  set cm_coeffs (list (0.000006 * TimeScale) (0.000008 * TimeScale) )
 
   ; uses new state system: s_P_DEFENSE, s_DEFENSE, s_ATTACK, s_B_ATTACK, s_RETREAT, s_ROUTE, s_RESERVE, s_Q_BRIDGE, s_ON_BRIDGE, s_OVR_BRIDGE
-  set cm_attritionScalar [ 0.5          0.8        1         1.2         1          1.5      1          0.8         2          1 ]
+  set cm_attritionScalar [ 0.4          0.9        1         1.1         1          1.5      1          0.9         2            1 ]
   
   set GermanForceRetreat 0.2
 end
@@ -101,14 +101,14 @@ to cm_realizeAttrition
     set size 4
   ]
   if (state != s_RETREAT) [
-    let forceRetreat nobody
+    let forceRetreat false
     ifelse (allegiance = FRENCH) [
-      if (effectiveness < beginEffectiveness - FrenchForceRetreat) [ set forceRetreat FrenchForceRetreat ]
+      if (effectiveness < beginEffectiveness - pressure - FrenchForceRetreat) [ set forceRetreat true ]
     ] [
-    if (effectiveness < beginEffectiveness - GermanForceRetreat) [ set forceRetreat GermanForceRetreat ]
+      if (effectiveness < beginEffectiveness - pressure - GermanForceRetreat) [ set forceRetreat true ]
     ]
-    if ( forceRetreat != nobody ) [
-      set beginState state
+    if (forceRetreat) [
+      set beginState state                                            ; save state
       if ( beginState = s_P_DEFENSE ) [ set beginState s_DEFENSE ]    ; as unit can't prepare a new defensive position quickly enough
       set state s_RETREAT
       set isNewState? true

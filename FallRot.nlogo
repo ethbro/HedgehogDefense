@@ -5,6 +5,7 @@ extensions [array]
 
 globals [
   HedgehogDepth
+  Standoff
 ]
 
 ; Executed when the user click on the 'Setup' button
@@ -70,7 +71,7 @@ to setup-units
     set state s_P_DEFENSE
   ]
   
-  ; Places the French in a checkerboard pattern.
+  ; Places the French in a checkerboard pattern
   let leftPatch patch 110 472                 ; our vertices
   let v1Patch patch 377 298
   let v2Patch patch 581 335
@@ -141,10 +142,11 @@ to go
 
   clear-links                                 ;Clear all direct & indirect fire links for the new tick
 
+  let combatUnits (validUnits with [state != s_RETREAT and state != s_ROUTE])
   ;Combat
-  ask validUnits [ cm_declareTarget ]         ;Everyone marks targets they'd like to fire at
-  ask validUnits [ cm_attritTargets ]         ;Each unit attrits all the targets that marked it + its target(s)
-  ask validUnits [ cm_realizeAttrition ]      ;Everyone updates themselves with the attrition dealt to them
+  ask combatUnits [ cm_declareTarget ]        ;Everyone marks targets they'd like to fire at
+  ask combatUnits [ cm_attritTargets ]        ;Each unit attrits all the targets that marked it + its target(s)
+  ask combatUnits [ cm_realizeAttrition ]     ;Everyone updates themselves with the attrition dealt to them
 
   ;Bridge building
   if (numBridges < MaxBridges and ticks > (HoursBetweenBridges / TimeScale * numBridges)) [
@@ -153,6 +155,7 @@ to go
 
   ;If someone left the simulation on, stop it eventually...
   if (ticks >= 42800) [ stop ]
+  if (count units with [allegiance = FRENCH and effectiveness > 0] < 2) [ stop ]
   tick
 end
 
@@ -160,31 +163,60 @@ end
 to move
   ;GERMAN BEHAVIOR
   ifelse (allegiance = GERMAN) [
-    ifelse (state = s_OVR_BRIDGE) [                ;  If just crossed the bridge...
+    ifelse (state = s_OVR_BRIDGE) [                ;If just crossed the bridge...
       set state s_ATTACK
-      set curSpeed maxSpeed * 0.8                  ;controlled attack, so slow down slightly
+      set curSpeed maxSpeed * 0.8                  ;  controlled attack, so slow down slightly
     ][
-    if (state = s_ATTACK or state = s_B_ATTACK) [  ;  If attacking...
+    ifelse (state = s_RETREAT) [
+      ifelse (isNewState?) [
+        set reorgTimer (24 / TimeScale)
+        set isNewState? false
+      ] [
+        set reorgTimer (reorgTimer - 1)
+        if (reorgTimer = 0) [
+          set targetPatch nobody                     ;  clear my move target
+          set state beginState                       ;  restore my state
+          set beginState nobody
+          set beginEffectiveness effectiveness       ;  store at what effectiveness I started here
+        ]
+      ]
+    ][
+    if (state = s_ATTACK or state = s_B_ATTACK) [  ;If attacking...
       let nearestEnemy nobody
       let dTargets count out-directFire-neighbors
-      ifelse (dTargets > 0) [                      ;    and we currently have a target, stick with it
+      ifelse (dTargets > 0) [                      ;  ...and we currently have a target, stick with it
         if (dTargets != 1) [error "In move, this unit reported having more than one direct target."] ;DEBUG
         set nearestEnemy one-of out-directFire-neighbors
       ] [
-        set nearestEnemy c_nearestAvailEnemy
+        set nearestEnemy c_nearestAvailEnemy       ;  ...otherwise, find the nearest enemy that isn't already surrounded
         if (nearestEnemy = nobody) [stop]
       ]
       let enemyDistance distance nearestEnemy
       
-      if (enemyDistance > curDRange) [             ;close to direct-fire weapons range if not there
+      ifelse (enemyDistance > curDRange) [         ;  close to direct-fire weapons range if not there
         face nearestEnemy
-        ifelse (enemyDistance - 0.2 > curSpeed) [  ;if won't arrive at enemy this tick
+        ifelse (enemyDistance - curDRange > curSpeed) [  ;  if won't arrive at enemy this tick, curSpeed ahead
           c_move curSpeed
         ] [
-          c_move (enemyDistance - 0.2)             ;else, approach just shy of the enemy (for visual distinction)
+          c_move (enemyDistance - curDRange)             ;  else, approach just shy of the enemy (for visual distinction)
         ]
+      ] [                                          ;  otherwise, let me randomly shift about the enemy
+        let myHeading nobody
+        ifelse (xcor = [xcor] of nearestEnemy and ycor = [ycor] of nearestEnemy) [
+          set myHeading (random 360)
+        ] [
+          ask nearestEnemy [ set myHeading towards myself ]
+        ]
+        let randomShift ((random 46) - 23)
+        set myHeading (myHeading + randomShift)
+        
+        let myTarget nobody
+        ask nearestEnemy [ set myTarget patch-at-heading-and-distance myHeading curDRange ]
+        if (myTarget = nobody) [stop]
+        move-to myTarget
+        face nearestEnemy
       ]
-    ]]
+    ]]]
   ] [
     let nearestEnemy c_nearestEnemy             ;Procedure found in libCommon. Returns the nearest opponent.
     if (nearestEnemy = nobody) [stop]           ;FIXME should use something like c_nearestAvilEnemy, but oscillates currently
@@ -204,10 +236,10 @@ to move
         ] [
           set targetPatch patch-at-heading-and-distance ((beginHeading + 180) mod 360) (8 / MapScale)
         ]
-        ;fixme FIX ME
+        if (targetPatch = nobody) [stop]
         face targetPatch
-        ; FIXME fix me error at the end of the code
       ] [
+        if (targetPatch = nobody) [stop]
         ifelse (distance targetPatch > curSpeed) [
           c_move curSpeed                            ;if we won't arrive at target this tick...
         ] [
@@ -244,8 +276,8 @@ GRAPHICS-WINDOW
 639
 0
 639
-0
-0
+1
+1
 1
 ticks
 30.0
@@ -379,12 +411,12 @@ Forces
 Time
 Soldiers
 0.0
-2000.0
+1000.0
 0.0
 860000.0
 false
 true
-"" "if(plotForces = true)[\nlet numGerman 0\nlet numFrench 0\nask turtles[\nif(allegiance = GERMAN)[\nset numGerman numGerman + curInf + curAT + curArt + curTanks\n]\nif(allegiance = FRENCH)[\nset numFrench numFrench + curInf + curAT + curArt + curTanks\n]\n]\nset-current-plot-pen \"French\"\nplot numFrench\nset-current-plot-pen \"German\"\nplot numGerman\n]"
+"" "if(plotForces = true)[\n  let numGerman 0\n  let numFrench 0\n  ask turtles[\n    ifelse (allegiance = GERMAN) [\n      set numGerman numGerman + curInf + curAT + curArt + curTanks\n    ] [\n      set numFrench numFrench + curInf + curAT + curArt + curTanks\n    ]\n]\nset-current-plot-pen \"French\"\nplot numFrench\nset-current-plot-pen \"German\"\nplot numGerman\n]"
 PENS
 "German" 1.0 0 -2674135 true "" ""
 "French" 1.0 0 -13791810 true "" ""
@@ -431,7 +463,7 @@ FrenchForceRetreat
 FrenchForceRetreat
 0
 1
-0.3
+0.5
 0.01
 1
 attrition
@@ -446,7 +478,7 @@ HoursBetweenBridges
 HoursBetweenBridges
 1
 72
-6
+8
 1
 1
 NIL
@@ -461,7 +493,7 @@ MaxBridges
 MaxBridges
 0
 10
-10
+5
 1
 1
 NIL
@@ -504,7 +536,7 @@ SWITCH
 604
 MoveAnimation
 MoveAnimation
-1
+0
 1
 -1000
 

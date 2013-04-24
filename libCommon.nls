@@ -10,7 +10,6 @@ globals [
   s_P_DEFENSE s_DEFENSE s_ATTACK s_B_ATTACK s_RETREAT s_ROUTE s_RESERVE s_Q_BRIDGE s_ON_BRIDGE s_OVR_BRIDGE
 
   ;Simulation Variables
-; TimeScale       ;How many hours (or portions of one) in a tick
   MapScale        ;The conversion factor between sim distance -> map distance (aka sim_distance * MapScale = map_distance)
   
   ;Historical values
@@ -19,6 +18,9 @@ globals [
   ;Utility variables
   GermanInfBrigade GermanMotBrigade GermanPzrBrigade
   FrenchInfBrigade FrenchCavBrigade FrenchDLMBrigade FrenchDCrBrigade
+  
+  ;Locations
+  RallyPoints
 ]
 
 breed [units unit]
@@ -44,6 +46,7 @@ units-own [
   curDRange       ;base range of direct fire weapons, in km
   curIRange       ;base range of indirect fire weapons, in km
   effectiveness   ;unit's remaining strength, as a percentage (1.0 -> 0.0)
+  pressure        ;effectiveness, modified by retreating neighbors
   
   ;Variables for unit behavior
   state               ;unit's current behavior
@@ -52,8 +55,9 @@ units-own [
   beginState          ;unit's state before being switched
   beginHeading        ;unit's declared heading when starting current elected behavior
   beginRow            ;unit's starting row
-  targetPatch
   isNewState?         ;whether or not the current state is newly set
+  targetPatch
+  reorgTimer
   
   ;Combat variables
   enemyStrength   ;total enemy strength directed at this unit at the end of the tick
@@ -121,6 +125,9 @@ to setup-Common
   set FrenchDLMBrigade (list "C DLM Brigade" "C DLM Division" FRENCH 1950 6 6 6 15 (item i_INF FrenchRanges) (item i_ART FrenchRanges))
   ;  3 armored divisions (reconstructed, all < 1/2 strength)
   set FrenchDCrBrigade (list "D DCr Brigade" "D DCr Division" FRENCH 1221 18 21 11 25 (item i_INF FrenchRanges) (item i_ART FrenchRanges))
+  
+  ;Locations
+  set RallyPoints [ [115 462] [167 420] [345 312] [515 319] [557 324] ]
 end
 
 ;----------------------------------------------
@@ -135,7 +142,6 @@ to c_writeUnit [ statsList ]
   set startAT (item 5 statsList)
   set startArt (item 6 statsList)
   set maxSpeed (item 7 statsList) / MapScale * TimeScale       ;converted to simulation distance per tick
-  ;fixme FIX ME
   set curInf startInf
   set curTanks startTanks
   set curAT startAT
@@ -147,6 +153,7 @@ to c_writeUnit [ statsList ]
   set shape "Default"
   set size 7
   set effectiveness 1
+  set pressure 0
   set beginEffectiveness effectiveness
   set isNewState? false
 end
