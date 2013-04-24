@@ -5,7 +5,7 @@ extensions [array]
 
 globals [
   HedgehogDepth
-  Standoff
+  CheckRange CheckAngle
 ]
 
 ; Executed when the user click on the 'Setup' button
@@ -15,9 +15,13 @@ to setup
   setup-BridgeModel ;Procedure found in libBridgeModel. Initializes staging coordinates.
   
   set HedgehogDepth (5 / MapScale)
+  set CheckRange (3 / MapScale) 
+  set CheckAngle 30
   
   setup-patches     ;Display the background
   setup-units       ;Place brigades and set their attributes.
+  
+;  ask units with [allegiance = FRENCH] [ flankCheck ]
 end
 
 to setup-patches
@@ -125,14 +129,14 @@ end
 ;This procedure is called when the user presses the 'Go' button.
 to go
   let validUnits units with [effectiveness > 0]
-  let germanUnits validUnits with [allegiance = GERMAN]
-  let frenchUnits validUnits with [allegiance = FRENCH]
+  let GermanUnits validUnits with [allegiance = GERMAN]
+  let FrenchUnits validUnits with [allegiance = FRENCH]
 
   ask DirectFiring [ set hidden? true ]       ;Still want to store links, but don't want to confuse by displaying as units move
   ask IndirectFiring [ set hidden? true ]
   
   ;Movement
-  ask germanUnits [
+  ask GermanUnits [
     if (state = s_RESERVE or state = s_Q_BRIDGE or state = s_ON_BRIDGE) [
       selectBridge ;Procedure found in libBridgeModel. Initializes destinations of the German brigades before the bridge crossing takes place.
       crossBridge ;Procedure found in libBridgeModel. Logic for the German brigades crossing the bridge.
@@ -156,13 +160,34 @@ to go
   ;If someone left the simulation on, stop it eventually...
   if (ticks >= 42800) [ stop ]
   if (count units with [allegiance = FRENCH and effectiveness > 0] < 2) [ stop ]
+  
   tick
 end
 
 
 to move
-  ;GERMAN BEHAVIOR
+;===================.
+;== FORCE RETREAT ===
+;==================='
+  if (state != s_RETREAT) [
+    let forceRetreat false
+    ifelse (allegiance = FRENCH) [
+      if (effectiveness  < beginEffectiveness - FrenchForceRetreat) [ set forceRetreat true ]
+    ] [
+      if (effectiveness < beginEffectiveness - GermanForceRetreat) [ set forceRetreat true ]
+    ]
+    if (forceRetreat) [
+      set beginState state                                            ; save state
+      if ( beginState = s_P_DEFENSE ) [ set beginState s_DEFENSE ]    ; as unit can't prepare a new defensive position quickly enough
+      set state s_RETREAT
+      set isNewState? true
+    ]
+  ]
+  
   ifelse (allegiance = GERMAN) [
+;=====================.
+;== GERMAN BEHAVIOR ===
+;====================='
     ifelse (state = s_OVR_BRIDGE) [                ;If just crossed the bridge...
       set state s_ATTACK
       set curSpeed maxSpeed * 0.8                  ;  controlled attack, so slow down slightly
@@ -222,12 +247,15 @@ to move
     if (nearestEnemy = nobody) [stop]           ;FIXME should use something like c_nearestAvilEnemy, but oscillates currently
     let enemyDistance distance nearestEnemy
     
-  ;FRENCH BEHAVIOR
+    
+;=====================.
+;== FRENCH BEHAVIOR ===
+;====================='
     ifelse (state != s_RETREAT) [                    ;  If not retreating...
       if (enemyDistance < 2 * curIRange) [face nearestEnemy]
     ][
     if (state = s_RETREAT) [                         ;  If retreating...
-      ifelse isNewState? [                           ;initialization for state behavior
+      ifelse isNewState? [                           ;initialization for retreat behavior
         set isNewState? false
         let currentPatch patch-here
         ifelse (beginRow != nobody) [
@@ -241,6 +269,7 @@ to move
       ] [
         if (targetPatch = nobody) [stop]
         ifelse (distance targetPatch > curSpeed) [
+          face targetPatch
           c_move curSpeed                            ;if we won't arrive at target this tick...
         ] [
           move-to targetPatch                        ;if we will arrive at target this tick...
@@ -276,8 +305,8 @@ GRAPHICS-WINDOW
 639
 0
 639
-1
-1
+0
+0
 1
 ticks
 30.0
@@ -336,7 +365,7 @@ CrossingAbbeville
 CrossingAbbeville
 0
 212
-44
+49
 1
 1
 NIL
@@ -351,7 +380,7 @@ CrossingAmiens
 CrossingAmiens
 0
 212
-59
+72
 1
 1
 NIL
@@ -366,7 +395,7 @@ CrossingBray
 CrossingBray
 0
 212
-39
+25
 1
 1
 NIL
@@ -381,7 +410,7 @@ CrossingPeronne
 CrossingPeronne
 0
 212
-46
+44
 1
 1
 NIL
@@ -396,7 +425,7 @@ CrossingChannel
 CrossingChannel
 0
 212
-24
+22
 1
 1
 NIL
@@ -478,7 +507,7 @@ HoursBetweenBridges
 HoursBetweenBridges
 1
 72
-8
+12
 1
 1
 NIL
@@ -523,7 +552,7 @@ TimeScale
 TimeScale
 0.05
 1
-0.2
+1
 0.05
 1
 hours per tick

@@ -100,20 +100,6 @@ to cm_realizeAttrition
     set color gray
     set size 4
   ]
-  if (state != s_RETREAT) [
-    let forceRetreat false
-    ifelse (allegiance = FRENCH) [
-      if (effectiveness < beginEffectiveness - pressure - FrenchForceRetreat) [ set forceRetreat true ]
-    ] [
-      if (effectiveness < beginEffectiveness - pressure - GermanForceRetreat) [ set forceRetreat true ]
-    ]
-    if (forceRetreat) [
-      set beginState state                                            ; save state
-      if ( beginState = s_P_DEFENSE ) [ set beginState s_DEFENSE ]    ; as unit can't prepare a new defensive position quickly enough
-      set state s_RETREAT
-      set isNewState? true
-    ]
-  ]
   
   ;Reset the strength directed towards me
   set enemyStrength 0

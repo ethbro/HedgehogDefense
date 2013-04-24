@@ -46,7 +46,6 @@ units-own [
   curDRange       ;base range of direct fire weapons, in km
   curIRange       ;base range of indirect fire weapons, in km
   effectiveness   ;unit's remaining strength, as a percentage (1.0 -> 0.0)
-  pressure        ;effectiveness, modified by retreating neighbors
   
   ;Variables for unit behavior
   state               ;unit's current behavior
@@ -153,7 +152,6 @@ to c_writeUnit [ statsList ]
   set shape "Default"
   set size 7
   set effectiveness 1
-  set pressure 0
   set beginEffectiveness effectiveness
   set isNewState? false
 end
