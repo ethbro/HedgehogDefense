@@ -225,21 +225,23 @@ to move
         ] [
           c_move (enemyDistance - curDRange)             ;  else, approach just shy of the enemy (for visual distinction)
         ]
-      ] [                                          ;  otherwise, let me randomly shift about the enemy
-        let myHeading nobody
-        ifelse (xcor = [xcor] of nearestEnemy and ycor = [ycor] of nearestEnemy) [
-          set myHeading (random 360)
-        ] [
+      ] [                                          ;  otherwise, let me randomly shift about the enemy if he's stationary
+        if ([state] of nearestEnemy = s_P_DEFENSE) [
+          let myHeading nobody
+          ifelse (xcor = [xcor] of nearestEnemy and ycor = [ycor] of nearestEnemy) [
+            set myHeading (random 360)
+          ] [
           ask nearestEnemy [ set myHeading towards myself ]
+          ]
+          let randomShift ((random 46) - 23)
+          set myHeading (myHeading + randomShift)
+          
+          let myTarget nobody
+          ask nearestEnemy [ set myTarget patch-at-heading-and-distance myHeading curDRange ]
+          if (myTarget = nobody) [stop]
+          move-to myTarget
+          face nearestEnemy
         ]
-        let randomShift ((random 46) - 23)
-        set myHeading (myHeading + randomShift)
-        
-        let myTarget nobody
-        ask nearestEnemy [ set myTarget patch-at-heading-and-distance myHeading curDRange ]
-        if (myTarget = nobody) [stop]
-        move-to myTarget
-        face nearestEnemy
       ]
     ]]]
   ] [
@@ -552,7 +554,7 @@ TimeScale
 TimeScale
 0.05
 1
-1
+0.25
 0.05
 1
 hours per tick
@@ -844,7 +846,7 @@ Polygon -6459832 true true 46 128 33 120 21 118 11 123 3 138 5 160 13 178 9 192 
 Polygon -6459832 true true 67 122 96 126 63 144
 
 @#$#@#$#@
-NetLogo 5.0.3
+NetLogo 5.0.4
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
