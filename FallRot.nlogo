@@ -844,7 +844,7 @@ Polygon -6459832 true true 46 128 33 120 21 118 11 123 3 138 5 160 13 178 9 192 
 Polygon -6459832 true true 67 122 96 126 63 144
 
 @#$#@#$#@
-NetLogo 5.0.4
+NetLogo 5.0.3
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@
@@ -868,6 +868,214 @@ NetLogo 5.0.4
     </enumeratedValueSet>
     <enumeratedValueSet variable="population">
       <value value="4"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="Count brigades against hoursbetweenbridges" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="1000"/>
+    <metric>count turtles with [who &lt; 189 and  curInf &gt; 2750]</metric>
+    <metric>count turtles with [who &lt; 189 and  curInf &lt; 2750 and curInf &gt; 1375]</metric>
+    <metric>count turtles with [who &lt; 189 and  curInf &lt; 1375]</metric>
+    <metric>count turtles with [who &lt; 288 and who &gt; 212 and curInf &gt; 1579]</metric>
+    <metric>count turtles with [who &lt; 288 and who &gt; 212 and curInf &lt; 1579 and curInf &gt; 839]</metric>
+    <metric>count turtles with [who &lt; 288 and who &gt; 212 and curInf &lt; 839]</metric>
+    <enumeratedValueSet variable="MoveAnimation">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingPeronne">
+      <value value="44"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingAbbeville">
+      <value value="49"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="TimeScale">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingChannel">
+      <value value="22"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="FrenchForceRetreat">
+      <value value="0.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingAmiens">
+      <value value="72"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="FireAnimation">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingRate">
+      <value value="3000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="PlotForces">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingBray">
+      <value value="25"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="MaxBridges">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="HoursBetweenBridges">
+      <value value="4"/>
+      <value value="12"/>
+      <value value="24"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="Count brigades against maxbridges" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="1000"/>
+    <metric>count turtles with [who &lt; 189 and  curInf &gt; 2750]</metric>
+    <metric>count turtles with [who &lt; 189 and  curInf &lt; 2750 and curInf &gt; 1375]</metric>
+    <metric>count turtles with [who &lt; 189 and  curInf &lt; 1375]</metric>
+    <metric>count turtles with [who &lt; 288 and who &gt; 212 and curInf &gt; 1579]</metric>
+    <metric>count turtles with [who &lt; 288 and who &gt; 212 and curInf &lt; 1579 and curInf &gt; 839]</metric>
+    <metric>count turtles with [who &lt; 288 and who &gt; 212 and curInf &lt; 839]</metric>
+    <enumeratedValueSet variable="MoveAnimation">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingPeronne">
+      <value value="44"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingAbbeville">
+      <value value="49"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="TimeScale">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingChannel">
+      <value value="22"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="FrenchForceRetreat">
+      <value value="0.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingAmiens">
+      <value value="72"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="FireAnimation">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingRate">
+      <value value="3000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="PlotForces">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingBray">
+      <value value="25"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="MaxBridges">
+      <value value="2"/>
+      <value value="5"/>
+      <value value="8"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="HoursBetweenBridges">
+      <value value="12"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="Count brigades against retreat" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="1000"/>
+    <metric>count turtles with [who &lt; 189 and  curInf &gt; 2750]</metric>
+    <metric>count turtles with [who &lt; 189 and  curInf &lt; 2750 and curInf &gt; 1375]</metric>
+    <metric>count turtles with [who &lt; 189 and  curInf &lt; 1375]</metric>
+    <metric>count turtles with [who &lt; 288 and who &gt; 212 and curInf &gt; 1579]</metric>
+    <metric>count turtles with [who &lt; 288 and who &gt; 212 and curInf &lt; 1579 and curInf &gt; 839]</metric>
+    <metric>count turtles with [who &lt; 288 and who &gt; 212 and curInf &lt; 839]</metric>
+    <enumeratedValueSet variable="MoveAnimation">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingPeronne">
+      <value value="44"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingAbbeville">
+      <value value="49"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="TimeScale">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingChannel">
+      <value value="22"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="FrenchForceRetreat">
+      <value value="0.25"/>
+      <value value="0.5"/>
+      <value value="0.75"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingAmiens">
+      <value value="72"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="FireAnimation">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingRate">
+      <value value="3000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="PlotForces">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingBray">
+      <value value="25"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="MaxBridges">
+      <value value="5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="HoursBetweenBridges">
+      <value value="12"/>
+    </enumeratedValueSet>
+  </experiment>
+  <experiment name="Count brigades against hoursbetweenbridges and maxbridges" repetitions="1" runMetricsEveryStep="true">
+    <setup>setup</setup>
+    <go>go</go>
+    <timeLimit steps="1000"/>
+    <metric>count turtles with [who &lt; 189 and  curInf &gt; 2750]</metric>
+    <metric>count turtles with [who &lt; 189 and  curInf &lt; 2750 and curInf &gt; 1375]</metric>
+    <metric>count turtles with [who &lt; 189 and  curInf &lt; 1375]</metric>
+    <metric>count turtles with [who &lt; 288 and who &gt; 212 and curInf &gt; 1579]</metric>
+    <metric>count turtles with [who &lt; 288 and who &gt; 212 and curInf &lt; 1579 and curInf &gt; 839]</metric>
+    <metric>count turtles with [who &lt; 288 and who &gt; 212 and curInf &lt; 839]</metric>
+    <enumeratedValueSet variable="MoveAnimation">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingPeronne">
+      <value value="44"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingAbbeville">
+      <value value="49"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="TimeScale">
+      <value value="1"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingChannel">
+      <value value="22"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="FrenchForceRetreat">
+      <value value="0.5"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingAmiens">
+      <value value="72"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="FireAnimation">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingRate">
+      <value value="3000"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="PlotForces">
+      <value value="true"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="CrossingBray">
+      <value value="25"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="MaxBridges">
+      <value value="1"/>
+      <value value="10"/>
+    </enumeratedValueSet>
+    <enumeratedValueSet variable="HoursBetweenBridges">
+      <value value="4"/>
+      <value value="24"/>
     </enumeratedValueSet>
   </experiment>
 </experiments>
