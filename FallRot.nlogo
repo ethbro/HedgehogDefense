@@ -10,18 +10,45 @@ globals [
 
 ; Executed when the user click on the 'Setup' button
 to setup
+  ifelse (Model = "Historical Reset") [
+    set CrossingChannel 22
+    set CrossingAbbeville 49
+    set CrossingAmiens 72
+    set CrossingBray 25
+    set CrossingPeronne 44
+    set TimeScale 0.5
+    set FrenchForceRetreat 0.5
+    set GermanReorgPause 12
+    set CrossingRate 3000
+    set HoursBetweenBridges 12
+    set MaxBridges 5
+  ][
+  ifelse (Model = "(Retreat) No Retreat Broadcast") [
+    set RetreatBroadcast false
+    set BroadcastRange 0
+    set RetreatScalar 0
+  ][
+  ifelse (Model = "(Retreat) Hold Ground Behavior") [
+    set RetreatBroadcast true
+    set BroadcastRange 8
+    set RetreatScalar 1
+  ][
+  if (Model = "(Retreat) Panicked Behavior") [
+    set RetreatBroadcast true
+    set BroadcastRange 5
+    set RetreatScalar 1.8
+  ]]]]
+  
   setup-Common      ;Procedure found in libCommon. Initializes various system constants.
   setup-CombatModel ;Procedure found in libCombatModel. Initializes attrition coefficients.
   setup-BridgeModel ;Procedure found in libBridgeModel. Initializes staging coordinates.
   
   set HedgehogDepth (5 / MapScale)
-  set CheckRange (3 / MapScale) 
+  set CheckRange (BroadcastRange / MapScale) 
   set CheckAngle 30
   
   setup-patches     ;Display the background
   setup-units       ;Place brigades and set their attributes.
-  
-;  ask units with [allegiance = FRENCH] [ flankCheck ]
 end
 
 to setup-patches
@@ -172,14 +199,15 @@ to move
   if (state != s_RETREAT) [
     let forceRetreat false
     ifelse (allegiance = FRENCH) [
-      if (effectiveness  < beginEffectiveness - FrenchForceRetreat) [ set forceRetreat true ]
+      if (effectiveness - pressure <= beginEffectiveness - FrenchForceRetreat) [ set forceRetreat true ]
     ] [
-      if (effectiveness < beginEffectiveness - GermanForceRetreat) [ set forceRetreat true ]
+      if (effectiveness - pressure <= beginEffectiveness - GermanForceRetreat) [ set forceRetreat true ]
     ]
     if (forceRetreat) [
       set beginState state                                            ; save state
       if ( beginState = s_P_DEFENSE ) [ set beginState s_DEFENSE ]    ; as unit can't prepare a new defensive position quickly enough
       set state s_RETREAT
+      if (RetreatBroadcast) [ broadcastPressure ]
       set isNewState? true
     ]
   ]
@@ -194,15 +222,16 @@ to move
     ][
     ifelse (state = s_RETREAT) [
       ifelse (isNewState?) [
-        set reorgTimer (24 / TimeScale)
+        set reorgTimer (GermanReorgPause / TimeScale)
         set isNewState? false
       ] [
         set reorgTimer (reorgTimer - 1)
-        if (reorgTimer = 0) [
+        if (reorgTimer = 0) [                        ;consider units reorganized and ready to attack
           set targetPatch nobody                     ;  clear my move target
           set state beginState                       ;  restore my state
           set beginState nobody
           set beginEffectiveness effectiveness       ;  store at what effectiveness I started here
+          set pressure 0
         ]
       ]
     ][
@@ -266,7 +295,14 @@ to move
         ] [
           set targetPatch patch-at-heading-and-distance ((beginHeading + 180) mod 360) (8 / MapScale)
         ]
-        if (targetPatch = nobody) [stop]
+        if (targetPatch = nobody) [                  ;nowhere to retreat, stand and fight
+          set heading beginHeading
+          set state beginState
+          set beginState nobody
+          set beginEffectiveness effectiveness
+          set pressure 0
+          stop
+        ]
         face targetPatch
       ] [
         if (targetPatch = nobody) [stop]
@@ -280,10 +316,38 @@ to move
           set state beginState                       ;  restore my state
           set beginState nobody
           set beginEffectiveness effectiveness       ;  store at what effectiveness I started here
+          set pressure 0
         ]
       ]
     ]]
   ]
+end
+
+to broadcastPressure
+  let savedHeading heading
+  let mySide units with [allegiance = [allegiance] of myself]
+  let myForceRetreat -1
+  ifelse (allegiance = GERMAN) [ set myForceRetreat GermanForceRetreat ]
+  [ set myForceRetreat FrenchForceRetreat ]
+  
+  set heading ((beginHeading + 90) mod 360)             ;locate units to my right
+  let myRight mySide in-cone CheckRange CheckAngle
+  set myRight myRight with [self != myself]             ;  remove myself from resulting set
+  
+  set heading ((beginHeading - 90) mod 360)             ;locate units to my left
+  let myLeft mySide in-cone CheckRange CheckAngle
+  set myLeft myLeft with [self != myself]              
+  
+  ask myRight [
+    let newPressure ((1 - (distance myself / CheckRange)) * myForceRetreat * RetreatScalar)
+    if (newPressure > pressure) [ set pressure newPressure ]
+  ]
+  ask myLeft [
+    let newPressure ((1 - (distance myself / CheckRange)) * myForceRetreat * RetreatScalar)
+    if (newPressure > pressure) [ set pressure newPressure ]
+  ]
+  
+  set heading savedHeading
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -314,12 +378,12 @@ ticks
 30.0
 
 BUTTON
-16
-11
-83
-44
+226
+13
+293
+46
 NIL
-setup
+Setup
 NIL
 1
 T
@@ -331,12 +395,12 @@ NIL
 1
 
 BUTTON
-17
-60
-80
-93
+15
+67
+78
+100
 NIL
-go
+Go
 T
 1
 T
@@ -348,10 +412,10 @@ NIL
 1
 
 MONITOR
-195
-12
-277
-57
+314
+13
+396
+58
 NIL
 Ticks
 0
@@ -434,18 +498,18 @@ NIL
 HORIZONTAL
 
 PLOT
-16
-352
-395
-518
+15
+393
+394
+559
 Forces
 Time
 Soldiers
 0.0
-1000.0
+250.0
 0.0
 860000.0
-false
+true
 true
 "" "if(plotForces = true)[\n  let numGerman 0\n  let numFrench 0\n  ask turtles[\n    ifelse (allegiance = GERMAN) [\n      set numGerman numGerman + curInf + curAT + curArt + curTanks\n    ] [\n      set numFrench numFrench + curInf + curAT + curArt + curTanks\n    ]\n]\nset-current-plot-pen \"French\"\nplot numFrench\nset-current-plot-pen \"German\"\nplot numGerman\n]"
 PENS
@@ -453,10 +517,10 @@ PENS
 "French" 1.0 0 -13791810 true "" ""
 
 SWITCH
-16
-527
-145
-560
+17
+328
+123
+361
 PlotForces
 PlotForces
 0
@@ -464,10 +528,10 @@ PlotForces
 -1000
 
 MONITOR
-195
-286
-362
-339
+227
+328
+394
+381
 Number of Bridgeheads
 numBridges
 0
@@ -475,10 +539,10 @@ numBridges
 13
 
 SWITCH
-266
-527
-397
-560
+267
+612
+393
+645
 FireAnimation
 FireAnimation
 0
@@ -501,10 +565,10 @@ attrition
 HORIZONTAL
 
 SLIDER
-196
-196
-363
-229
+195
+241
+394
+274
 HoursBetweenBridges
 HoursBetweenBridges
 1
@@ -517,9 +581,9 @@ HORIZONTAL
 
 SLIDER
 195
-240
-362
-273
+285
+393
+318
 MaxBridges
 MaxBridges
 0
@@ -531,10 +595,10 @@ NIL
 HORIZONTAL
 
 SLIDER
-196
-152
-363
-185
+195
+197
+394
+230
 CrossingRate
 CrossingRate
 0
@@ -554,22 +618,88 @@ TimeScale
 TimeScale
 0.05
 1
-0.25
+0.5
 0.05
 1
 hours per tick
 HORIZONTAL
 
 SWITCH
-265
-571
+267
+570
 394
-604
+603
 MoveAnimation
 MoveAnimation
 0
 1
 -1000
+
+SLIDER
+16
+656
+394
+689
+RetreatScalar
+RetreatScalar
+0
+2
+0
+0.1
+1
+* ForceRetreat * Distance / BroadcastRange
+HORIZONTAL
+
+SWITCH
+16
+570
+170
+603
+RetreatBroadcast
+RetreatBroadcast
+1
+1
+-1000
+
+SLIDER
+16
+613
+170
+646
+BroadcastRange
+BroadcastRange
+0
+30
+0
+1
+1
+km
+HORIZONTAL
+
+SLIDER
+195
+153
+395
+186
+GermanReorgPause
+GermanReorgPause
+1
+24
+12
+0.25
+1
+hours
+HORIZONTAL
+
+CHOOSER
+16
+13
+206
+58
+Model
+Model
+"No Slider Changes on Setup" "Historical Reset" "(Retreat) No Retreat Broadcast" "(Retreat) Hold Ground Behavior" "(Retreat) Panicked Behavior"
+2
 
 @#$#@#$#@
 ## WHAT IS IT?
@@ -582,7 +712,13 @@ German brigades will move towards French static positions and both sides engage 
 
 ## HOW TO USE IT
 
-The 'Setup' button will place the brigades in their initial positions, where the French positions are in a checkerboard pattern. The Go button will make the simulation run (each tick represents one hour). The user may set the numbers of brigades that are crossing each bridge. Further, to analyze attrition, the user may plot the forces in the Interface tab and inspect statistics of both sides. Lastly, the user may choose to animate fire.
+The Model choice is used to toggle between various preset selections, each of which are loaded by then pressing the Setup button. If no slider changes are desired, then the Model choice should be 'No Slider Changes on Setup' when Setup is clicked.
+
+Setup will then place brigades in their initial positions, where the French positions are in a checkerboard pattern. The Go button will make the simulation run.
+
+A variety of adjustments may be made to the model, all of which should be set before pressing the Setup button.
+
+The disposition of the attacking German forces amongst the available bridgeheads may be changed (historically accurate total brigade count will be enforced). The TimeScale of each tick may be altered. Several retreat and bridge variables may be tweaked. Plotting and animations may be toggled on and off. Lastly, several settings regarding how retreat broadcasts (if turned on) spread through brigades are available.
 
 ## THINGS TO NOTICE
 
@@ -590,7 +726,7 @@ The 'Forces' plot will give insight to the attrition dynamics based on the param
 
 ## THINGS TO TRY
 
-The analyst can choose to vary the bride-crossing mobility of the German forces and its impact on attrition by enabling the 'plotForces' switch.
+The analyst can choose to vary the bridge-crossing mobility of the German forces and its impact on attrition by enabling the 'PlotForces' switch.
 
 ## EXTENDING THE MODEL
 
@@ -846,7 +982,7 @@ Polygon -6459832 true true 46 128 33 120 21 118 11 123 3 138 5 160 13 178 9 192 
 Polygon -6459832 true true 67 122 96 126 63 144
 
 @#$#@#$#@
-NetLogo 5.0.4
+NetLogo 5.0.3
 @#$#@#$#@
 @#$#@#$#@
 @#$#@#$#@

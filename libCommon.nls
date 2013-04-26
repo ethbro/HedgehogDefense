@@ -51,6 +51,7 @@ units-own [
   state               ;unit's current behavior
                       ;  s_P_DEFENSE, s_DEFENSE, s_ATTACK, s_B_ATTACK, s_RETREAT, s_ROUTE, s_RESERVE, s_Q_BRIDGE, s_ON_BRIDGE, s_OVR_BRIDGE
   beginEffectiveness  ;unit's effectiveness when starting current elected behavior
+  pressure            ;unit's retreat pressure from neighboring units
   beginState          ;unit's state before being switched
   beginHeading        ;unit's declared heading when starting current elected behavior
   beginRow            ;unit's starting row
@@ -153,6 +154,7 @@ to c_writeUnit [ statsList ]
   set size 7
   set effectiveness 1
   set beginEffectiveness effectiveness
+  set pressure 0
   set isNewState? false
 end
 
